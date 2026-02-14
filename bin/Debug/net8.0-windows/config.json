@@ -1,4 +1,5 @@
 {
+  "Version": "1.0",
   "Hotkey": {
     "Modifier": "Alt",
     "Key": "Space"
@@ -6,34 +7,121 @@
   "Theme": "Light",
   "Commands": [
     {
+      "Id": "a13eb4c9-c1b8-4c83-b59d-ac7828dc042a",
       "Keyword": "b",
-      "Name": "百度搜索",
+      "Name": "\u767E\u5EA6\u641C\u7D22",
       "Type": "Url",
-      "Path": "https://www.baidu.com/s?wd={param}"
+      "Path": "https://www.baidu.com/s?wd={param}",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
     },
     {
+      "Id": "80332cda-df34-4587-b6e7-7fb7586a4c8f",
       "Keyword": "g",
-      "Name": "Google搜索",
+      "Name": "Google\u641C\u7D22",
       "Type": "Url",
-      "Path": "https://www.google.com/search?q={param}"
+      "Path": "https://www.google.com/search?q={param}",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
     },
     {
+      "Id": "84b31857-688b-4482-be05-869f1c4230af",
       "Keyword": "gh",
       "Name": "GitHub",
       "Type": "Url",
-      "Path": "https://github.com/search?q={param}"
+      "Path": "https://github.com/search?q={param}",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
     },
     {
-      "Keyword": ">",
+      "Id": "e1245077-9723-4df4-947c-91a2e18fecd7",
+      "Keyword": "\u003E",
       "Name": "PowerShell",
       "Type": "Shell",
-      "Path": "{param}"
+      "Path": "{param}",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
     },
     {
+      "Id": "78d02bdd-bbdd-4af2-88b4-ebc5a6257449",
       "Keyword": "calc",
-      "Name": "计算器",
+      "Name": "\u8BA1\u7B97\u5668",
       "Type": "Calculator",
-      "Path": "{param}"
+      "Path": "{param}",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
+    },
+    {
+      "Id": "e661936b-6260-4573-aafd-d093d2de1fab",
+      "Keyword": "uber",
+      "Name": "\u5904\u7406Uber\u53D1\u7968",
+      "Type": "Program",
+      "Path": "D:\\06 \u5DE5\u4F5C\u6587\u6863\\41 \u51FA\u5DEE\u4E0E\u62A5\u9500\\tool\\uber_extractor3-enhanced.exe",
+      "GroupId": null,
+      "Arguments": "",
+      "WorkingDirectory": "",
+      "RunAsAdmin": false,
+      "RunHidden": false,
+      "IconPath": "",
+      "Hotkey": null,
+      "Enabled": true,
+      "Description": "",
+      "ParamPlaceholder": "{param}"
     }
-  ]
+  ],
+  "CommandGroups": [],
+  "PluginSettings": {
+    "Enabled": true,
+    "PluginDirectory": "Plugins",
+    "LoadedPlugins": []
+  },
+  "AppSettings": {
+    "StartWithWindows": false,
+    "MinimizeToTray": true,
+    "CloseToTray": true,
+    "ShowInTaskbar": false,
+    "MaxResults": 10,
+    "AutoUpdate": true,
+    "CheckForUpdatesOnStartup": true
+  }
 }

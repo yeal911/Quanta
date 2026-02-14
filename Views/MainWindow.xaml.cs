@@ -57,7 +57,7 @@ public partial class MainWindow : Window
         
         // Initialize system tray
         _trayService = new TrayService(this);
-        _trayService.SettingsRequested += (s, args) => Dispatcher.Invoke(OpenCommandSettings);
+        _trayService.SettingsRequested += (s, args) => Dispatcher.Invoke(() => OpenCommandSettings());
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
         _trayService.Initialize();
         
