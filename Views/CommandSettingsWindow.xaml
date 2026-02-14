@@ -2,400 +2,133 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="命令设置"
-        Height="600" Width="900" 
+        Height="500" Width="700" 
         WindowStartupLocation="CenterOwner"
         WindowStyle="None" 
         AllowsTransparency="True"
         Background="Transparent"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
-        <!-- Modern Button Style -->
-        <Style x:Key="ModernButton" TargetType="Button">
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="微软雅黑"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontFamily" Value="微软雅黑"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        
+        <Style TargetType="Button">
             <Setter Property="Background" Value="#0078D4"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" 
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#106EBE"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#005A9E"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="FontFamily" Value="微软雅黑"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinWidth" Value="60"/>
         </Style>
-
-        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-            <Setter Property="Background" Value="#F0F0F0"/>
-            <Setter Property="Foreground" Value="#333333"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E0E0E0"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-            <Setter Property="Background" Value="#E74856"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#D73A49"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Modern TextBox -->
-        <Style x:Key="ModernTextBox" TargetType="TextBox">
-            <Setter Property="Background" Value="#F5F5F5"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="#0078D4"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Modern DataGrid -->
-        <Style x:Key="ModernDataGrid" TargetType="DataGrid">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E5E5E5"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#F0F0F0"/>
-            <Setter Property="RowBackground" Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="SelectionUnit" Value="FullRow"/>
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="RowHeight" Value="40"/>
-        </Style>
-
-        <Style x:Key="ModernDataGridColumnHeader" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#F8F8F8"/>
-            <Setter Property="Foreground" Value="#666666"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="BorderBrush" Value="#E5E5E5"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        </Style>
-
-        <!-- Navigation Button -->
-        <Style x:Key="NavButton" TargetType="RadioButton">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#666666"/>
-            <Setter Property="Padding" Value="16,12"/>
+        
+        <Style x:Key="Btn" TargetType="Button">
+            <Setter Property="Background" Value="#EEE"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" 
-                                CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="4,2">
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F0F0F0"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#E8F4FD"/>
-                                <Setter Property="Foreground" Value="#0078D4"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="FontFamily" Value="微软雅黑"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinWidth" Value="60"/>
         </Style>
     </Window.Resources>
 
-    <!-- Main Container -->
-    <Border Background="White" CornerRadius="12" Margin="10">
-        <Border.Effect>
-            <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="0" Opacity="0.15"/>
-        </Border.Effect>
-
+    <Border Background="White" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Left Sidebar -->
-            <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="12,0,0,12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Header -->
-                    <StackPanel Grid.Row="0" Margin="16,20,16,20">
-                        <TextBlock Text="⚡" FontSize="28" HorizontalAlignment="Center"/>
-                        <TextBlock Text="命令设置" FontSize="16" FontWeight="SemiBold" 
-                                   Foreground="#333" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                    </StackPanel>
-
-                    <!-- Navigation -->
-                    <StackPanel Grid.Row="1">
-                        <RadioButton x:Name="NavCommands" Content="📋 命令列表" Style="{StaticResource NavButton}" 
-                                     IsChecked="True" Checked="Nav_Checked" GroupName="Nav"/>
-                        <RadioButton x:Name="NavGroups" Content="📁 命令分组" Style="{StaticResource NavButton}" 
-                                     Checked="Nav_Checked" GroupName="Nav"/>
-                        <RadioButton x:Name="NavImportExport" Content="🔄 导入/导出" Style="{StaticResource NavButton}" 
-                                     Checked="Nav_Checked" GroupName="Nav"/>
-                        <RadioButton x:Name="NavAdvanced" Content="⚙️ 高级设置" Style="{StaticResource NavButton}" 
-                                     Checked="Nav_Checked" GroupName="Nav"/>
-                    </StackPanel>
-
-                    <!-- Version -->
-                    <TextBlock Grid.Row="2" Text="v1.0" Foreground="#999" 
-                               FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#F5F5F5" CornerRadius="4,4,0,0">
+                <Grid Margin="15,0">
+                    <TextBlock Text="命令设置" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" Foreground="#666" 
+                            Padding="8,4" Click="Cancel_Click" FontSize="14"/>
                 </Grid>
             </Border>
-
-            <!-- Right Content Area -->
-            <Grid Grid.Column="1" Margin="20">
-                <!-- Commands Panel -->
-                <Grid x:Name="CommandsPanel" Visibility="Visible">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                        <TextBlock Text="命令列表" FontSize="20" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBlock Text="管理你的快速命令" FontSize="12" Foreground="#999" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <DataGrid x:Name="CommandsGrid" ItemsSource="{Binding Commands}" 
-                              Style="{StaticResource ModernDataGrid}" Grid.Row="1">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ModernDataGridColumnHeader}"/>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="关键字" Binding="{Binding Keyword}" Width="90"/>
-                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="110"/>
-                            <DataGridComboBoxColumn Header="类型" SelectedItemBinding="{Binding Type}" Width="80">
-                                <DataGridComboBoxColumn.ItemsSource>
-                                    <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-                                        <sys:String>Url</sys:String>
-                                        <sys:String>Program</sys:String>
-                                        <sys:String>Directory</sys:String>
-                                        <sys:String>Shell</sys:String>
-                                        <sys:String>Calculator</sys:String>
-                                    </x:Array>
-                                </DataGridComboBoxColumn.ItemsSource>
-                            </DataGridComboBoxColumn>
-                            <DataGridTextColumn Header="路径/URL" Binding="{Binding Path}" Width="*"/>
-                            <DataGridTextColumn Header="参数" Binding="{Binding Arguments}" Width="80"/>
-                            <DataGridCheckBoxColumn Header="管理" Binding="{Binding RunAsAdmin}" Width="45"/>
-                            <DataGridCheckBoxColumn Header="启用" Binding="{Binding Enabled}" Width="45"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="➕ 添加" Style="{StaticResource ModernButton}" Click="AddCommand_Click" Margin="0,0,8,0"/>
-                        <Button Content="🗑️ 删除" Style="{StaticResource DangerButton}" Click="DeleteCommand_Click" Margin="0,0,8,0"/>
-                        <Button Content="⬆️ 上移" Style="{StaticResource SecondaryButton}" Click="MoveUp_Click" Margin="0,0,8,0"/>
-                        <Button Content="⬇️ 下移" Style="{StaticResource SecondaryButton}" Click="MoveDown_Click"/>
+            
+            <!-- Content -->
+            <Grid Grid.Row="1" Margin="15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Hotkey and Buttons Row -->
+                <Grid Grid.Row="0" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Hotkey Settings (Left 50%) -->
+                    <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="4" Padding="12" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" Text="快捷键：" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="HotkeyTextBox" Grid.Column="1" Text="请按下快捷键..." 
+                                     IsReadOnly="True" VerticalAlignment="Center" Padding="8,4"
+                                     Background="White" BorderBrush="#DDD" FontSize="12" FontFamily="微软雅黑"
+                                     PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" GotFocus="HotkeyTextBox_GotFocus"/>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Buttons (Right 50%) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="8,0,0,0">
+                        <Button Content="添加" Click="AddCommand_Click" Margin="0,0,6,0"/>
+                        <Button Content="删除" Style="{StaticResource Btn}" Click="DeleteCommand_Click" Margin="0,0,6,0"/>
+                        <Button Content="保存" Click="SaveCommand_Click"/>
                     </StackPanel>
                 </Grid>
-
-                <!-- Groups Panel -->
-                <Grid x:Name="GroupsPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                        <TextBlock Text="命令分组" FontSize="20" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBlock Text="将命令分组以便更好地组织" FontSize="12" Foreground="#999" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <DataGrid x:Name="GroupsGrid" ItemsSource="{Binding Groups}" 
-                              Style="{StaticResource ModernDataGrid}" Grid.Row="1">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ModernDataGridColumnHeader}"/>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="分组名称" Binding="{Binding Name}" Width="150"/>
-                            <DataGridTextColumn Header="图标" Binding="{Binding Icon}" Width="60"/>
-                            <DataGridTextColumn Header="颜色" Binding="{Binding Color}" Width="80"/>
-                            <DataGridTextColumn Header="排序" Binding="{Binding SortOrder}" Width="60"/>
-                            <DataGridCheckBoxColumn Header="展开" Binding="{Binding Expanded}" Width="50"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="➕ 添加分组" Style="{StaticResource ModernButton}" Click="AddGroup_Click" Margin="0,0,8,0"/>
-                        <Button Content="🗑️ 删除" Style="{StaticResource DangerButton}" Click="DeleteGroup_Click"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- Import/Export Panel -->
-                <Grid x:Name="ImportExportPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,20">
-                        <TextBlock Text="导入 / 导出" FontSize="20" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBlock Text="备份和恢复你的命令配置" FontSize="12" Foreground="#999" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <!-- Export Section -->
-                            <Border Background="#F8F9FA" CornerRadius="10" Padding="20" Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="📤 导出" FontSize="15" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,12"/>
-                                    <TextBlock Text="将你的命令配置导出为 JSON 文件" FontSize="12" Foreground="#666" Margin="0,0,0,12"/>
-                                    <WrapPanel>
-                                        <Button Content="导出所有命令" Style="{StaticResource SecondaryButton}" Click="ExportCommands_Click" Margin="0,0,8,8"/>
-                                        <Button Content="导出完整配置" Style="{StaticResource SecondaryButton}" Click="ExportAll_Click" Margin="0,0,8,8"/>
-                                    </WrapPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Import Section -->
-                            <Border Background="#F8F9FA" CornerRadius="10" Padding="20" Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="📥 导入" FontSize="15" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,12"/>
-                                    <TextBlock Text="从 JSON 文件导入命令配置" FontSize="12" Foreground="#666" Margin="0,0,0,12"/>
-                                    <WrapPanel>
-                                        <Button Content="导入命令" Style="{StaticResource SecondaryButton}" Click="ImportCommands_Click" Margin="0,0,8,8"/>
-                                        <Button Content="导入配置" Style="{StaticResource SecondaryButton}" Click="ImportAll_Click" Margin="0,0,8,8"/>
-                                    </WrapPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Sample Commands -->
-                            <Border Background="#F8F9FA" CornerRadius="10" Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="📦 示例命令" FontSize="15" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,12"/>
-                                    <TextBlock Text="加载预定义的示例命令快速入门" FontSize="12" Foreground="#666" Margin="0,0,0,12"/>
-                                    <Button Content="加载示例命令" Style="{StaticResource ModernButton}" Click="LoadSampleCommands_Click"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- Advanced Panel -->
-                <Grid x:Name="AdvancedPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,20">
-                        <TextBlock Text="高级设置" FontSize="20" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBlock Text="为选中命令设置高级属性" FontSize="12" Foreground="#999" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <Border Background="#F8F9FA" CornerRadius="10" Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="选择一条命令后设置以下属性：" FontSize="13" Foreground="#666" Margin="0,0,0,15"/>
-
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="快捷键" VerticalAlignment="Center" 
-                                                   Foreground="#666" FontSize="13" Margin="0,0,0,12"/>
-                                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="HotkeyTextBox" 
-                                                 Style="{StaticResource ModernTextBox}" Width="200" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="图标路径" VerticalAlignment="Center" 
-                                                   Foreground="#666" FontSize="13" Margin="0,0,0,12"/>
-                                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="IconPathTextBox" 
-                                                 Style="{StaticResource ModernTextBox}" Width="350" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="描述" VerticalAlignment="Center" 
-                                                   Foreground="#666" FontSize="13" Margin="0,0,0,12"/>
-                                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="DescriptionTextBox" 
-                                                 Style="{StaticResource ModernTextBox}" Width="350" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="参数占位符" VerticalAlignment="Center" 
-                                                   Foreground="#666" FontSize="13" Margin="0,0,0,12"/>
-                                        <TextBox Grid.Row="3" Grid.Column="1" x:Name="ParamPlaceholderTextBox" 
-                                                 Style="{StaticResource ModernTextBox}" Width="150" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-
-                                        <CheckBox Grid.Row="4" Grid.Column="1" x:Name="RunHiddenCheckBox" 
-                                                  Content="隐藏窗口运行" Foreground="#666" FontSize="13"/>
-                                    </Grid>
-
-                                    <Button Content="💾 保存高级属性" Style="{StaticResource ModernButton}" 
-                                            Click="SaveAdvanced_Click" HorizontalAlignment="Left" Margin="0,20,0,0"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- Bottom Action Buttons -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" 
-                            VerticalAlignment="Bottom" Margin="0,0,0,0">
-                    <Button Content="保存并关闭" Style="{StaticResource ModernButton}" 
-                            Click="SaveCommand_Click" Margin="0,0,8,0" Width="100"/>
-                    <Button Content="取消" Style="{StaticResource SecondaryButton}" 
-                            Click="Cancel_Click" Width="80"/>
-                </StackPanel>
+                
+                <!-- Commands DataGrid -->
+                <TextBlock Grid.Row="1" Text="自定义命令" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                
+                <DataGrid Grid.Row="1" x:Name="CommandsGrid" ItemsSource="{Binding Commands}"
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                          RowHeight="32" FontSize="12" FontFamily="微软雅黑"
+                          BorderThickness="1" BorderBrush="#DDD">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="关键字" Binding="{Binding Keyword}" Width="80"/>
+                        <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="100"/>
+                        <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="70"/>
+                        <DataGridTextColumn Header="路径/URL" Binding="{Binding Path}" Width="*"/>
+                        <DataGridTextColumn Header="参数" Binding="{Binding Arguments}" Width="80"/>
+                        <DataGridCheckBoxColumn Header="启用" Binding="{Binding Enabled}" Width="50"/>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Grid>
+            
+            <!-- Footer -->
+            <Border Grid.Row="2" Background="#F9F9F9" CornerRadius="0,0,4,4" BorderBrush="#EEE" BorderThickness="0,1,0,0">
+                <TextBlock Text="拖动标题栏移动 | 输入关键字搜索 | 回车执行" 
+                           Foreground="#999" FontSize="11" Margin="15,0" VerticalAlignment="Center"/>
+            </Border>
         </Grid>
     </Border>
 </Window>

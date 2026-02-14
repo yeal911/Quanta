@@ -77,7 +77,7 @@
                              FontSize="14" Padding="6,4" 
                              Background="Transparent" BorderThickness="0" 
                              Foreground="#1A1A1A" CaretBrush="#1A1A1A" 
-                             FontFamily="Segoe UI"
+                             FontFamily="微软雅黑"
                              VerticalAlignment="Center"/>
                     
                     <Button x:Name="ThemeToggleButton" Grid.Column="1" 

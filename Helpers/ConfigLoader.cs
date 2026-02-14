@@ -162,6 +162,12 @@ public static class ConfigLoader
             // Migrate from v0.x to v1.0
             Logger.Log("Migrating config to v1.0...");
             
+            // Add sample commands if empty
+            if (config.Commands == null || config.Commands.Count == 0)
+            {
+                config.Commands = Services.CommandService.GenerateSampleCommands();
+            }
+            
             // Add command groups if not present
             if (config.CommandGroups == null || config.CommandGroups.Count == 0)
             {

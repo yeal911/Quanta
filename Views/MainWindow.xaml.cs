@@ -25,9 +25,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         
         var usageTracker = new UsageTracker();
-        var windowManager = new WindowManager();
         var commandRouter = new CommandRouter(usageTracker);
-        var searchEngine = new SearchEngine(usageTracker, windowManager, commandRouter);
+        var searchEngine = new SearchEngine(usageTracker, commandRouter);
         
         _viewModel = new MainViewModel(searchEngine, usageTracker);
         _hotkeyManager = new HotkeyManager();

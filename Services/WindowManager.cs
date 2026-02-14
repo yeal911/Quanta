@@ -17,9 +17,13 @@ public class WindowManager
     [DllImport("user32.dll")] private static extern IntPtr GetShellWindow();
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
     private const int SW_RESTORE = 9, GWL_EXSTYLE = -20, WS_EX_TOOLWINDOW = 0x00000080, WS_EX_APPWINDOW = 0x00040000;
     private const uint GW_OWNER = 4;
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    
+    // Get current process name to filter out
+    private static readonly string CurrentProcessName = Process.GetCurrentProcess().ProcessName;
 
     public List<SearchResult> GetVisibleWindows()
     {
@@ -28,6 +32,20 @@ public class WindowManager
         EnumWindows((hWnd, lParam) =>
         {
             if (!IsWindowVisible(hWnd) || hWnd == shellWindow) return true;
+            
+            // Get process ID to filter out this app
+            GetWindowThreadProcessId(hWnd, out uint processId);
+            try
+            {
+                var process = Process.GetProcessById((int)processId);
+                // Filter out Quanta and OpenCode (the IDE)
+                if (process.ProcessName.Equals("Quanta", StringComparison.OrdinalIgnoreCase) ||
+                    process.ProcessName.Equals("opencode", StringComparison.OrdinalIgnoreCase) ||
+                    process.ProcessName.Equals("OpenCode", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            catch { }
+            
             int length = GetWindowTextLength(hWnd);
             if (length == 0) return true;
             var sb = new StringBuilder(length + 1);

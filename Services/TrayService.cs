@@ -39,6 +39,7 @@ public class TrayService : IDisposable
         menu.Items.Add("显示界面", null, (s, e) => ShowMainWindow());
         menu.Items.Add("命令设置", null, (s, e) => OnSettingsRequested());
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("关于", null, (s, e) => ShowAbout());
         menu.Items.Add("退出", null, (s, e) => OnExitRequested());
 
         _notifyIcon.ContextMenuStrip = menu;
@@ -88,6 +89,15 @@ public class TrayService : IDisposable
     {
         ShowMainWindow();
         SettingsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ShowAbout()
+    {
+        // Show toast notification with about info
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            ToastService.Instance.ShowInfo("作者：yeal911\n邮箱：yeal91117@gmail.com", 3.0);
+        });
     }
 
     private void OnExitRequested()

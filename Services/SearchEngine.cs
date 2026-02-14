@@ -16,24 +16,15 @@ public interface ISearchProvider
 public class SearchEngine
 {
     private readonly UsageTracker _usageTracker;
-    private readonly WindowManager _windowManager;
     private readonly CommandRouter _commandRouter;
-    private readonly List<ISearchProvider> _providers;
     private List<CommandConfig> _customCommands = new();
 
-    public SearchEngine(UsageTracker usageTracker, WindowManager windowManager, CommandRouter commandRouter)
+    public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter)
     {
         _usageTracker = usageTracker;
-        _windowManager = windowManager;
         _commandRouter = commandRouter;
         
         LoadCustomCommands();
-
-        // Only keep command-based searches, remove file searching
-        _providers = new List<ISearchProvider>
-        {
-            new WindowSearchProvider(_windowManager)
-        };
     }
 
     private void LoadCustomCommands()
@@ -64,29 +55,8 @@ public class SearchEngine
         if (commandResult != null)
         {
             results.Add(commandResult);
-            var list = results.OrderByDescending(r => r.MatchScore).ToList();
-            for (int i = 0; i < list.Count; i++) list[i].Index = i;
-            return list;
         }
 
-        var tasks = _providers.Select(provider => Task.Run(async () =>
-        {
-            try
-            {
-                var providerResults = await provider.SearchAsync(query, cancellationToken);
-                foreach (var result in providerResults)
-                {
-                    result.MatchScore = _usageTracker.CalculateUsageScore(result.Id, result.MatchScore);
-                    results.Add(result);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Provider {provider.Name} search failed", ex);
-            }
-        }, cancellationToken));
-
-        await Task.WhenAll(tasks);
         var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(10).ToList();
         for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i;
         return finalList;
@@ -178,14 +148,6 @@ public class SearchEngine
             });
         }
 
-        // Show visible windows
-        var windows = await Task.Run(() => _windowManager.GetVisibleWindows(), cancellationToken);
-        foreach (var window in windows.Take(3))
-        {
-            window.Index = index++;
-            results.Add(window);
-        }
-
         return results.ToList();
     }
 
@@ -227,11 +189,10 @@ public class SearchEngine
             case SearchResultType.File:
             case SearchResultType.RecentFile:
                 return await LaunchFileAsync(result);
-            case SearchResultType.Window:
-                return _windowManager.ActivateWindow(result);
             case SearchResultType.Command:
             case SearchResultType.Calculator:
             case SearchResultType.WebSearch:
+            case SearchResultType.Window:
                 return true;
             case SearchResultType.CustomCommand:
                 return await ExecuteCustomCommandAsync(result, "");
@@ -327,14 +288,13 @@ public class SearchEngine
                         var shellCmd = processedPath;
                         if (!string.IsNullOrEmpty(processedArgs))
                             shellCmd += " " + processedArgs;
-                            
+                        
+                        // Optimize: Use cmd.exe directly and don't wait for output (faster execution)
                         var shellPsi = new ProcessStartInfo
                         {
-                            FileName = "powershell.exe",
-                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{shellCmd}\"",
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
+                            FileName = "cmd.exe",
+                            Arguments = $"/c {shellCmd}",
+                            UseShellExecute = !cmd.RunHidden,
                             CreateNoWindow = cmd.RunHidden,
                             WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory) 
                                 ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) 
@@ -344,21 +304,11 @@ public class SearchEngine
                         if (cmd.RunAsAdmin)
                         {
                             shellPsi.Verb = "runas";
+                            shellPsi.UseShellExecute = true;
                         }
                         
-                        using var process = Process.Start(shellPsi);
-                        if (process != null)
-                        {
-                            await process.WaitForExitAsync();
-                            if (!cmd.RunHidden)
-                            {
-                                var output = await process.StandardOutput.ReadToEndAsync();
-                                var error = await process.StandardError.ReadToEndAsync();
-                                Logger.Log($"Shell output: {output}");
-                                if (!string.IsNullOrEmpty(error))
-                                    Logger.Warn($"Shell error: {error}");
-                            }
-                        }
+                        // Start process without waiting (fire and forget for speed)
+                        Process.Start(shellPsi);
                         _usageTracker.RecordUsage(result.Id);
                         return true;
                     }
@@ -381,32 +331,49 @@ public class SearchEngine
     }
 
     /// <summary>
-    /// Find executable in PATH environment variable
+    /// Find executable in PATH environment variable (with caching)
     /// </summary>
+    private static readonly Dictionary<string, string?> PathCache = new(StringComparer.OrdinalIgnoreCase);
+    
     private string? FindInPath(string executable)
     {
         if (string.IsNullOrEmpty(executable)) return null;
         
+        // Check cache first
+        if (PathCache.TryGetValue(executable, out var cached))
+            return cached;
+        
         var pathEnv = Environment.GetEnvironmentVariable("PATH");
         if (string.IsNullOrEmpty(pathEnv)) return null;
         
+        string? result = null;
         foreach (var path in pathEnv.Split(';'))
         {
             try
             {
+                if (string.IsNullOrEmpty(path)) continue;
+                
                 var fullPath = Path.Combine(path, executable);
                 if (File.Exists(fullPath))
-                    return fullPath;
+                {
+                    result = fullPath;
+                    break;
+                }
                     
                 // Also check with .exe extension
                 fullPath = Path.Combine(path, executable + ".exe");
                 if (File.Exists(fullPath))
-                    return fullPath;
+                {
+                    result = fullPath;
+                    break;
+                }
             }
             catch { }
         }
         
-        return null;
+        // Cache the result
+        PathCache[executable] = result;
+        return result;
     }
 
     private string CalculateInternal(string expression)
@@ -602,27 +569,5 @@ public class RecentFileSearchProvider : ISearchProvider
         });
         while (_recentFiles.Count > 30) _recentFiles.RemoveAt(_recentFiles.Count - 1);
         _onRecentFilesUpdated?.Invoke(_recentFiles);
-    }
-}
-
-public class WindowSearchProvider : ISearchProvider
-{
-    private readonly WindowManager _windowManager;
-
-    public string Name => "Windows";
-
-    public WindowSearchProvider(WindowManager windowManager) => _windowManager = windowManager;
-
-    public async Task<List<SearchResult>> SearchAsync(string query, CancellationToken cancellationToken = default)
-    {
-        return await Task.Run(() =>
-        {
-            return _windowManager.GetVisibleWindows()
-                .Select(window => { window.MatchScore = SearchEngine.CalculateFuzzyScore(query, window.Title); return window; })
-                .Where(r => r.MatchScore > 0)
-                .OrderByDescending(r => r.MatchScore)
-                .Take(5)
-                .ToList();
-        }, cancellationToken);
     }
 }
