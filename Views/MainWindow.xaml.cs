@@ -145,6 +145,24 @@ public partial class MainWindow : Window
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        // Ctrl+数字 快速执行
+        if (e.Key >= Key.D1 && e.Key <= Key.D9 && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            int index = e.Key - Key.D1;
+            ExecuteByIndex(index);
+            e.Handled = true;
+            return;
+        }
+        
+        // Ctrl+数字 (小键盘)
+        if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9 && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            int index = e.Key - Key.NumPad1;
+            ExecuteByIndex(index);
+            e.Handled = true;
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.Escape:
@@ -179,6 +197,15 @@ public partial class MainWindow : Window
                 HandleTabKey();
                 e.Handled = true;
                 break;
+        }
+    }
+
+    private void ExecuteByIndex(int index)
+    {
+        if (index >= 0 && index < _viewModel.Results.Count)
+        {
+            _viewModel.SelectedIndex = index;
+            _ = ExecuteSelectedAsync();
         }
     }
 

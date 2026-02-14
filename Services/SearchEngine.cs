@@ -64,7 +64,9 @@ public class SearchEngine
         if (commandResult != null)
         {
             results.Add(commandResult);
-            return results.OrderByDescending(r => r.MatchScore).ToList();
+            var list = results.OrderByDescending(r => r.MatchScore).ToList();
+            for (int i = 0; i < list.Count; i++) list[i].Index = i;
+            return list;
         }
 
         var tasks = _providers.Select(provider => Task.Run(async () =>
@@ -85,12 +87,15 @@ public class SearchEngine
         }, cancellationToken));
 
         await Task.WhenAll(tasks);
-        return results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(15).ToList();
+        var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(10).ToList();
+        for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i;
+        return finalList;
     }
 
     private List<SearchResult> SearchCustomCommands(string query)
     {
         var results = new List<SearchResult>();
+        int index = 0;
         
         // Check if user is typing a command
         foreach (var cmd in _customCommands)
@@ -100,6 +105,7 @@ public class SearchEngine
                 // Show all commands when empty
                 results.Add(new SearchResult
                 {
+                    Index = index++,
                     Id = $"cmd:{cmd.Keyword}",
                     Title = cmd.Keyword,
                     Subtitle = cmd.Name,
@@ -114,6 +120,7 @@ public class SearchEngine
                 double score = query == cmd.Keyword ? 1.0 : 0.8;
                 results.Add(new SearchResult
                 {
+                    Index = index++,
                     Id = $"cmd:{cmd.Keyword}",
                     Title = cmd.Keyword,
                     Subtitle = cmd.Name,
@@ -127,6 +134,7 @@ public class SearchEngine
                 // Prefix match
                 results.Add(new SearchResult
                 {
+                    Index = index++,
                     Id = $"cmd:{cmd.Keyword}",
                     Title = cmd.Keyword,
                     Subtitle = cmd.Name,
@@ -143,9 +151,10 @@ public class SearchEngine
     private async Task<List<SearchResult>> GetDefaultResultsAsync(CancellationToken cancellationToken)
     {
         var results = new ConcurrentBag<SearchResult>();
+        int index = 0;
         
         // Show custom commands
-        foreach (var cmd in _customCommands.Take(6))
+        foreach (var cmd in _customCommands.Take(8))
         {
             var typeName = cmd.Type.ToLower() switch
             {
@@ -159,6 +168,7 @@ public class SearchEngine
             
             results.Add(new SearchResult
             {
+                Index = index++,
                 Id = $"cmd:{cmd.Keyword}",
                 Title = cmd.Keyword,
                 Subtitle = typeName,
@@ -171,7 +181,10 @@ public class SearchEngine
         // Show visible windows
         var windows = await Task.Run(() => _windowManager.GetVisibleWindows(), cancellationToken);
         foreach (var window in windows.Take(3))
+        {
+            window.Index = index++;
             results.Add(window);
+        }
 
         return results.ToList();
     }
@@ -232,32 +245,77 @@ public class SearchEngine
         if (result.CommandConfig == null) return false;
 
         var cmd = result.CommandConfig;
+        
+        // Check if command is enabled
+        if (!cmd.Enabled)
+        {
+            Logger.Warn($"Command is disabled: {cmd.Keyword}");
+            return false;
+        }
+
         try
         {
+            // Support multiple parameter placeholders
+            var processedPath = cmd.Path
+                .Replace("{param}", param)
+                .Replace("{query}", param)
+                .Replace("%p", param);
+            
+            var processedArgs = cmd.Arguments
+                .Replace("{param}", param)
+                .Replace("{query}", param)
+                .Replace("%p", param);
+
             switch (cmd.Type.ToLower())
             {
                 case "url":
-                    var url = cmd.Path.Replace("{param}", Uri.EscapeDataString(param)).Replace("{query}", Uri.EscapeDataString(param));
+                    var url = processedPath;
                     Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
                     _usageTracker.RecordUsage(result.Id);
                     return true;
 
                 case "program":
-                    var programPath = cmd.Path.Replace("{param}", param).Replace("{query}", param);
+                    var programPath = processedPath;
+                    
+                    // Check if file exists
+                    if (!File.Exists(programPath) && !Path.IsPathRooted(programPath))
+                    {
+                        // Try to find in PATH
+                        programPath = FindInPath(programPath);
+                    }
+                    
                     var psi = new ProcessStartInfo
                     {
                         FileName = programPath,
-                        UseShellExecute = true
+                        Arguments = processedArgs,
+                        UseShellExecute = !cmd.RunHidden,
+                        WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory) 
+                            ? Path.GetDirectoryName(programPath) 
+                            : cmd.WorkingDirectory,
+                        CreateNoWindow = cmd.RunHidden
                     };
+                    
+                    // Handle run as admin
+                    if (cmd.RunAsAdmin)
+                    {
+                        psi.Verb = "runas";
+                    }
+                    
                     Process.Start(psi);
                     _usageTracker.RecordUsage(result.Id);
                     return true;
 
                 case "directory":
-                    var dirPath = cmd.Path.Replace("{param}", param).Replace("{query}", param);
+                    var dirPath = processedPath;
                     if (System.IO.Directory.Exists(dirPath))
                     {
-                        Process.Start(new ProcessStartInfo { FileName = "explorer.exe", Arguments = dirPath, UseShellExecute = true });
+                        Process.Start(new ProcessStartInfo 
+                        { 
+                            FileName = "explorer.exe", 
+                            Arguments = dirPath, 
+                            UseShellExecute = true,
+                            WorkingDirectory = cmd.WorkingDirectory
+                        });
                         _usageTracker.RecordUsage(result.Id);
                         return true;
                     }
@@ -266,7 +324,10 @@ public class SearchEngine
 
                 case "shell":
                     {
-                        var shellCmd = cmd.Path.Replace("{param}", param).Replace("{query}", param);
+                        var shellCmd = processedPath;
+                        if (!string.IsNullOrEmpty(processedArgs))
+                            shellCmd += " " + processedArgs;
+                            
                         var shellPsi = new ProcessStartInfo
                         {
                             FileName = "powershell.exe",
@@ -274,19 +335,37 @@ public class SearchEngine
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
-                            CreateNoWindow = true
+                            CreateNoWindow = cmd.RunHidden,
+                            WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory) 
+                                ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) 
+                                : cmd.WorkingDirectory
                         };
+                        
+                        if (cmd.RunAsAdmin)
+                        {
+                            shellPsi.Verb = "runas";
+                        }
+                        
                         using var process = Process.Start(shellPsi);
                         if (process != null)
                         {
                             await process.WaitForExitAsync();
+                            if (!cmd.RunHidden)
+                            {
+                                var output = await process.StandardOutput.ReadToEndAsync();
+                                var error = await process.StandardError.ReadToEndAsync();
+                                Logger.Log($"Shell output: {output}");
+                                if (!string.IsNullOrEmpty(error))
+                                    Logger.Warn($"Shell error: {error}");
+                            }
                         }
                         _usageTracker.RecordUsage(result.Id);
                         return true;
                     }
 
                 case "calculator":
-                    var calcResult = CalculateInternal(cmd.Path.Replace("{param}", param).Replace("{query}", param));
+                    var calcResult = CalculateInternal(processedPath);
+                    Logger.Log($"Calculator result: {calcResult}");
                     return true;
 
                 default:
@@ -299,6 +378,35 @@ public class SearchEngine
             Logger.Error($"Failed to execute command: {cmd.Keyword}", ex);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Find executable in PATH environment variable
+    /// </summary>
+    private string? FindInPath(string executable)
+    {
+        if (string.IsNullOrEmpty(executable)) return null;
+        
+        var pathEnv = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(pathEnv)) return null;
+        
+        foreach (var path in pathEnv.Split(';'))
+        {
+            try
+            {
+                var fullPath = Path.Combine(path, executable);
+                if (File.Exists(fullPath))
+                    return fullPath;
+                    
+                // Also check with .exe extension
+                fullPath = Path.Combine(path, executable + ".exe");
+                if (File.Exists(fullPath))
+                    return fullPath;
+            }
+            catch { }
+        }
+        
+        return null;
     }
 
     private string CalculateInternal(string expression)

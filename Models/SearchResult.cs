@@ -5,9 +5,9 @@ public enum SearchResultType { Application, File, RecentFile, Window, Command, C
 public class SearchResult
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string Title { get; set; } = string.Empty;
-    public string Subtitle { get; set; } = string.Empty;
-    public string Path { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;  // 命令关键字
+    public string Subtitle { get; set; } = string.Empty;  // 说明
+    public string Path { get; set; } = string.Empty;  // 执行路径/URL
     public SearchResultType Type { get; set; }
     public int UsageCount { get; set; }
     public DateTime LastUsedTime { get; set; }
@@ -15,6 +15,7 @@ public class SearchResult
     public object? Data { get; set; }
     public IntPtr WindowHandle { get; set; }
     public CommandConfig? CommandConfig { get; set; }
+    public int Index { get; set; }  // 显示序号
 }
 
 public class CommandResult
