@@ -1,0 +1,10 @@
+<Window x:Class="Quanta.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings" Height="300" Width="400" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <TextBlock Text="Settings" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+        <!-- Simple placeholder for settings; real settings UI to be added in follow-up patches -->
+        <TextBlock Text="(Settings UI placeholder)" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Gray"/>
+    </Grid>
+</Window>

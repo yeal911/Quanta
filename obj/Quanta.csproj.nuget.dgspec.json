@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\VS-STUDIO-CODES\\Quanta\\Quanta.csproj": {}
+  },
+  "projects": {
+    "E:\\VS-STUDIO-CODES\\Quanta\\Quanta.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\VS-STUDIO-CODES\\Quanta\\Quanta.csproj",
+        "projectName": "Quanta",
+        "projectPath": "E:\\VS-STUDIO-CODES\\Quanta\\Quanta.csproj",
+        "packagesPath": "C:\\Users\\t00527655\\.nuget\\packages\\",
+        "outputPath": "E:\\VS-STUDIO-CODES\\Quanta\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\t00527655\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0-windows"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0-windows7.0": {
+            "targetAlias": "net8.0-windows",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0-windows7.0": {
+          "targetAlias": "net8.0-windows",
+          "dependencies": {
+            "CommunityToolkit.Mvvm": {
+              "target": "Package",
+              "version": "[8.2.2, )"
+            },
+            "System.Drawing.Common": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App": {
+              "privateAssets": "none"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
