@@ -1,7 +1,7 @@
 {
   "Version": "1.0",
   "Hotkey": {
-    "Modifier": "Alt",
+    "Modifier": "Ctrl",
     "Key": "R"
   },
   "Theme": "Light",

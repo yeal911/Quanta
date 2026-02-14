@@ -261,6 +261,14 @@ public partial class MainWindow : Window
     {
         var win = new CommandSettingsWindow { Owner = this };
         win.Show();
+        
+        // After settings window closes, reload hotkey and commands
+        win.Closed += (s, args) =>
+        {
+            var config = ConfigLoader.Load();
+            _hotkeyManager.Reregister(config.Hotkey);
+            _viewModel.SearchEngine.ReloadCommands();
+        };
     }
 
     private async Task ExecuteSelectedAsync()

@@ -84,34 +84,50 @@ public class SearchEngine
                     MatchScore = 1.0
                 });
             }
-            else if (query.StartsWith(cmd.Keyword, StringComparison.OrdinalIgnoreCase))
+            else 
             {
-                // Exact or partial match
-                double score = query == cmd.Keyword ? 1.0 : 0.8;
-                results.Add(new SearchResult
+                // Check for substring matches (LIKE "%keyword%")
+                double score = 0;
+                
+                // 1. Exact match on keyword (highest priority)
+                if (query.Equals(cmd.Keyword, StringComparison.OrdinalIgnoreCase))
                 {
-                    Index = index++,
-                    Id = $"cmd:{cmd.Keyword}",
-                    Title = cmd.Keyword,
-                    Subtitle = cmd.Name,
-                    Type = SearchResultType.CustomCommand,
-                    CommandConfig = cmd,
-                    MatchScore = score
-                });
-            }
-            else if (cmd.Keyword.StartsWith(query, StringComparison.OrdinalIgnoreCase))
-            {
-                // Prefix match
-                results.Add(new SearchResult
+                    score = 1.0;
+                }
+                // 2. Keyword starts with query (e.g., query="msc", keyword="mscon")
+                else if (cmd.Keyword.StartsWith(query, StringComparison.OrdinalIgnoreCase))
                 {
-                    Index = index++,
-                    Id = $"cmd:{cmd.Keyword}",
-                    Title = cmd.Keyword,
-                    Subtitle = cmd.Name,
-                    Type = SearchResultType.CustomCommand,
-                    CommandConfig = cmd,
-                    MatchScore = 0.9
-                });
+                    score = 0.95;
+                }
+                // 3. Keyword contains query as substring (e.g., query="scon", keyword="mscon")
+                else if (cmd.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    score = 0.9;
+                }
+                // 4. Name contains query as substring
+                else if (!string.IsNullOrEmpty(cmd.Name) && cmd.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    score = 0.85;
+                }
+                // 5. Description contains query as substring
+                else if (!string.IsNullOrEmpty(cmd.Description) && cmd.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    score = 0.8;
+                }
+                
+                if (score > 0)
+                {
+                    results.Add(new SearchResult
+                    {
+                        Index = index++,
+                        Id = $"cmd:{cmd.Keyword}",
+                        Title = cmd.Keyword,
+                        Subtitle = cmd.Name,
+                        Type = SearchResultType.CustomCommand,
+                        CommandConfig = cmd,
+                        MatchScore = score
+                    });
+                }
             }
         }
 

@@ -65,19 +65,20 @@ public partial class CommandSettingsWindow : Window
         var modifiers = Keyboard.Modifiers;
         var key = e.Key;
         
-        // Ignore modifier keys alone
-        if (key == Key.LeftCtrl || key == Key.RightCtrl || 
-            key == Key.LeftAlt || key == Key.RightAlt ||
-            key == Key.LeftShift || key == Key.RightShift ||
-            key == Key.LWin || key == Key.RWin)
-        {
-            return;
-        }
-
         // If no modifier, ignore (require at least one)
         if (modifiers == ModifierKeys.None)
         {
             HotkeyTextBox.Text = "请按下快捷键...";
+            return;
+        }
+
+        // Ignore pure modifier key presses (Ctrl, Alt, Shift, Win by themselves)
+        if (key == Key.LeftCtrl || key == Key.RightCtrl || 
+            key == Key.LeftAlt || key == Key.RightAlt ||
+            key == Key.LeftShift || key == Key.RightShift ||
+            key == Key.LWin || key == Key.RWin ||
+            key == Key.System)
+        {
             return;
         }
 
@@ -87,12 +88,8 @@ public partial class CommandSettingsWindow : Window
         if (modifiers.HasFlag(ModifierKeys.Shift)) modifierStr += "Shift+";
         if (modifiers.HasFlag(ModifierKeys.Windows)) modifierStr += "Win+";
 
-        // Get the actual key (handle Key.System for Alt combinations)
+        // Get the actual key
         string keyStr = key.ToString();
-        if (key == Key.System)
-        {
-            keyStr = e.SystemKey.ToString();
-        }
 
         _currentHotkey = modifierStr + keyStr;
         HotkeyTextBox.Text = _currentHotkey;

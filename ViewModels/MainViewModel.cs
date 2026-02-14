@@ -41,6 +41,8 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<SearchResult> Results { get; } = new();
 
+    public SearchEngine SearchEngine => _searchEngine;
+
     public MainViewModel(SearchEngine searchEngine, UsageTracker usageTracker)
     {
         _searchEngine = searchEngine;
