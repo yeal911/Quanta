@@ -28,3 +28,4 @@ E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Views\CommandSettingsWindow.b
 E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Views\SettingsWindow.baml
 E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Views\CommandSettingsWindow.g.cs
 E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Views\SettingsWindow.g.cs
+E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Quanta.sourcelink.json

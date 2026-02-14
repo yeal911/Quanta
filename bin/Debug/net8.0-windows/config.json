@@ -3,62 +3,37 @@
     "Modifier": "Alt",
     "Key": "Space"
   },
-  "SearchDirectories": [
-    "C:\\Users\\{username}\\Desktop",
-    "C:\\Users\\{username}\\Downloads"
-  ],
-  "MaxRecentFiles": 30,
-  "AutoStart": false,
-  "Theme": "Dark",
+  "Theme": "Light",
   "Commands": [
     {
       "Keyword": "b",
       "Name": "百度搜索",
       "Type": "Url",
-      "Path": "https://www.baidu.com/s?wd=",
-      "Arguments": "{param}"
+      "Path": "https://www.baidu.com/s?wd={param}"
     },
     {
       "Keyword": "g",
       "Name": "Google搜索",
       "Type": "Url",
-      "Path": "https://www.google.com/search?q=",
-      "Arguments": "{param}"
+      "Path": "https://www.google.com/search?q={param}"
     },
     {
       "Keyword": "gh",
       "Name": "GitHub",
       "Type": "Url",
-      "Path": "https://github.com/search?q=",
-      "Arguments": "{param}"
+      "Path": "https://github.com/search?q={param}"
     },
     {
       "Keyword": ">",
       "Name": "PowerShell",
       "Type": "Shell",
-      "Path": "powershell.exe",
-      "Arguments": "-NoProfile -ExecutionPolicy Bypass -Command \"{param}\""
+      "Path": "{param}"
     },
     {
       "Keyword": "calc",
       "Name": "计算器",
       "Type": "Calculator",
-      "Path": "",
-      "Arguments": "{param}"
-    },
-    {
-      "Keyword": "d",
-      "Name": "打开目录",
-      "Type": "Directory",
-      "Path": "C:\\Users\\{username}\\Documents",
-      "Arguments": ""
-    },
-    {
-      "Keyword": "notepad",
-      "Name": "记事本",
-      "Type": "Program",
-      "Path": "notepad.exe",
-      "Arguments": "{param}"
+      "Path": "{param}"
     }
   ]
 }

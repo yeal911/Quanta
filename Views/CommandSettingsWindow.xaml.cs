@@ -28,8 +28,7 @@ public partial class CommandSettingsWindow : Window
             Keyword = "new", 
             Name = "新命令", 
             Type = "Url", 
-            Path = "https://",
-            Arguments = "{param}" 
+            Path = "https://www.example.com/search?q={param}"
         };
         Commands.Add(cmd);
     }

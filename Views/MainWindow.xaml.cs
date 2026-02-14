@@ -34,6 +34,17 @@ public partial class MainWindow : Window
         
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
+        
+        // Enable dragging
+        MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
+    }
+
+    private void MainWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -89,20 +100,28 @@ public partial class MainWindow : Window
             var border = FindName("MainBorder") as Border;
             var icon = FindName("ThemeIcon") as TextBlock;
             
-            if (border != null)
+            if (border != null && icon != null)
             {
-                border.Background = _viewModel.IsDarkTheme
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30))
-                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 245, 245));
-            }
-            
-            if (icon != null)
-            {
-                // More harmonious icon
-                icon.Text = _viewModel.IsDarkTheme ? "🌙" : "☀";
-                icon.Foreground = _viewModel.IsDarkTheme
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
-                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black);
+                if (_viewModel.IsDarkTheme)
+                {
+                    // Switch to Dark mode
+                    border.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+                    border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+                    SearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+                    SearchBox.CaretBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+                    icon.Text = "☀";
+                    icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+                }
+                else
+                {
+                    // Switch to Light mode
+                    border.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+                    border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
+                    SearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+                    SearchBox.CaretBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+                    icon.Text = "🌙";
+                    icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+                }
             }
         });
     }

@@ -19,8 +19,6 @@ public class SearchEngine
     private readonly WindowManager _windowManager;
     private readonly CommandRouter _commandRouter;
     private readonly List<ISearchProvider> _providers;
-    private readonly List<SearchResult> _cachedRecentFiles = new();
-    private readonly object _recentFilesLock = new();
     private List<CommandConfig> _customCommands = new();
 
     public SearchEngine(UsageTracker usageTracker, WindowManager windowManager, CommandRouter commandRouter)
@@ -31,11 +29,9 @@ public class SearchEngine
         
         LoadCustomCommands();
 
+        // Only keep command-based searches, remove file searching
         _providers = new List<ISearchProvider>
         {
-            new ApplicationSearchProvider(),
-            new FileSearchProvider(),
-            new RecentFileSearchProvider(_usageTracker, UpdateRecentFiles),
             new WindowSearchProvider(_windowManager)
         };
     }
@@ -49,15 +45,6 @@ public class SearchEngine
     public void ReloadCommands()
     {
         LoadCustomCommands();
-    }
-
-    private void UpdateRecentFiles(List<SearchResult> recentFiles)
-    {
-        lock (_recentFilesLock)
-        {
-            _cachedRecentFiles.Clear();
-            _cachedRecentFiles.AddRange(recentFiles);
-        }
     }
 
     public async Task<List<SearchResult>> SearchAsync(string query, CancellationToken cancellationToken = default)
@@ -157,8 +144,8 @@ public class SearchEngine
     {
         var results = new ConcurrentBag<SearchResult>();
         
-        // Show custom commands first
-        foreach (var cmd in _customCommands.Take(5))
+        // Show custom commands
+        foreach (var cmd in _customCommands.Take(6))
         {
             var typeName = cmd.Type.ToLower() switch
             {
@@ -181,12 +168,7 @@ public class SearchEngine
             });
         }
 
-        lock (_recentFilesLock)
-        {
-            foreach (var file in _cachedRecentFiles.Take(5))
-                results.Add(file);
-        }
-
+        // Show visible windows
         var windows = await Task.Run(() => _windowManager.GetVisibleWindows(), cancellationToken);
         foreach (var window in windows.Take(3))
             results.Add(window);
@@ -255,18 +237,16 @@ public class SearchEngine
             switch (cmd.Type.ToLower())
             {
                 case "url":
-                    var url = cmd.Path + Uri.EscapeDataString(param);
+                    var url = cmd.Path.Replace("{param}", Uri.EscapeDataString(param)).Replace("{query}", Uri.EscapeDataString(param));
                     Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
                     _usageTracker.RecordUsage(result.Id);
                     return true;
 
                 case "program":
-                    var programPath = cmd.Path;
-                    var args = cmd.Arguments.Replace("{param}", param).Replace("{query}", param);
+                    var programPath = cmd.Path.Replace("{param}", param).Replace("{query}", param);
                     var psi = new ProcessStartInfo
                     {
                         FileName = programPath,
-                        Arguments = args,
                         UseShellExecute = true
                     };
                     Process.Start(psi);
@@ -286,11 +266,11 @@ public class SearchEngine
 
                 case "shell":
                     {
-                        var shellCmd = cmd.Arguments.Replace("{param}", param).Replace("{query}", param);
+                        var shellCmd = cmd.Path.Replace("{param}", param).Replace("{query}", param);
                         var shellPsi = new ProcessStartInfo
                         {
-                            FileName = cmd.Path,
-                            Arguments = shellCmd,
+                            FileName = "powershell.exe",
+                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{shellCmd}\"",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
@@ -306,7 +286,7 @@ public class SearchEngine
                     }
 
                 case "calculator":
-                    var calcResult = CalculateInternal(cmd.Arguments.Replace("{param}", param).Replace("{query}", param));
+                    var calcResult = CalculateInternal(cmd.Path.Replace("{param}", param).Replace("{query}", param));
                     return true;
 
                 default:
