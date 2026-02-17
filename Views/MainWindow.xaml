@@ -122,26 +122,39 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
                          ItemContainerStyle="{StaticResource ResultItemStyle}" 
                          SelectionChanged="ResultsList_SelectionChanged" 
-                         MouseDoubleClick="ResultsList_MouseDoubleClick">
+                         PreviewMouseLeftButtonUp="ResultsList_MouseClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="24"/>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
+
                                 <!-- Index -->
-                                <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11" Foreground="#999" 
+                                <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11" Foreground="#999"
                                            VerticalAlignment="Center" FontFamily="Consolas"/>
-                                
+
                                 <!-- Command -->
-                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" Foreground="#0078D4" 
-                                           VerticalAlignment="Center" FontFamily="Consolas" FontWeight="SemiBold"/>
-                                
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" Foreground="#0078D4"
+                                           VerticalAlignment="Center" FontFamily="Consolas" FontWeight="SemiBold"
+                                           MaxWidth="100" TextTrimming="CharacterEllipsis"/>
+
+                                <!-- Type -->
+                                <TextBlock Grid.Column="2" Text="{Binding CommandConfig.Type}" FontSize="10" Foreground="#888"
+                                           VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
+                                           Opacity="0.8"/>
+
+                                <!-- Path -->
+                                <TextBlock Grid.Column="3" Text="{Binding Path}" FontSize="10" Foreground="#AAA"
+                                           VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
+                                           MaxWidth="150" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+
                                 <!-- Description -->
-                                <TextBlock Grid.Column="2" Text="{Binding Subtitle}" FontSize="12" Foreground="#666" 
+                                <TextBlock Grid.Column="4" Text="{Binding Subtitle}" FontSize="12" Foreground="#666"
                                            VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
                             </Grid>
                         </DataTemplate>

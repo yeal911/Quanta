@@ -142,7 +142,7 @@ public class SearchEngine
 
         // 按匹配分数降序、使用次数降序排列，取前 10 条并设置索引
         var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(10).ToList();
-        for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i;
+        for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i + 1;
         return finalList;
     }
 
@@ -172,6 +172,7 @@ public class SearchEngine
                     Id = $"cmd:{cmd.Keyword}",
                     Title = cmd.Keyword,
                     Subtitle = cmd.Name,
+                    Path = cmd.Path,
                     Type = SearchResultType.CustomCommand,
                     CommandConfig = cmd,
                     MatchScore = 1.0
@@ -201,6 +202,7 @@ public class SearchEngine
                         Id = $"cmd:{cmd.Keyword}",
                         Title = cmd.Keyword,
                         Subtitle = cmd.Name,
+                        Path = cmd.Path,
                         Type = SearchResultType.CustomCommand,
                         CommandConfig = cmd,
                         MatchScore = score
@@ -222,7 +224,7 @@ public class SearchEngine
     private async Task<List<SearchResult>> GetDefaultResultsAsync(CancellationToken cancellationToken)
     {
         var results = new ConcurrentBag<SearchResult>();
-        int index = 0;
+        int index = 1;
 
         // 优先显示用户命令，然后显示内置命令，最多取 8 条
         foreach (var cmd in _customCommands.Concat(BuiltInCommands).Take(8))
@@ -244,6 +246,7 @@ public class SearchEngine
                 Id = $"cmd:{cmd.Keyword}",
                 Title = cmd.Keyword,
                 Subtitle = typeName,
+                Path = cmd.Path,
                 Type = SearchResultType.CustomCommand,
                 CommandConfig = cmd,
                 MatchScore = 0.5

@@ -566,9 +566,18 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 结果列表双击事件处理，执行选中的搜索结果。
+    /// 结果列表鼠标单击事件处理，点击即执行选中的搜索结果。
     /// </summary>
-    private void ResultsList_MouseDoubleClick(object sender, MouseButtonEventArgs e) => _ = ExecuteSelectedAsync();
+    private void ResultsList_MouseClick(object sender, MouseButtonEventArgs e)
+    {
+        // 确保点击的是列表项而非空白区域
+        var item = (e.OriginalSource as FrameworkElement)?.DataContext as SearchResult;
+        if (item != null)
+        {
+            _viewModel.SelectedResult = item;
+            _ = ExecuteSelectedAsync();
+        }
+    }
 
     /// <summary>
     /// 打开命令设置窗口。窗口关闭后自动重新加载快捷键配置和命令列表。
