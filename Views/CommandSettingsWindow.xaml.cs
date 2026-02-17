@@ -87,6 +87,16 @@ public partial class CommandSettingsWindow : Window
         CommandSearchBox.Focus();
     }
 
+    private void CommandsGrid_LoadingRow(object sender, DataGridRowEventArgs e)
+    {
+        e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+        // Also set the Index property for the bound command
+        if (e.Row.Item is CommandConfig cmd)
+        {
+            cmd.Index = e.Row.GetIndex() + 1;
+        }
+    }
+
     private void ApplyLocalization()
     {
         TitleText.Text = LocalizationService.Get("SettingsTitle");
@@ -111,7 +121,6 @@ public partial class CommandSettingsWindow : Window
             Commands = new ObservableCollection<CommandConfig>(
                 _config.Commands.OrderByDescending(c => c.ModifiedAt));
 
-        // Show current hotkey
         if (_config?.Hotkey != null)
         {
             _currentHotkey = FormatHotkey(_config.Hotkey.Modifier, _config.Hotkey.Key);
@@ -173,6 +182,31 @@ public partial class CommandSettingsWindow : Window
         string keyStr = key.ToString();
         _currentHotkey = modifierStr + keyStr;
         HotkeyTextBox.Text = _currentHotkey;
+
+        // Auto-save hotkey
+        SaveHotkey();
+    }
+
+    private void SaveHotkey()
+    {
+        if (string.IsNullOrEmpty(_currentHotkey) || _currentHotkey == LocalizationService.Get("HotkeyPress"))
+            return;
+
+        var config = ConfigLoader.Load();
+        var parts = _currentHotkey.Split('+');
+        string modifier = "";
+        string key = "";
+
+        foreach (var part in parts)
+        {
+            if (part == "Ctrl" || part == "Alt" || part == "Shift" || part == "Win")
+                modifier = part;
+            else
+                key = part;
+        }
+
+        config.Hotkey = new HotkeyConfig { Modifier = modifier, Key = key };
+        ConfigLoader.Save(config);
     }
 
     private void AddCommand_Click(object sender, RoutedEventArgs e)
@@ -209,6 +243,15 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    private void CommandsGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // Ensure the row is selected when double-clicking
+        if (CommandsGrid.SelectedItem != null)
+        {
+            // Can add edit behavior here if needed
+        }
+    }
+
     private void DeleteCommand_Click(object sender, RoutedEventArgs e)
     {
         if (CommandsGrid?.SelectedItem is CommandConfig selected)
@@ -220,31 +263,10 @@ public partial class CommandSettingsWindow : Window
 
     private void SaveCommand_Click(object sender, RoutedEventArgs e)
     {
-        if (_config == null) _config = new AppConfig();
-
-        if (!string.IsNullOrEmpty(_currentHotkey) && _currentHotkey != LocalizationService.Get("HotkeyPress"))
-        {
-            var parts = _currentHotkey.Split('+');
-            string modifier = "";
-            string key = "";
-
-            foreach (var part in parts)
-            {
-                if (part == "Ctrl" || part == "Alt" || part == "Shift" || part == "Win")
-                    modifier = part;
-                else
-                    key = part;
-            }
-
-            _config.Hotkey = new HotkeyConfig
-            {
-                Modifier = modifier,
-                Key = key
-            };
-        }
-
-        _config.Commands = Commands.ToList();
-        ConfigLoader.Save(_config);
+        // Only save commands; hotkey is auto-saved when user sets it
+        var config = ConfigLoader.Load();
+        config.Commands = Commands.ToList();
+        ConfigLoader.Save(config);
         ToastService.Instance.ShowSuccess(LocalizationService.Get("Saved"));
         Close();
     }

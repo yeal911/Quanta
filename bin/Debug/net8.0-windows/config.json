@@ -1,7 +1,7 @@
 {
   "Version": "1.0",
   "Hotkey": {
-    "Modifier": "Ctrl",
+    "Modifier": "Alt",
     "Key": "R"
   },
   "Theme": "Light",
@@ -39,7 +39,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u6253\u5F00\u63A7\u5236\u9762\u677F",
-      "ModifiedAt": "2026-02-16T18:17:06.9087384-06:00",
+      "ModifiedAt": "2026-02-16T19:05:22.976401-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -57,7 +57,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "",
-      "ModifiedAt": "2026-02-16T18:17:05.2859927-06:00",
+      "ModifiedAt": "2026-02-16T19:00:18.9989911-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -75,7 +75,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u641C\u7D22\u767E\u5EA6",
-      "ModifiedAt": "2026-02-16T18:13:17.5034546-06:00",
+      "ModifiedAt": "2026-02-16T19:05:33.2359004-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -93,7 +93,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u641C\u7D22YouTube",
-      "ModifiedAt": "2026-02-16T18:13:17.5034447-06:00",
+      "ModifiedAt": "2026-02-16T18:59:37.2872239-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -129,7 +129,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u641C\u7D22Google",
-      "ModifiedAt": "2026-02-16T18:13:17.5034244-06:00",
+      "ModifiedAt": "2026-02-16T18:59:39.910749-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -147,7 +147,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u67E5\u770B\u7F51\u7EDC\u72B6\u6001",
-      "ModifiedAt": "2026-02-16T18:13:17.5034144-06:00",
+      "ModifiedAt": "2026-02-16T19:05:23.4047114-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -165,7 +165,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "DNS\u67E5\u8BE2",
-      "ModifiedAt": "2026-02-16T18:13:17.5034043-06:00",
+      "ModifiedAt": "2026-02-16T18:59:43.9589365-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -183,7 +183,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u8FFD\u8E2A\u8DEF\u7531",
-      "ModifiedAt": "2026-02-16T18:13:17.5033944-06:00",
+      "ModifiedAt": "2026-02-16T18:59:37.9652587-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -201,7 +201,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u67E5\u770BIP\u914D\u7F6E",
-      "ModifiedAt": "2026-02-16T18:13:17.5033743-06:00",
+      "ModifiedAt": "2026-02-16T19:05:23.857531-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -219,7 +219,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u6253\u5F00\u6CE8\u518C\u8868",
-      "ModifiedAt": "2026-02-16T18:13:17.5033542-06:00",
+      "ModifiedAt": "2026-02-16T19:05:22.5596074-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -255,7 +255,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u6253\u5F00\u8BBE\u5907\u7BA1\u7406\u5668",
-      "ModifiedAt": "2026-02-16T18:13:17.5033234-06:00",
+      "ModifiedAt": "2026-02-16T19:05:21.8660502-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -309,7 +309,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "\u6253\u5F00\u753B\u56FE",
-      "ModifiedAt": "2026-02-16T18:13:17.5032924-06:00",
+      "ModifiedAt": "2026-02-16T19:05:18.0328157-06:00",
       "ParamPlaceholder": "{param}"
     },
     {
@@ -435,7 +435,7 @@
       "Hotkey": null,
       "Enabled": true,
       "Description": "",
-      "ModifiedAt": "2026-02-16T18:13:17.5031841-06:00",
+      "ModifiedAt": "2026-02-16T19:05:19.983798-06:00",
       "ParamPlaceholder": "{param}"
     },
     {

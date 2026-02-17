@@ -241,12 +241,12 @@ public class SearchEngine
             var processedPath = cmd.Path
                 .Replace("{param}", param)
                 .Replace("{query}", param)
-                .Replace("%p", param);
+                .Replace("{%p}", param);
             
             var processedArgs = cmd.Arguments
                 .Replace("{param}", param)
                 .Replace("{query}", param)
-                .Replace("%p", param);
+                .Replace("{%p}", param);
 
             switch (cmd.Type.ToLower())
             {

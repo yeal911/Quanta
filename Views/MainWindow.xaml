@@ -84,13 +84,16 @@
                                VerticalAlignment="Center" IsHitTestVisible="False"
                                Visibility="Visible"/>
 
-                    <!-- Red "keyword >" indicator for param mode -->
-                    <TextBlock x:Name="ParamIndicator" Grid.Column="1"
-                               Text="" FontSize="14" Padding="6,4"
-                               Foreground="#E74C3C" FontFamily="Consolas" FontWeight="Bold"
-                               VerticalAlignment="Center" IsHitTestVisible="False"
-                               Visibility="Collapsed"
-                               Panel.ZIndex="1"/>
+                    <!-- "keyword >" indicator for param mode: keyword=blue, >=red -->
+                    <StackPanel x:Name="ParamIndicator" Grid.Column="1"
+                                Orientation="Horizontal" Margin="6,4,0,4"
+                                VerticalAlignment="Center" IsHitTestVisible="False"
+                                Visibility="Collapsed" Panel.ZIndex="1">
+                        <TextBlock x:Name="ParamKeywordText" FontSize="14"
+                                   Foreground="#0078D4" FontFamily="Consolas" FontWeight="Bold"/>
+                        <TextBlock x:Name="ParamArrowText" Text=" >" FontSize="14"
+                                   Foreground="#E74C3C" FontFamily="Consolas" FontWeight="Bold"/>
+                    </StackPanel>
 
                     <TextBox x:Name="SearchBox" Grid.Column="1"
                              Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

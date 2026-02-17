@@ -28,6 +28,9 @@ public class CommandConfig
     [JsonPropertyName("Path")] public string Path { get; set; } = string.Empty;
     [JsonPropertyName("GroupId")] public string? GroupId { get; set; }
     
+    // Display only - not serialized
+    [JsonIgnore] public int Index { get; set; }
+    
     // Advanced capabilities
     [JsonPropertyName("Arguments")] public string Arguments { get; set; } = string.Empty;
     [JsonPropertyName("WorkingDirectory")] public string WorkingDirectory { get; set; } = string.Empty;

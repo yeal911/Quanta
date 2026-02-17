@@ -221,7 +221,8 @@ public partial class MainWindow : Window
                 break;
 
             case Key.Enter:
-                _ = ExecuteSelectedAsync();
+                // Execute immediately without await to reduce delay
+                ExecuteSelected();
                 e.Handled = true;
                 break;
 
@@ -274,7 +275,7 @@ public partial class MainWindow : Window
     private void EnterParamMode(string keyword)
     {
         _viewModel.SwitchToParamModeCommand.Execute(keyword);
-        ParamIndicator.Text = keyword + " >";
+        ParamKeywordText.Text = keyword;
         ParamIndicator.Visibility = Visibility.Visible;
         PlaceholderText.Visibility = Visibility.Collapsed;
         SearchBox.Text = "";
@@ -285,7 +286,7 @@ public partial class MainWindow : Window
         {
             ParamIndicator.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
             var indicatorWidth = ParamIndicator.DesiredSize.Width;
-            SearchBox.Padding = new Thickness(indicatorWidth, 4, 0, 4);
+            SearchBox.Padding = new Thickness(indicatorWidth + 6, 4, 0, 4);
             SearchBox.CaretIndex = 0;
         });
     }
@@ -294,7 +295,7 @@ public partial class MainWindow : Window
     {
         if (_viewModel.IsParamMode)
         {
-            ParamIndicator.Text = _viewModel.CommandKeyword + " >";
+            ParamKeywordText.Text = _viewModel.CommandKeyword;
             ParamIndicator.Visibility = Visibility.Visible;
             PlaceholderText.Visibility = Visibility.Collapsed;
 
@@ -302,7 +303,7 @@ public partial class MainWindow : Window
             {
                 ParamIndicator.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
                 var indicatorWidth = ParamIndicator.DesiredSize.Width;
-                SearchBox.Padding = new Thickness(indicatorWidth, 4, 0, 4);
+                SearchBox.Padding = new Thickness(indicatorWidth + 6, 4, 0, 4);
             });
         }
         else
@@ -322,9 +323,7 @@ public partial class MainWindow : Window
     {
         SearchIconMenu.Items.Clear();
 
-        var showItem = new MenuItem { Header = LocalizationService.Get("TrayShow") };
-        showItem.Click += (s, e) => ShowWindow();
-        SearchIconMenu.Items.Add(showItem);
+        // Removed "Show" menu item per user request
 
         var settingsItem = new MenuItem { Header = LocalizationService.Get("TraySettings") };
         settingsItem.Click += (s, e) => OpenCommandSettings();
@@ -383,6 +382,35 @@ public partial class MainWindow : Window
                 ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed"));
             }
         };
+    }
+
+    private void ExecuteSelected()
+    {
+        // Execute immediately without waiting
+        if (_viewModel.SelectedResult == null) return;
+        
+        // Fire and forget - execute in background
+        Task.Run(async () =>
+        {
+            bool success;
+            if (_viewModel.IsParamMode && _viewModel.SelectedResult.Type == SearchResultType.CustomCommand)
+            {
+                success = await _viewModel.SearchEngine.ExecuteCustomCommandAsync(_viewModel.SelectedResult, _viewModel.CommandParam);
+            }
+            else
+            {
+                success = await _viewModel.SearchEngine.ExecuteResultAsync(_viewModel.SelectedResult);
+            }
+            
+            if (success)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _viewModel.ClearSearchCommand.Execute(null);
+                    HideWindow();
+                });
+            }
+        });
     }
 
     private async Task ExecuteSelectedAsync()
