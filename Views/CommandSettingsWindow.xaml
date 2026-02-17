@@ -98,6 +98,7 @@
                 </Grid>
 
                 <!-- DataGrid -->
+                <!-- 命令列表表格：紧凑行高，1px分割线，全行可点击选中 -->
                 <DataGrid Grid.Row="2" x:Name="CommandsGrid"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           HeadersVisibility="Column" GridLinesVisibility="None"
@@ -108,7 +109,9 @@
                           LoadingRow="CommandsGrid_LoadingRow"
                           SelectionMode="Single" SelectionUnit="FullRow"
                           IsReadOnly="False" CanUserSortColumns="True"
-                          MouseDoubleClick="CommandsGrid_MouseDoubleClick">
+                          MouseDoubleClick="CommandsGrid_MouseDoubleClick"
+                          VerticalGridLinesBrush="Transparent"
+                          HorizontalGridLinesBrush="Transparent">
 
                     <!-- Semi-transparent scrollbar -->
                     <DataGrid.Resources>
@@ -178,22 +181,26 @@
                         </Style>
                     </DataGrid.RowHeaderStyle>
 
-                    <!-- Row style: no gaps, no margin -->
+                    <!-- 行样式：无间距，紧凑布局，支持明暗主题 -->
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Margin" Value="0"/>
                             <Setter Property="Padding" Value="0"/>
-                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#E8E8E8"/>
                             <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="#333"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#3498DB"/>
+                                    <Setter Property="Background" Value="#0078D4"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                    </MultiTrigger.Conditions>
                                     <Setter Property="Background" Value="#F0F6FF"/>
-                                </Trigger>
+                                </MultiTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>

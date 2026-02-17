@@ -1,3 +1,9 @@
+// ============================================================================
+// 文件名：CommandSettingsWindow.xaml.cs
+// 文件用途：命令设置窗口的代码隐藏文件，提供命令的增删改查、导入导出功能，
+//          以及全局快捷键的配置。支持明暗主题切换和命令搜索过滤。
+// ============================================================================
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -5,6 +11,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using Quanta.Models;
@@ -13,15 +20,34 @@ using Quanta.Services;
 
 namespace Quanta.Views;
 
+/// <summary>
+/// 命令设置窗口，允许用户管理自定义命令（增、删、编辑、导入、导出）、
+/// 配置全局快捷键，并支持命令搜索过滤和明暗主题切换。
+/// </summary>
 public partial class CommandSettingsWindow : Window
 {
+    /// <summary>命令配置的可观察集合，绑定到 DataGrid 控件</summary>
     public ObservableCollection<CommandConfig> Commands { get; set; } = new();
+
+    /// <summary>命令集合的视图，支持过滤和排序</summary>
     private ICollectionView? _commandsView;
+
+    /// <summary>命令搜索框中的当前文本</summary>
     private string _commandSearchText = "";
+
+    /// <summary>当前加载的应用配置</summary>
     private AppConfig? _config;
+
+    /// <summary>当前配置的快捷键字符串（如 "Alt+Space"）</summary>
     private string _currentHotkey = "";
+
+    /// <summary>当前是否为暗色主题</summary>
     private bool _isDarkTheme;
 
+    /// <summary>
+    /// 构造函数，初始化组件、加载配置、应用本地化文本，
+    /// 并设置命令列表的过滤视图。
+    /// </summary>
     public CommandSettingsWindow()
     {
         InitializeComponent();
@@ -34,16 +60,25 @@ public partial class CommandSettingsWindow : Window
         CommandsGrid.ItemsSource = _commandsView;
     }
 
+    /// <summary>
+    /// 设置当前主题（明/暗），并立即应用主题样式
+    /// </summary>
+    /// <param name="isDark">是否为暗色主题</param>
     public void SetDarkTheme(bool isDark)
     {
         _isDarkTheme = isDark;
         ApplyTheme();
     }
 
+    /// <summary>
+    /// 根据 _isDarkTheme 标志，统一应用明暗主题的颜色方案
+    /// 确保在任何主题下，表格文字、选中行、悬浮行都清晰可见
+    /// </summary>
     private void ApplyTheme()
     {
         if (_isDarkTheme)
         {
+            // === 暗色主题 ===
             RootBorder.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
             TitleText.Foreground = System.Windows.Media.Brushes.White;
@@ -54,12 +89,127 @@ public partial class CommandSettingsWindow : Window
             CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
             FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
-            CommandsGrid.Foreground = System.Windows.Media.Brushes.White;
+
+            // DataGrid 整体前景色（未选中行的文字颜色）
+            CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
             CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 38, 38));
+
+            // 更新行样式：暗色主题下悬浮行用深蓝色，行边框用深灰色
+            var darkRowStyle = new Style(typeof(DataGridRow));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.MarginProperty, new Thickness(0)));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.PaddingProperty, new Thickness(0)));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(50, 50, 50))));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            darkRowStyle.Setters.Add(new Setter(DataGridRow.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220))));
+            // 选中行：蓝色背景 + 白色文字
+            var selectedTrigger = new Trigger { Property = DataGridRow.IsSelectedProperty, Value = true };
+            selectedTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212))));
+            selectedTrigger.Setters.Add(new Setter(DataGridRow.ForegroundProperty, System.Windows.Media.Brushes.White));
+            darkRowStyle.Triggers.Add(selectedTrigger);
+            // 悬浮行（非选中时）：深灰色背景
+            var hoverTrigger = new MultiTrigger();
+            hoverTrigger.Conditions.Add(new Condition(DataGridRow.IsMouseOverProperty, true));
+            hoverTrigger.Conditions.Add(new Condition(DataGridRow.IsSelectedProperty, false));
+            hoverTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(45, 45, 48))));
+            darkRowStyle.Triggers.Add(hoverTrigger);
+            CommandsGrid.RowStyle = darkRowStyle;
+
+            // 列头样式
+            var darkHeaderStyle = new Style(typeof(DataGridColumnHeader));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(140, 140, 140))));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 11.0));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.Normal));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(6, 4, 6, 4)));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
+            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(50, 50, 50))));
+            CommandsGrid.ColumnHeaderStyle = darkHeaderStyle;
+
+            // 单元格样式：确保文字颜色随行变化
+            var darkCellStyle = new Style(typeof(DataGridCell));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(6, 0, 6, 0)));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.MarginProperty, new Thickness(0)));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.VerticalAlignmentProperty, VerticalAlignment.Center));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.FocusVisualStyleProperty, null));
+            darkCellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(DataGridRow), 1) }));
+            var cellSelectedTrigger = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
+            cellSelectedTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            cellSelectedTrigger.Setters.Add(new Setter(DataGridCell.ForegroundProperty, System.Windows.Media.Brushes.White));
+            darkCellStyle.Triggers.Add(cellSelectedTrigger);
+            CommandsGrid.CellStyle = darkCellStyle;
+        }
+        else
+        {
+            // === 亮色主题 ===
+            RootBorder.Background = System.Windows.Media.Brushes.White;
+            RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
+            TitleText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
+            HotkeyTextBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
+            CommandSearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
+            CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(187, 187, 187));
+            FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+
+            CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+            CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
+            CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(248, 248, 248));
+
+            // 亮色行样式
+            var lightRowStyle = new Style(typeof(DataGridRow));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.MarginProperty, new Thickness(0)));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.PaddingProperty, new Thickness(0)));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            lightRowStyle.Setters.Add(new Setter(DataGridRow.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51))));
+            var lightSelectedTrigger = new Trigger { Property = DataGridRow.IsSelectedProperty, Value = true };
+            lightSelectedTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212))));
+            lightSelectedTrigger.Setters.Add(new Setter(DataGridRow.ForegroundProperty, System.Windows.Media.Brushes.White));
+            lightRowStyle.Triggers.Add(lightSelectedTrigger);
+            var lightHoverTrigger = new MultiTrigger();
+            lightHoverTrigger.Conditions.Add(new Condition(DataGridRow.IsMouseOverProperty, true));
+            lightHoverTrigger.Conditions.Add(new Condition(DataGridRow.IsSelectedProperty, false));
+            lightHoverTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(240, 246, 255))));
+            lightRowStyle.Triggers.Add(lightHoverTrigger);
+            CommandsGrid.RowStyle = lightRowStyle;
+
+            // 亮色列头样式
+            var lightHeaderStyle = new Style(typeof(DataGridColumnHeader));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136))));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 11.0));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.Normal));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(6, 4, 6, 4)));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
+            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
+            CommandsGrid.ColumnHeaderStyle = lightHeaderStyle;
+
+            // 亮色单元格样式
+            var lightCellStyle = new Style(typeof(DataGridCell));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(6, 0, 6, 0)));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.MarginProperty, new Thickness(0)));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.VerticalAlignmentProperty, VerticalAlignment.Center));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.FocusVisualStyleProperty, null));
+            lightCellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(DataGridRow), 1) }));
+            var lightCellSelectedTrigger = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
+            lightCellSelectedTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            lightCellSelectedTrigger.Setters.Add(new Setter(DataGridCell.ForegroundProperty, System.Windows.Media.Brushes.White));
+            lightCellStyle.Triggers.Add(lightCellSelectedTrigger);
+            CommandsGrid.CellStyle = lightCellStyle;
         }
     }
 
+    /// <summary>
+    /// 命令列表的过滤器函数。根据搜索文本对命令的关键字、名称、类型、路径进行模糊匹配。
+    /// </summary>
+    /// <param name="obj">待过滤的对象</param>
+    /// <returns>如果匹配搜索条件返回 true</returns>
     private bool CommandFilter(object obj)
     {
         if (string.IsNullOrWhiteSpace(_commandSearchText)) return true;
@@ -71,6 +221,9 @@ public partial class CommandSettingsWindow : Window
             || cmd.Path.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// 命令搜索框文本变更事件处理。更新搜索文本、切换占位符和清除按钮的可见性，并刷新过滤视图。
+    /// </summary>
     private void CommandSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _commandSearchText = CommandSearchBox.Text;
@@ -81,12 +234,18 @@ public partial class CommandSettingsWindow : Window
         _commandsView?.Refresh();
     }
 
+    /// <summary>
+    /// 搜索清除按钮点击事件处理，清空搜索框并重新聚焦。
+    /// </summary>
     private void SearchClearBtn_Click(object sender, MouseButtonEventArgs e)
     {
         CommandSearchBox.Text = "";
         CommandSearchBox.Focus();
     }
 
+    /// <summary>
+    /// DataGrid 加载行事件处理，为每行设置序号。
+    /// </summary>
     private void CommandsGrid_LoadingRow(object sender, DataGridRowEventArgs e)
     {
         e.Row.Header = (e.Row.GetIndex() + 1).ToString();
@@ -97,6 +256,9 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 应用本地化文本到窗口中的所有 UI 元素（标题、按钮、列头、页脚等）。
+    /// </summary>
     private void ApplyLocalization()
     {
         TitleText.Text = LocalizationService.Get("SettingsTitle");
@@ -114,6 +276,10 @@ public partial class CommandSettingsWindow : Window
         CommandSearchPlaceholder.Text = LocalizationService.Get("CommandSearchPlaceholder");
     }
 
+    /// <summary>
+    /// 从配置文件加载应用配置，填充命令列表和快捷键显示。
+    /// 命令按修改时间倒序排列。
+    /// </summary>
     private void LoadConfig()
     {
         _config = ConfigLoader.Load();
@@ -133,6 +299,12 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 将修饰键和主键格式化为可读的快捷键字符串（如 "Alt+Space"）。
+    /// </summary>
+    /// <param name="modifier">修饰键（如 "Alt"、"Ctrl"）</param>
+    /// <param name="key">主键（如 "Space"）</param>
+    /// <returns>格式化后的快捷键字符串</returns>
     private string FormatHotkey(string modifier, string key)
     {
         if (string.IsNullOrEmpty(modifier) && string.IsNullOrEmpty(key))
@@ -140,18 +312,29 @@ public partial class CommandSettingsWindow : Window
         return $"{modifier}+{key}".TrimStart('+');
     }
 
+    /// <summary>
+    /// 窗口鼠标左键按下事件处理，允许拖动窗口。
+    /// </summary>
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
             DragMove();
     }
 
+    /// <summary>
+    /// 快捷键输入框获取焦点事件处理，显示提示文本并全选。
+    /// </summary>
     private void HotkeyTextBox_GotFocus(object sender, RoutedEventArgs e)
     {
         HotkeyTextBox.Text = LocalizationService.Get("HotkeyPress");
         HotkeyTextBox.SelectAll();
     }
 
+    /// <summary>
+    /// 快捷键输入框键盘按下预处理事件。
+    /// 捕获修饰键 + 主键的组合，格式化后显示并自动保存。
+    /// 忽略单独的修饰键按下。
+    /// </summary>
     private void HotkeyTextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         e.Handled = true;
@@ -187,6 +370,10 @@ public partial class CommandSettingsWindow : Window
         SaveHotkey();
     }
 
+    /// <summary>
+    /// 保存当前配置的快捷键到配置文件。
+    /// 解析快捷键字符串，分离修饰键和主键后写入配置。
+    /// </summary>
     private void SaveHotkey()
     {
         if (string.IsNullOrEmpty(_currentHotkey) || _currentHotkey == LocalizationService.Get("HotkeyPress"))
@@ -209,6 +396,10 @@ public partial class CommandSettingsWindow : Window
         ConfigLoader.Save(config);
     }
 
+    /// <summary>
+    /// 添加命令按钮点击事件处理。
+    /// 创建一个空白命令插入到列表顶部，并自动进入编辑模式。
+    /// </summary>
     private void AddCommand_Click(object sender, RoutedEventArgs e)
     {
         var cmd = new CommandConfig
@@ -235,6 +426,9 @@ public partial class CommandSettingsWindow : Window
         ToastService.Instance.ShowSuccess(LocalizationService.Get("Added"));
     }
 
+    /// <summary>
+    /// DataGrid 选中单元格变更事件处理，更新选中命令的修改时间。
+    /// </summary>
     private void CommandsGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
     {
         if (CommandsGrid.SelectedItem is CommandConfig selected)
@@ -243,6 +437,9 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// DataGrid 双击事件处理，预留行编辑行为扩展。
+    /// </summary>
     private void CommandsGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         // Ensure the row is selected when double-clicking
@@ -252,6 +449,9 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 删除命令按钮点击事件处理，移除当前选中的命令。
+    /// </summary>
     private void DeleteCommand_Click(object sender, RoutedEventArgs e)
     {
         if (CommandsGrid?.SelectedItem is CommandConfig selected)
@@ -261,6 +461,10 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 保存命令按钮点击事件处理。
+    /// 将当前命令列表写入配置文件并关闭设置窗口。
+    /// </summary>
     private void SaveCommand_Click(object sender, RoutedEventArgs e)
     {
         // Only save commands; hotkey is auto-saved when user sets it
@@ -271,6 +475,10 @@ public partial class CommandSettingsWindow : Window
         Close();
     }
 
+    /// <summary>
+    /// 导出命令按钮点击事件处理。
+    /// 打开文件保存对话框，将当前命令列表导出为 JSON 文件。
+    /// </summary>
     private async void ExportCommands_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.SaveFileDialog
@@ -290,6 +498,11 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 导入命令按钮点击事件处理。
+    /// 打开文件选择对话框，从 JSON 文件导入命令。
+    /// 自动跳过已存在的同名关键字命令，避免重复。
+    /// </summary>
     private async void ImportCommands_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
@@ -331,6 +544,9 @@ public partial class CommandSettingsWindow : Window
         }
     }
 
+    /// <summary>
+    /// 取消按钮点击事件处理，直接关闭设置窗口（不保存更改）。
+    /// </summary>
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         Close();

@@ -8,5 +8,6 @@
 //------------------------------------------------------------------------------
 
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("config.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("quanta.ico")]
 
 

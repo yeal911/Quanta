@@ -28,12 +28,6 @@
       "Name": "PowerShell",
       "Type": "Shell",
       "Path": "{param}"
-    },
-    {
-      "Keyword": "calc",
-      "Name": "计算器",
-      "Type": "Calculator",
-      "Path": "{param}"
     }
   ]
 }

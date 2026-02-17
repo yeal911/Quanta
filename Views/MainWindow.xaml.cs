@@ -1,3 +1,10 @@
+// ============================================================================
+// 文件名：MainWindow.xaml.cs
+// 文件用途：主窗口的代码隐藏文件，负责处理窗口的显示/隐藏动画、
+//          全局快捷键注册、系统托盘初始化、键盘事件分发、
+//          参数模式 UI 切换以及搜索结果的交互逻辑。
+// ============================================================================
+
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,32 +19,52 @@ using Quanta.ViewModels;
 
 namespace Quanta.Views;
 
+/// <summary>
+/// 主窗口类，作为 Quanta 启动器的核心 UI 界面。
+/// 负责搜索框交互、快捷键响应、窗口动画、系统托盘管理等功能。
+/// </summary>
 public partial class MainWindow : Window
 {
+    /// <summary>主窗口的视图模型，管理搜索逻辑和数据</summary>
     private readonly MainViewModel _viewModel;
+
+    /// <summary>全局快捷键管理器，用于注册和监听系统级热键</summary>
     private readonly HotkeyManager _hotkeyManager;
+
+    /// <summary>窗口句柄，用于快捷键注册和 Win32 交互</summary>
     private IntPtr _windowHandle;
+
+    /// <summary>窗口当前是否可见</summary>
     private bool _isVisible;
+
+    /// <summary>系统托盘服务，管理托盘图标和右键菜单</summary>
     private TrayService? _trayService;
 
+    /// <summary>
+    /// 构造函数，初始化组件并创建各服务实例（使用追踪器、命令路由器、搜索引擎）。
+    /// 设置数据上下文和事件处理程序。
+    /// </summary>
     public MainWindow()
     {
         InitializeComponent();
-        
+
         var usageTracker = new UsageTracker();
         var commandRouter = new CommandRouter(usageTracker);
         var searchEngine = new SearchEngine(usageTracker, commandRouter);
-        
+
         _viewModel = new MainViewModel(searchEngine, usageTracker);
         _hotkeyManager = new HotkeyManager();
-        
+
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
-        
+
         // Enable dragging
         MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
     }
 
+    /// <summary>
+    /// 鼠标左键按下时允许拖动窗口。
+    /// </summary>
     private void MainWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
@@ -46,6 +73,10 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 搜索框文本变更事件处理。
+    /// 参数模式下更新 ViewModel 的参数值；普通模式下切换占位符可见性。
+    /// </summary>
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_viewModel.IsParamMode)
@@ -63,20 +94,26 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 窗口加载完成事件处理。
+    /// 依次执行：加载语言设置、设置占位符文本、初始化 Toast 服务、
+    /// 注册全局快捷键、初始化系统托盘、构建搜索图标菜单，
+    /// 最后隐藏窗口等待快捷键唤起。
+    /// </summary>
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // Load language setting
         LocalizationService.LoadFromConfig();
-        
+
         // Set placeholder text
         PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
-        
+
         // Initialize ToastService with main window
         ToastService.Instance.SetMainWindow(this);
-        
+
         _windowHandle = new WindowInteropHelper(this).Handle;
         var config = ConfigLoader.Load();
-        
+
         var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
         if (!registered)
@@ -84,13 +121,13 @@ public partial class MainWindow : Window
             Dispatcher.BeginInvoke(() =>
                 ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed")));
         }
-        
+
         // Initialize system tray
         _trayService = new TrayService(this);
         _trayService.SettingsRequested += (s, args) => Dispatcher.Invoke(() => OpenCommandSettings());
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
         _trayService.Initialize();
-        
+
         BuildSearchIconMenu();
 
         SearchBox.Focus();
@@ -100,6 +137,9 @@ public partial class MainWindow : Window
         Logger.Log("MainWindow loaded");
     }
 
+    /// <summary>
+    /// 切换窗口的显示/隐藏状态。由全局快捷键触发调用。
+    /// </summary>
     public void ToggleVisibility()
     {
         if (_isVisible)
@@ -108,36 +148,43 @@ public partial class MainWindow : Window
             ShowWindow();
     }
 
+    /// <summary>
+    /// 显示主窗口：居中定位、清空搜索状态、播放淡入动画、聚焦搜索框。
+    /// </summary>
     private void ShowWindow()
     {
         var screen = SystemParameters.WorkArea;
         Left = (screen.Width - Width) / 2;
         Top = (screen.Height - Height) / 2;
         Show(); Activate(); Focus();
-        
+
         _viewModel.ClearSearchCommand.Execute(null);
         ParamIndicator.Visibility = Visibility.Collapsed;
         SearchBox.Padding = new Thickness(6, 4, 0, 4);
         PlaceholderText.Visibility = Visibility.Visible;
         SearchBox.Focus();
-        
+
         // Update toast position
         ToastService.Instance.SetMainWindow(this);
-        
+
         Opacity = 0;
         BeginAnimation(OpacityProperty, new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(150) });
         _isVisible = true;
     }
 
+    /// <summary>
+    /// 主题切换按钮点击事件处理。
+    /// 切换 ViewModel 的主题状态，并即时更新窗口边框、搜索框、图标等 UI 元素的颜色。
+    /// </summary>
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.ToggleThemeCommand.Execute(null);
-        
+
         Dispatcher.Invoke(() =>
         {
             var border = FindName("MainBorder") as Border;
             var icon = FindName("ThemeIcon") as TextBlock;
-            
+
             if (border != null && icon != null)
             {
                 if (_viewModel.IsDarkTheme)
@@ -164,6 +211,9 @@ public partial class MainWindow : Window
         });
     }
 
+    /// <summary>
+    /// 隐藏主窗口，播放淡出动画后执行 Hide()。
+    /// </summary>
     private void HideWindow()
     {
         var animation = new DoubleAnimation { From = 1, To = 0, Duration = TimeSpan.FromMilliseconds(100) };
@@ -172,6 +222,10 @@ public partial class MainWindow : Window
         _isVisible = false;
     }
 
+    /// <summary>
+    /// 窗口键盘按下预处理事件。
+    /// 处理 Ctrl+数字 快速执行、Escape 退出/返回、方向键选择、Enter 执行、Tab 补全等快捷键。
+    /// </summary>
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         // Ctrl+数字 快速执行
@@ -182,7 +236,7 @@ public partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        
+
         // Ctrl+数字 (小键盘)
         if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9 && Keyboard.Modifiers == ModifierKeys.Control)
         {
@@ -233,6 +287,10 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 按索引快速执行搜索结果。用于 Ctrl+数字 快捷键。
+    /// </summary>
+    /// <param name="index">结果列表中的索引（0-based）</param>
     private void ExecuteByIndex(int index)
     {
         if (index >= 0 && index < _viewModel.Results.Count)
@@ -242,6 +300,11 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 处理 Tab 键逻辑：
+    /// 参数模式下聚焦搜索框并移动光标到末尾；
+    /// 普通模式下尝试匹配自定义命令进入参数模式，否则选择下一项。
+    /// </summary>
     private void HandleTabKey()
     {
         if (_viewModel.IsParamMode)
@@ -272,6 +335,11 @@ public partial class MainWindow : Window
         _viewModel.SelectNextCommand.Execute(null);
     }
 
+    /// <summary>
+    /// 进入参数输入模式：显示命令关键字标签，清空搜索框，
+    /// 并动态调整搜索框左内边距以避免与关键字标签重叠。
+    /// </summary>
+    /// <param name="keyword">进入参数模式的命令关键字</param>
     private void EnterParamMode(string keyword)
     {
         _viewModel.SwitchToParamModeCommand.Execute(keyword);
@@ -291,6 +359,10 @@ public partial class MainWindow : Window
         });
     }
 
+    /// <summary>
+    /// 更新参数指示器的显示状态和位置。
+    /// 参数模式下显示关键字标签并调整搜索框内边距；普通模式下隐藏标签。
+    /// </summary>
     private void UpdateParamIndicator()
     {
         if (_viewModel.IsParamMode)
@@ -313,12 +385,19 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 刷新界面的本地化文本（如搜索框占位符、菜单项文字等）。
+    /// 在语言切换后调用。
+    /// </summary>
     public void RefreshLocalization()
     {
         PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
         BuildSearchIconMenu();
     }
 
+    /// <summary>
+    /// 构建搜索图标的右键上下文菜单，包含设置、语言切换、关于、退出等菜单项。
+    /// </summary>
     private void BuildSearchIconMenu()
     {
         SearchIconMenu.Items.Clear();
@@ -350,6 +429,9 @@ public partial class MainWindow : Window
         SearchIconMenu.Items.Add(exitItem);
     }
 
+    /// <summary>
+    /// 搜索图标右键点击事件处理，打开上下文菜单。
+    /// </summary>
     private void SearchIcon_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         BuildSearchIconMenu();
@@ -357,20 +439,31 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
+    /// <summary>
+    /// 结果列表选择变更事件处理，自动滚动到选中项使其可见。
+    /// </summary>
     private void ResultsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ResultsList.SelectedItem != null)
             ResultsList.ScrollIntoView(ResultsList.SelectedItem);
     }
 
+    /// <summary>
+    /// 结果列表双击事件处理，执行选中的搜索结果。
+    /// </summary>
     private void ResultsList_MouseDoubleClick(object sender, MouseButtonEventArgs e) => _ = ExecuteSelectedAsync();
 
+    /// <summary>
+    /// 打开命令设置窗口。窗口关闭后自动重新加载快捷键配置和命令列表。
+    /// </summary>
+    /// <param name="sender">事件发送者（可选）</param>
+    /// <param name="e">路由事件参数（可选）</param>
     private void OpenCommandSettings(object? sender = null, RoutedEventArgs? e = null)
     {
         var win = new CommandSettingsWindow { Owner = this };
         win.SetDarkTheme(_viewModel.IsDarkTheme);
         win.Show();
-        
+
         // After settings window closes, reload hotkey and commands
         win.Closed += (s, args) =>
         {
@@ -384,11 +477,15 @@ public partial class MainWindow : Window
         };
     }
 
+    /// <summary>
+    /// 同步执行当前选中的搜索结果（Fire-and-Forget 模式）。
+    /// 在后台线程执行命令，成功后在 UI 线程清空搜索并隐藏窗口。
+    /// </summary>
     private void ExecuteSelected()
     {
         // Execute immediately without waiting
         if (_viewModel.SelectedResult == null) return;
-        
+
         // Fire and forget - execute in background
         Task.Run(async () =>
         {
@@ -401,7 +498,7 @@ public partial class MainWindow : Window
             {
                 success = await _viewModel.SearchEngine.ExecuteResultAsync(_viewModel.SelectedResult);
             }
-            
+
             if (success)
             {
                 Dispatcher.Invoke(() =>
@@ -413,6 +510,9 @@ public partial class MainWindow : Window
         });
     }
 
+    /// <summary>
+    /// 异步执行当前选中的搜索结果，执行成功且搜索文本为空时自动隐藏窗口。
+    /// </summary>
     private async Task ExecuteSelectedAsync()
     {
         await _viewModel.ExecuteSelectedCommand.ExecuteAsync(null);
