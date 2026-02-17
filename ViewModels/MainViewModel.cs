@@ -52,7 +52,10 @@ public partial class MainViewModel : ObservableObject
     partial void OnSearchTextChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayText));
-        _ = SearchAsync();
+        if (!IsParamMode)
+        {
+            _ = SearchAsync();
+        }
     }
 
     partial void OnCommandKeywordChanged(string value)
@@ -130,7 +133,6 @@ public partial class MainViewModel : ObservableObject
     private void SwitchToParamMode(string keyword)
     {
         CommandKeyword = keyword;
-        SearchText = keyword + " ";
         IsParamMode = true;
         CommandParam = "";
     }

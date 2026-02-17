@@ -37,7 +37,8 @@ public class CommandConfig
     [JsonPropertyName("Hotkey")] public string? Hotkey { get; set; }
     [JsonPropertyName("Enabled")] public bool Enabled { get; set; } = true;
     [JsonPropertyName("Description")] public string Description { get; set; } = string.Empty;
-    
+    [JsonPropertyName("ModifiedAt")] public DateTime ModifiedAt { get; set; } = DateTime.Now;
+
     // For parameter substitution
     [JsonPropertyName("ParamPlaceholder")] public string ParamPlaceholder { get; set; } = "{param}";
 }
@@ -68,4 +69,5 @@ public class AppSettings
     [JsonPropertyName("MaxResults")] public int MaxResults { get; set; } = 10;
     [JsonPropertyName("AutoUpdate")] public bool AutoUpdate { get; set; } = true;
     [JsonPropertyName("CheckForUpdatesOnStartup")] public bool CheckForUpdatesOnStartup { get; set; } = true;
+    [JsonPropertyName("Language")] public string Language { get; set; } = "zh-CN";
 }

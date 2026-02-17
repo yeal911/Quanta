@@ -46,13 +46,44 @@ public partial class MainWindow : Window
         }
     }
 
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_viewModel.IsParamMode)
+        {
+            // In param mode, update the param in ViewModel
+            _viewModel.CommandParam = SearchBox.Text;
+            // Placeholder stays hidden, ParamIndicator stays visible
+        }
+        else
+        {
+            // Show/hide placeholder based on text
+            PlaceholderText.Visibility = string.IsNullOrEmpty(SearchBox.Text)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+    }
+
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        // Load language setting
+        LocalizationService.LoadFromConfig();
+        
+        // Set placeholder text
+        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
+        
+        // Initialize ToastService with main window
+        ToastService.Instance.SetMainWindow(this);
+        
         _windowHandle = new WindowInteropHelper(this).Handle;
         var config = ConfigLoader.Load();
         
-        _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
+        var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
+        if (!registered)
+        {
+            Dispatcher.BeginInvoke(() =>
+                ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed")));
+        }
         
         // Initialize system tray
         _trayService = new TrayService(this);
@@ -60,10 +91,12 @@ public partial class MainWindow : Window
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
         _trayService.Initialize();
         
+        BuildSearchIconMenu();
+
         SearchBox.Focus();
         Hide();
         _isVisible = false;
-        
+
         Logger.Log("MainWindow loaded");
     }
 
@@ -83,7 +116,13 @@ public partial class MainWindow : Window
         Show(); Activate(); Focus();
         
         _viewModel.ClearSearchCommand.Execute(null);
+        ParamIndicator.Visibility = Visibility.Collapsed;
+        SearchBox.Padding = new Thickness(6, 4, 0, 4);
+        PlaceholderText.Visibility = Visibility.Visible;
         SearchBox.Focus();
+        
+        // Update toast position
+        ToastService.Instance.SetMainWindow(this);
         
         Opacity = 0;
         BeginAnimation(OpacityProperty, new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(150) });
@@ -133,16 +172,7 @@ public partial class MainWindow : Window
         _isVisible = false;
     }
 
-    private void Window_Deactivated(object sender, EventArgs e)
-    {
-        Dispatcher.InvokeAsync(async () =>
-        {
-            await Task.Delay(150);
-            if (_isVisible && !IsActive) HideWindow();
-        });
-    }
-
-    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         // Ctrl+数字 快速执行
         if (e.Key >= Key.D1 && e.Key <= Key.D9 && Keyboard.Modifiers == ModifierKeys.Control)
@@ -169,6 +199,9 @@ public partial class MainWindow : Window
                 {
                     _viewModel.SwitchToNormalModeCommand.Execute(null);
                     SearchBox.Text = "";
+                    ParamIndicator.Visibility = Visibility.Collapsed;
+                    SearchBox.Padding = new Thickness(6, 4, 0, 4);
+                    PlaceholderText.Visibility = Visibility.Visible;
                 }
                 else
                 {
@@ -210,8 +243,6 @@ public partial class MainWindow : Window
 
     private void HandleTabKey()
     {
-        var text = SearchBox.Text;
-
         if (_viewModel.IsParamMode)
         {
             SearchBox.Focus();
@@ -219,34 +250,112 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Check if current text matches a command
+        // Try to find the first matching CustomCommand in results
+        string? matchedKeyword = null;
         foreach (var result in _viewModel.Results)
         {
-            if (result.Type == SearchResultType.CustomCommand && 
-                result.Title.Equals(text, StringComparison.OrdinalIgnoreCase))
+            if (result.Type == SearchResultType.CustomCommand)
             {
-                _viewModel.SwitchToParamModeCommand.Execute(result.Title);
-                SearchBox.Text = _viewModel.SearchText;
-                SearchBox.CaretIndex = SearchBox.Text.Length;
-                return;
+                matchedKeyword = result.Title;
+                break;
             }
         }
 
-        // If no exact match but starts with a known command, auto-switch
-        var config = ConfigLoader.Load();
-        foreach (var cmd in config.Commands)
+        if (matchedKeyword != null)
         {
-            if (cmd.Keyword.Equals(text, StringComparison.OrdinalIgnoreCase))
-            {
-                _viewModel.SwitchToParamModeCommand.Execute(cmd.Keyword);
-                SearchBox.Text = _viewModel.SearchText;
-                SearchBox.CaretIndex = SearchBox.Text.Length;
-                return;
-            }
+            EnterParamMode(matchedKeyword);
+            return;
         }
 
         // Normal tab behavior - select next item
         _viewModel.SelectNextCommand.Execute(null);
+    }
+
+    private void EnterParamMode(string keyword)
+    {
+        _viewModel.SwitchToParamModeCommand.Execute(keyword);
+        ParamIndicator.Text = keyword + " >";
+        ParamIndicator.Visibility = Visibility.Visible;
+        PlaceholderText.Visibility = Visibility.Collapsed;
+        SearchBox.Text = "";
+        SearchBox.Focus();
+
+        // Adjust SearchBox left padding to avoid overlapping with ParamIndicator
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            ParamIndicator.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            var indicatorWidth = ParamIndicator.DesiredSize.Width;
+            SearchBox.Padding = new Thickness(indicatorWidth, 4, 0, 4);
+            SearchBox.CaretIndex = 0;
+        });
+    }
+
+    private void UpdateParamIndicator()
+    {
+        if (_viewModel.IsParamMode)
+        {
+            ParamIndicator.Text = _viewModel.CommandKeyword + " >";
+            ParamIndicator.Visibility = Visibility.Visible;
+            PlaceholderText.Visibility = Visibility.Collapsed;
+
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+            {
+                ParamIndicator.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+                var indicatorWidth = ParamIndicator.DesiredSize.Width;
+                SearchBox.Padding = new Thickness(indicatorWidth, 4, 0, 4);
+            });
+        }
+        else
+        {
+            ParamIndicator.Visibility = Visibility.Collapsed;
+            SearchBox.Padding = new Thickness(6, 4, 0, 4);
+        }
+    }
+
+    public void RefreshLocalization()
+    {
+        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
+        BuildSearchIconMenu();
+    }
+
+    private void BuildSearchIconMenu()
+    {
+        SearchIconMenu.Items.Clear();
+
+        var showItem = new MenuItem { Header = LocalizationService.Get("TrayShow") };
+        showItem.Click += (s, e) => ShowWindow();
+        SearchIconMenu.Items.Add(showItem);
+
+        var settingsItem = new MenuItem { Header = LocalizationService.Get("TraySettings") };
+        settingsItem.Click += (s, e) => OpenCommandSettings();
+        SearchIconMenu.Items.Add(settingsItem);
+
+        // Language submenu
+        var langItem = new MenuItem { Header = LocalizationService.Get("TrayLanguage") };
+        var zhItem = new MenuItem { Header = LocalizationService.Get("TrayChinese"), IsChecked = LocalizationService.CurrentLanguage == "zh-CN" };
+        zhItem.Click += (s, e) => { LocalizationService.CurrentLanguage = "zh-CN"; RefreshLocalization(); _trayService?.Initialize(); };
+        var enItem = new MenuItem { Header = LocalizationService.Get("TrayEnglish"), IsChecked = LocalizationService.CurrentLanguage == "en-US" };
+        enItem.Click += (s, e) => { LocalizationService.CurrentLanguage = "en-US"; RefreshLocalization(); _trayService?.Initialize(); };
+        langItem.Items.Add(zhItem);
+        langItem.Items.Add(enItem);
+        SearchIconMenu.Items.Add(langItem);
+
+        SearchIconMenu.Items.Add(new Separator());
+
+        var aboutItem = new MenuItem { Header = LocalizationService.Get("TrayAbout") };
+        aboutItem.Click += (s, e) => ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
+        SearchIconMenu.Items.Add(aboutItem);
+
+        var exitItem = new MenuItem { Header = LocalizationService.Get("TrayExit") };
+        exitItem.Click += (s, e) => { _trayService?.Dispose(); System.Windows.Application.Current.Shutdown(); };
+        SearchIconMenu.Items.Add(exitItem);
+    }
+
+    private void SearchIcon_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        BuildSearchIconMenu();
+        SearchIconMenu.IsOpen = true;
+        e.Handled = true;
     }
 
     private void ResultsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -260,14 +369,19 @@ public partial class MainWindow : Window
     private void OpenCommandSettings(object? sender = null, RoutedEventArgs? e = null)
     {
         var win = new CommandSettingsWindow { Owner = this };
+        win.SetDarkTheme(_viewModel.IsDarkTheme);
         win.Show();
         
         // After settings window closes, reload hotkey and commands
         win.Closed += (s, args) =>
         {
             var config = ConfigLoader.Load();
-            _hotkeyManager.Reregister(config.Hotkey);
+            var registered = _hotkeyManager.Reregister(config.Hotkey);
             _viewModel.SearchEngine.ReloadCommands();
+            if (!registered)
+            {
+                ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed"));
+            }
         };
     }
 

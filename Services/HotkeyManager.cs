@@ -18,41 +18,43 @@ public class HotkeyManager : IDisposable
     private bool _isRegistered, _disposed;
     public event EventHandler? HotkeyPressed;
 
-    public void Initialize(IntPtr windowHandle, HotkeyConfig config)
+    public bool Initialize(IntPtr windowHandle, HotkeyConfig config)
     {
         _windowHandle = windowHandle;
         _source = HwndSource.FromHwnd(windowHandle);
         _source?.AddHook(HwndHook);
-        RegisterHotkey(config);
+        return RegisterHotkey(config);
     }
 
-    private void RegisterHotkey(HotkeyConfig config)
+    private bool RegisterHotkey(HotkeyConfig config)
     {
-        if (_isRegistered) 
+        if (_isRegistered)
         {
             UnregisterHotKey(_windowHandle, HOTKEY_ID);
             _isRegistered = false;
         }
 
-        uint modifiers = config.Modifier?.ToUpper() switch 
-        { 
-            "ALT" => MOD_ALT, 
-            "CTRL" => MOD_CONTROL, 
-            "SHIFT" => MOD_SHIFT, 
-            "WIN" => MOD_WIN, 
-            _ => MOD_ALT 
+        uint modifiers = config.Modifier?.ToUpper() switch
+        {
+            "ALT" => MOD_ALT,
+            "CTRL" => MOD_CONTROL,
+            "SHIFT" => MOD_SHIFT,
+            "WIN" => MOD_WIN,
+            _ => MOD_ALT
         };
 
         uint vk = ParseVirtualKey(config.Key);
-        
+
         Logger.Log($"[Hotkey] Registering: Modifier={config.Modifier}({modifiers}), Key={config.Key}({vk})");
-        
+
         _isRegistered = RegisterHotKey(_windowHandle, HOTKEY_ID, modifiers, vk);
-        
+
         if (!_isRegistered)
         {
             Logger.Log($"[Hotkey] Failed to register hotkey!");
         }
+
+        return _isRegistered;
     }
 
     private uint ParseVirtualKey(string? key)
@@ -103,7 +105,7 @@ public class HotkeyManager : IDisposable
         return IntPtr.Zero;
     }
 
-    public void Reregister(HotkeyConfig config) => RegisterHotkey(config);
+    public bool Reregister(HotkeyConfig config) => RegisterHotkey(config);
     public void Dispose() 
     { 
         if (!_disposed) 

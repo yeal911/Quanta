@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Forms;
+using Quanta.Helpers;
 
 namespace Quanta.Services;
 
@@ -22,7 +23,17 @@ public class TrayService : IDisposable
 
     public void Initialize()
     {
-        if (_notifyIcon != null) return;
+        // Always rebuild the menu if NotifyIcon already exists
+        if (_notifyIcon != null)
+        {
+            _notifyIcon.ContextMenuStrip?.Dispose();
+            _notifyIcon.Visible = false;
+            _notifyIcon.Dispose();
+            _notifyIcon = null;
+        }
+
+        // Load language from config
+        LocalizationService.LoadFromConfig();
 
         // Create a simple, minimalist icon programmatically
         Icon icon = CreateAppIcon();
@@ -31,21 +42,77 @@ public class TrayService : IDisposable
         {
             Icon = icon,
             Visible = true,
-            Text = "Quanta - 启动器",
+            Text = "Quanta - Launcher",
         };
 
         // Build context menu
-        var menu = new ContextMenuStrip();
-        menu.Items.Add("显示界面", null, (s, e) => ShowMainWindow());
-        menu.Items.Add("命令设置", null, (s, e) => OnSettingsRequested());
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("关于", null, (s, e) => ShowAbout());
-        menu.Items.Add("退出", null, (s, e) => OnExitRequested());
+        BuildContextMenu();
 
-        _notifyIcon.ContextMenuStrip = menu;
         _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
 
         Logger.Log("TrayService initialized");
+    }
+
+    private void BuildContextMenu()
+    {
+        if (_notifyIcon == null) return;
+        
+        var menu = new ContextMenuStrip();
+        
+        // Show
+        var showItem = new ToolStripMenuItem(LocalizationService.Get("TrayShow"));
+        showItem.Click += (s, e) => ShowMainWindow();
+        menu.Items.Add(showItem);
+        
+        // Settings
+        var settingsItem = new ToolStripMenuItem(LocalizationService.Get("TraySettings"));
+        settingsItem.Click += (s, e) => OnSettingsRequested();
+        menu.Items.Add(settingsItem);
+        
+        // Language submenu
+        var langMenu = new ToolStripMenuItem(LocalizationService.Get("TrayLanguage"));
+        
+        var zhItem = new ToolStripMenuItem(LocalizationService.Get("TrayChinese"));
+        zhItem.Click += (s, e) => SetLanguage("zh-CN");
+        zhItem.Checked = LocalizationService.CurrentLanguage == "zh-CN";
+        langMenu.DropDownItems.Add(zhItem);
+        
+        var enItem = new ToolStripMenuItem(LocalizationService.Get("TrayEnglish"));
+        enItem.Click += (s, e) => SetLanguage("en-US");
+        enItem.Checked = LocalizationService.CurrentLanguage == "en-US";
+        langMenu.DropDownItems.Add(enItem);
+        
+        menu.Items.Add(langMenu);
+        
+        menu.Items.Add(new ToolStripSeparator());
+        
+        // About
+        var aboutItem = new ToolStripMenuItem(LocalizationService.Get("TrayAbout"));
+        aboutItem.Click += (s, e) => ShowAbout();
+        menu.Items.Add(aboutItem);
+        
+        // Exit
+        var exitItem = new ToolStripMenuItem(LocalizationService.Get("TrayExit"));
+        exitItem.Click += (s, e) => OnExitRequested();
+        menu.Items.Add(exitItem);
+
+        _notifyIcon.ContextMenuStrip = menu;
+    }
+
+    private void SetLanguage(string lang)
+    {
+        LocalizationService.CurrentLanguage = lang;
+        // Rebuild menu to update language
+        BuildContextMenu();
+
+        // Refresh MainWindow localization
+        _mainWindow.Dispatcher.Invoke(() =>
+        {
+            if (_mainWindow is Quanta.Views.MainWindow mainWin)
+            {
+                mainWin.RefreshLocalization();
+            }
+        });
     }
 
     private Icon CreateAppIcon()
@@ -96,7 +163,7 @@ public class TrayService : IDisposable
         // Show toast notification with about info
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
-            ToastService.Instance.ShowInfo("作者：yeal911\n邮箱：yeal91117@gmail.com", 3.0);
+            ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
         });
     }
 

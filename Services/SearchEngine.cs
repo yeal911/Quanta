@@ -19,11 +19,31 @@ public class SearchEngine
     private readonly CommandRouter _commandRouter;
     private List<CommandConfig> _customCommands = new();
 
+    private static readonly List<CommandConfig> BuiltInCommands = new()
+    {
+        new() { Keyword = "cmd", Name = "命令提示符", Type = "Program", Path = "cmd.exe", Arguments = "/k {param}", Description = "打开CMD" },
+        new() { Keyword = "powershell", Name = "PowerShell", Type = "Program", Path = "powershell.exe", Arguments = "-NoExit -Command \"{param}\"", Description = "打开PowerShell" },
+        new() { Keyword = "notepad", Name = "记事本", Type = "Program", Path = "notepad.exe", Arguments = "{param}", Description = "打开记事本" },
+        new() { Keyword = "calc", Name = "计算器", Type = "Program", Path = "calc.exe", Description = "打开计算器" },
+        new() { Keyword = "mspaint", Name = "画图", Type = "Program", Path = "mspaint.exe", Description = "打开画图" },
+        new() { Keyword = "explorer", Name = "资源管理器", Type = "Program", Path = "explorer.exe", Arguments = "{param}", Description = "打开资源管理器" },
+        new() { Keyword = "taskmgr", Name = "任务管理器", Type = "Program", Path = "taskmgr.exe", Description = "打开任务管理器" },
+        new() { Keyword = "devmgmt", Name = "设备管理器", Type = "Program", Path = "devmgmt.msc", Description = "打开设备管理器" },
+        new() { Keyword = "services", Name = "服务", Type = "Program", Path = "services.msc", Description = "打开服务" },
+        new() { Keyword = "regedit", Name = "注册表", Type = "Program", Path = "regedit.exe", Description = "打开注册表" },
+        new() { Keyword = "control", Name = "控制面板", Type = "Program", Path = "control.exe", Description = "打开控制面板" },
+        new() { Keyword = "ipconfig", Name = "IP配置", Type = "Shell", Path = "ipconfig {param}", Description = "查看IP配置" },
+        new() { Keyword = "ping", Name = "Ping", Type = "Shell", Path = "ping {param}", Description = "Ping命令" },
+        new() { Keyword = "tracert", Name = "路由追踪", Type = "Shell", Path = "tracert {param}", Description = "追踪路由" },
+        new() { Keyword = "nslookup", Name = "DNS查询", Type = "Shell", Path = "nslookup {param}", Description = "DNS查询" },
+        new() { Keyword = "netstat", Name = "网络状态", Type = "Shell", Path = "netstat -an", Description = "查看网络状态" },
+    };
+
     public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter)
     {
         _usageTracker = usageTracker;
         _commandRouter = commandRouter;
-        
+
         LoadCustomCommands();
     }
 
@@ -66,13 +86,14 @@ public class SearchEngine
     {
         var results = new List<SearchResult>();
         int index = 0;
-        
-        // Check if user is typing a command
-        foreach (var cmd in _customCommands)
+
+        // Search both user commands (higher priority) and built-in commands
+        var allCommands = _customCommands.Concat(BuiltInCommands);
+
+        foreach (var cmd in allCommands)
         {
             if (string.IsNullOrEmpty(query))
             {
-                // Show all commands when empty
                 results.Add(new SearchResult
                 {
                     Index = index++,
@@ -84,37 +105,21 @@ public class SearchEngine
                     MatchScore = 1.0
                 });
             }
-            else 
+            else
             {
-                // Check for substring matches (LIKE "%keyword%")
                 double score = 0;
-                
-                // 1. Exact match on keyword (highest priority)
+
                 if (query.Equals(cmd.Keyword, StringComparison.OrdinalIgnoreCase))
-                {
                     score = 1.0;
-                }
-                // 2. Keyword starts with query (e.g., query="msc", keyword="mscon")
                 else if (cmd.Keyword.StartsWith(query, StringComparison.OrdinalIgnoreCase))
-                {
                     score = 0.95;
-                }
-                // 3. Keyword contains query as substring (e.g., query="scon", keyword="mscon")
                 else if (cmd.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase))
-                {
                     score = 0.9;
-                }
-                // 4. Name contains query as substring
                 else if (!string.IsNullOrEmpty(cmd.Name) && cmd.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                {
                     score = 0.85;
-                }
-                // 5. Description contains query as substring
                 else if (!string.IsNullOrEmpty(cmd.Description) && cmd.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
-                {
                     score = 0.8;
-                }
-                
+
                 if (score > 0)
                 {
                     results.Add(new SearchResult
@@ -138,9 +143,9 @@ public class SearchEngine
     {
         var results = new ConcurrentBag<SearchResult>();
         int index = 0;
-        
-        // Show custom commands
-        foreach (var cmd in _customCommands.Take(8))
+
+        // Show user commands first, then built-in
+        foreach (var cmd in _customCommands.Concat(BuiltInCommands).Take(8))
         {
             var typeName = cmd.Type.ToLower() switch
             {

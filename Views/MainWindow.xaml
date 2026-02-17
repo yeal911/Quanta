@@ -5,7 +5,7 @@
         Width="540" SizeToContent="Height" MaxHeight="400" MinHeight="48"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Topmost="True"
-        Deactivated="Window_Deactivated" KeyDown="Window_KeyDown"
+        PreviewKeyDown="Window_PreviewKeyDown"
         MouseLeftButtonDown="MainWindow_MouseLeftButtonDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -53,11 +53,6 @@
 
     <Grid>
         <Border x:Name="MainBorder" CornerRadius="8" Background="#FFFFFF" BorderBrush="#E5E5E5" BorderThickness="1">
-            <Border.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="命令设置" Click="OpenCommandSettings"/>
-                </ContextMenu>
-            </Border.ContextMenu>
             
             <Grid>
                 <Grid.RowDefinitions>
@@ -68,21 +63,47 @@
 
                 <Grid Grid.Row="0" Margin="12,10,12,8">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
-                    <TextBox x:Name="SearchBox" Grid.Column="0" 
-                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                             FontSize="14" Padding="6,4" 
-                             Background="Transparent" BorderThickness="0" 
-                             Foreground="#1A1A1A" CaretBrush="#1A1A1A" 
+
+                    <!-- Search icon with right-click menu -->
+                    <TextBlock x:Name="SearchIcon" Grid.Column="0" Text="🔍" FontSize="14"
+                               Foreground="#999" VerticalAlignment="Center" Cursor="Hand"
+                               Margin="0,0,4,0" MouseRightButtonUp="SearchIcon_RightClick">
+                        <TextBlock.ContextMenu>
+                            <ContextMenu x:Name="SearchIconMenu"/>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+
+                    <!-- Placeholder text -->
+                    <TextBlock x:Name="PlaceholderText" Grid.Column="1"
+                               Text="请输入命令关键字" FontSize="14" Padding="6,4"
+                               Foreground="#AAA" FontFamily="微软雅黑"
+                               VerticalAlignment="Center" IsHitTestVisible="False"
+                               Visibility="Visible"/>
+
+                    <!-- Red "keyword >" indicator for param mode -->
+                    <TextBlock x:Name="ParamIndicator" Grid.Column="1"
+                               Text="" FontSize="14" Padding="6,4"
+                               Foreground="#E74C3C" FontFamily="Consolas" FontWeight="Bold"
+                               VerticalAlignment="Center" IsHitTestVisible="False"
+                               Visibility="Collapsed"
+                               Panel.ZIndex="1"/>
+
+                    <TextBox x:Name="SearchBox" Grid.Column="1"
+                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="14" Padding="6,4"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="#1A1A1A" CaretBrush="#1A1A1A"
                              FontFamily="微软雅黑"
-                             VerticalAlignment="Center"/>
-                    
-                    <Button x:Name="ThemeToggleButton" Grid.Column="1" 
-                            Style="{StaticResource ThemeToggleStyle}" 
-                            Click="ThemeToggleButton_Click" 
+                             VerticalAlignment="Center"
+                             TextChanged="SearchBox_TextChanged"/>
+
+                    <Button x:Name="ThemeToggleButton" Grid.Column="2"
+                            Style="{StaticResource ThemeToggleStyle}"
+                            Click="ThemeToggleButton_Click"
                             ToolTip="切换主题">
                         <TextBlock x:Name="ThemeIcon" Text="🌙" FontSize="12" Foreground="#666"/>
                     </Button>
