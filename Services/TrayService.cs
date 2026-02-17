@@ -101,7 +101,7 @@ public class TrayService : IDisposable
 
     /// <summary>
     /// 构建系统托盘图标的右键上下文菜单。
-    /// 菜单项包括：显示主窗口、设置、语言切换（中文/英文）、关于、退出。
+    /// 菜单项包括：设置、语言切换（中文/英文）、关于、退出。
     /// 所有菜单项文字均通过 <see cref="LocalizationService"/> 获取本地化字符串。
     /// </summary>
     private void BuildContextMenu()
@@ -109,11 +109,6 @@ public class TrayService : IDisposable
         if (_notifyIcon == null) return;
 
         var menu = new ContextMenuStrip();
-
-        // "显示"菜单项 - 点击后显示主窗口
-        var showItem = new ToolStripMenuItem(LocalizationService.Get("TrayShow"));
-        showItem.Click += (s, e) => ShowMainWindow();
-        menu.Items.Add(showItem);
 
         // "设置"菜单项 - 点击后触发设置事件
         var settingsItem = new ToolStripMenuItem(LocalizationService.Get("TraySettings"));

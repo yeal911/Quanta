@@ -1,8 +1,7 @@
 // ============================================================================
 // 文件名：ConfigLoader.cs
 // 文件用途：应用配置的加载、保存和管理工具类。
-//          负责从 JSON 配置文件读取/写入应用配置，支持用户目录和本地目录双路径存储，
-//          提供配置缓存、版本迁移、默认配置创建以及必要目录的自动创建功能。
+//          配置文件直接保存在程序运行目录下的 config.json 中。
 // ============================================================================
 
 using System.IO;
@@ -13,22 +12,16 @@ using Quanta.Services;
 namespace Quanta.Helpers;
 
 /// <summary>
-/// 静态配置加载器，提供应用配置的加载、保存、导出和版本迁移功能。
-/// 配置文件以 JSON 格式存储，优先从用户 AppData 目录读取，回退到应用程序本地目录。
+/// 静态配置加载器，提供应用配置的加载、保存、导出功能。
+/// 配置文件保存在程序运行目录下的 config.json 中。
 /// </summary>
 public static class ConfigLoader
 {
     /// <summary>配置缓存，避免重复读取文件</summary>
     private static AppConfig? _cachedConfig;
 
-    /// <summary>应用程序本地目录下的配置文件路径</summary>
+    /// <summary>配置文件路径（程序运行目录下的 config.json）</summary>
     private static readonly string ConfigPath = Path.Combine(AppContext.BaseDirectory, "config.json");
-
-    /// <summary>用户 AppData/Roaming/Quanta 目录路径</summary>
-    private static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Quanta");
-
-    /// <summary>用户目录下的配置文件路径（优先使用）</summary>
-    private static readonly string UserConfigPath = Path.Combine(AppDataPath, "config.json");
 
     /// <summary>JSON 序列化选项：缩进格式、属性名大小写不敏感</summary>
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -38,53 +31,71 @@ public static class ConfigLoader
     };
 
     /// <summary>
-    /// 获取用户 AppData 目录路径。
-    /// </summary>
-    /// <returns>AppData/Roaming/Quanta 目录路径</returns>
-    public static string GetAppDataPath() => AppDataPath;
-
-    /// <summary>
-    /// 加载应用配置。优先从缓存返回，其次从用户目录读取，最后从本地目录读取。
+    /// 加载应用配置。优先从缓存返回，其次从 config.json 读取。
     /// 如果配置文件不存在或读取失败，则创建默认配置。
-    /// 加载后会执行版本迁移检查并确保必要目录存在。
     /// </summary>
     /// <returns>加载的应用配置对象</returns>
     public static AppConfig Load()
     {
-        if (_cachedConfig != null) return _cachedConfig;
+        if (_cachedConfig != null)
+        {
+            Logger.Log("[ConfigLoader] Using cached config");
+            return _cachedConfig;
+        }
 
         try
         {
-            // Try user config first (in AppData)
-            var configPath = File.Exists(UserConfigPath) ? UserConfigPath : ConfigPath;
+            // 获取绝对路径并打印
+            var fullPath = Path.GetFullPath(ConfigPath);
+            Logger.Log($"[ConfigLoader] Config file path: {fullPath}");
+            Logger.Log($"[ConfigLoader] File exists: {File.Exists(ConfigPath)}");
 
-            if (File.Exists(configPath))
+            if (File.Exists(ConfigPath))
             {
-                var json = File.ReadAllText(configPath);
-                _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions) ?? CreateDefaultConfig();
-
-                // Migrate if needed
-                _cachedConfig = MigrateConfig(_cachedConfig);
+                var json = File.ReadAllText(ConfigPath);
+                Logger.Log($"[ConfigLoader] Config file content length: {json.Length} characters");
+                
+                _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                
+                if (_cachedConfig != null)
+                {
+                    Logger.Log($"[ConfigLoader] Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
+                    if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
+                    {
+                        var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
+                        Logger.Log($"[ConfigLoader] Commands from file: {commandKeywords}");
+                    }
+                    else
+                    {
+                        Logger.Log("[ConfigLoader] No commands found in file");
+                    }
+                    
+                    // Migrate if needed
+                    _cachedConfig = MigrateConfig(_cachedConfig);
+                }
+                else
+                {
+                    Logger.Log("[ConfigLoader] Failed to deserialize config, creating default");
+                    _cachedConfig = CreateDefaultConfig();
+                }
             }
             else
             {
+                Logger.Log("[ConfigLoader] Config file not found, creating default config");
                 _cachedConfig = CreateDefaultConfig();
             }
         }
         catch (Exception ex)
         {
-            Logger.Error($"Failed to load config: {ex.Message}", ex);
+            Logger.Error($"[ConfigLoader] Failed to load config: {ex.Message}", ex);
             _cachedConfig = CreateDefaultConfig();
         }
-
-        // Ensure directories exist
-        EnsureDirectories();
 
         return _cachedConfig;
     }
 
     /// <summary>
-    /// 保存应用配置到用户目录和本地目录（双份备份）。
+    /// 保存应用配置到 config.json。
     /// 同时更新内存缓存。
     /// </summary>
     /// <param name="config">要保存的应用配置对象</param>
@@ -92,20 +103,12 @@ public static class ConfigLoader
     {
         try
         {
-            // Ensure AppData directory exists
-            if (!Directory.Exists(AppDataPath))
-                Directory.CreateDirectory(AppDataPath);
-
-            // Save to user config path
             var json = JsonSerializer.Serialize(config, JsonOptions);
-            File.WriteAllText(UserConfigPath, json);
-
-            // Also save to local directory as backup
             File.WriteAllText(ConfigPath, json);
 
             _cachedConfig = config;
 
-            Logger.Log($"Config saved to: {UserConfigPath}");
+            Logger.Log($"Config saved to: {ConfigPath}");
         }
         catch (Exception ex)
         {
@@ -143,33 +146,6 @@ public static class ConfigLoader
     }
 
     /// <summary>
-    /// 确保必要的目录结构存在（AppData 目录、插件目录、日志目录）。
-    /// 在配置加载完成后自动调用。
-    /// </summary>
-    private static void EnsureDirectories()
-    {
-        try
-        {
-            if (!Directory.Exists(AppDataPath))
-                Directory.CreateDirectory(AppDataPath);
-
-            // Create plugin directory
-            var pluginDir = Path.Combine(AppDataPath, "Plugins");
-            if (!Directory.Exists(pluginDir))
-                Directory.CreateDirectory(pluginDir);
-
-            // Create logs directory
-            var logsDir = Path.Combine(AppDataPath, "Logs");
-            if (!Directory.Exists(logsDir))
-                Directory.CreateDirectory(logsDir);
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to create directories: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
     /// 创建并保存默认配置，包含默认快捷键（Alt+Space）、示例命令、
     /// 默认命令分组、插件设置和应用设置。
     /// </summary>
@@ -186,7 +162,7 @@ public static class ConfigLoader
             PluginSettings = new PluginSettings
             {
                 Enabled = true,
-                PluginDirectory = Path.Combine(AppDataPath, "Plugins")
+                PluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins")
             },
             AppSettings = new AppSettings
             {
@@ -239,7 +215,7 @@ public static class ConfigLoader
                 config.PluginSettings = new PluginSettings
                 {
                     Enabled = true,
-                    PluginDirectory = Path.Combine(AppDataPath, "Plugins")
+                    PluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins")
                 };
             }
 
@@ -280,14 +256,8 @@ public static class ConfigLoader
     }
 
     /// <summary>
-    /// 获取用户配置文件的完整路径（AppData 目录下）。
+    /// 获取配置文件路径。
     /// </summary>
-    /// <returns>用户配置文件路径</returns>
-    public static string GetConfigPath() => UserConfigPath;
-
-    /// <summary>
-    /// 获取本地配置文件的完整路径（应用程序目录下）。
-    /// </summary>
-    /// <returns>本地配置文件路径</returns>
-    public static string GetLocalConfigPath() => ConfigPath;
+    /// <returns>配置文件路径</returns>
+    public static string GetConfigPath() => ConfigPath;
 }

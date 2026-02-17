@@ -50,6 +50,7 @@ public partial class CommandSettingsWindow : Window
     /// </summary>
     public CommandSettingsWindow()
     {
+        Logger.Log("[CommandSettingsWindow] Constructor started");
         InitializeComponent();
         LoadConfig();
         ApplyLocalization();
@@ -58,6 +59,9 @@ public partial class CommandSettingsWindow : Window
         _commandsView = CollectionViewSource.GetDefaultView(Commands);
         _commandsView.Filter = CommandFilter;
         CommandsGrid.ItemsSource = _commandsView;
+        
+        Logger.Log($"[CommandSettingsWindow] CommandsGrid ItemsSource set with {Commands.Count} commands");
+        Logger.Log($"[CommandSettingsWindow] CommandsGrid actual items count: {CommandsGrid.Items.Count}");
     }
 
     /// <summary>
@@ -86,6 +90,7 @@ public partial class CommandSettingsWindow : Window
     public void SetDarkTheme(bool isDark)
     {
         _isDarkTheme = isDark;
+        ToastService.Instance.SetTheme(isDark);
         ApplyTheme();
     }
 
@@ -117,6 +122,8 @@ public partial class CommandSettingsWindow : Window
             // 暗色主题：选中行黄色背景，悬停行深色背景
             if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
                 selectedBrush.Color = System.Windows.Media.Color.FromRgb(255, 215, 0); // 黄色
+            if (Resources["SelectedRowForegroundBrush"] is System.Windows.Media.SolidColorBrush selectedForegroundBrush)
+                selectedForegroundBrush.Color = System.Windows.Media.Color.FromRgb(0, 0, 0); // 暗色主题下选中行字体黑色
             if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
                 hoverBrush.Color = System.Windows.Media.Color.FromRgb(50, 50, 50); // 暗色悬停
         }
@@ -141,6 +148,8 @@ public partial class CommandSettingsWindow : Window
             // 亮色主题：选中行橙色背景，悬停行浅色背景
             if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
                 selectedBrush.Color = System.Windows.Media.Color.FromRgb(230, 126, 34); // 橙色
+            if (Resources["SelectedRowForegroundBrush"] is System.Windows.Media.SolidColorBrush selectedForegroundBrush)
+                selectedForegroundBrush.Color = System.Windows.Media.Color.FromRgb(0, 0, 0); // 亮色主题下选中行字体黑色，更清晰
             if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
                 hoverBrush.Color = System.Windows.Media.Color.FromRgb(240, 246, 255); // 亮色悬停
         }
@@ -223,10 +232,26 @@ public partial class CommandSettingsWindow : Window
     /// </summary>
     private void LoadConfig()
     {
+        Logger.Log("[CommandSettingsWindow] Loading config...");
         _config = ConfigLoader.Load();
+        
         if (_config?.Commands != null)
+        {
             Commands = new ObservableCollection<CommandConfig>(
                 _config.Commands.OrderByDescending(c => c.ModifiedAt));
+            
+            Logger.Log($"[CommandSettingsWindow] Loaded {Commands.Count} commands into ObservableCollection");
+            if (Commands.Count > 0)
+            {
+                var commandList = string.Join(", ", Commands.Select(c => $"{c.Keyword}({c.Name})"));
+                Logger.Log($"[CommandSettingsWindow] Commands in UI: {commandList}");
+            }
+        }
+        else
+        {
+            Logger.Log("[CommandSettingsWindow] No commands found in config");
+            Commands = new ObservableCollection<CommandConfig>();
+        }
 
         if (_config?.Hotkey != null)
         {
@@ -260,6 +285,17 @@ public partial class CommandSettingsWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
             DragMove();
+    }
+
+    /// <summary>
+    /// 窗口键盘按下事件处理，按 Esc 键关闭窗口。
+    /// </summary>
+    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            Close();
+        }
     }
 
     /// <summary>
@@ -350,6 +386,8 @@ public partial class CommandSettingsWindow : Window
             Type = "Url",
             Path = "",
             Enabled = true,
+            RunAsAdmin = false,
+            RunHidden = false,
             ModifiedAt = DateTime.Now
         };
         Commands.Insert(0, cmd);
@@ -409,8 +447,9 @@ public partial class CommandSettingsWindow : Window
     private void SaveCommand_Click(object sender, RoutedEventArgs e)
     {
         // Only save commands; hotkey is auto-saved when user sets it
+        // Filter out built-in commands, only save user-created commands
         var config = ConfigLoader.Load();
-        config.Commands = Commands.ToList();
+        config.Commands = Commands.Where(c => !c.IsBuiltIn).ToList();
         ConfigLoader.Save(config);
         ToastService.Instance.ShowSuccess(LocalizationService.Get("Saved"));
         Close();
@@ -431,7 +470,9 @@ public partial class CommandSettingsWindow : Window
 
         if (dialog.ShowDialog() == true)
         {
-            var success = await CommandService.ExportCommandsAsync(dialog.FileName, Commands.ToList());
+            // Export only user-created commands (exclude built-in commands)
+            var userCommands = Commands.Where(c => !c.IsBuiltIn).ToList();
+            var success = await CommandService.ExportCommandsAsync(dialog.FileName, userCommands);
             if (success)
                 ToastService.Instance.ShowSuccess(LocalizationService.Get("ExportSuccess"));
             else

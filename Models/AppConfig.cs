@@ -101,6 +101,9 @@ public class CommandConfig
     /// <summary>最后修改时间</summary>
     [JsonPropertyName("ModifiedAt")] public DateTime ModifiedAt { get; set; } = DateTime.Now;
 
+    /// <summary>是否为系统预置命令（预置命令不会被保存到配置文件）</summary>
+    [JsonPropertyName("IsBuiltIn")] public bool IsBuiltIn { get; set; } = false;
+
     /// <summary>参数替换占位符，用于在路径或参数中动态替换用户输入</summary>
     [JsonPropertyName("ParamPlaceholder")] public string ParamPlaceholder { get; set; } = "{param}";
 }

@@ -9,11 +9,13 @@
         Background="Transparent"
         ResizeMode="CanResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
 
-    <!-- 资源：选中行背景色，可在代码中动态修改 -->
+    <!-- 资源：选中行背景色和字体颜色，可在代码中动态修改 -->
     <Window.Resources>
         <SolidColorBrush x:Key="SelectedRowBackgroundBrush" Color="#E67E22"/>
+        <SolidColorBrush x:Key="SelectedRowForegroundBrush" Color="White"/>
         <SolidColorBrush x:Key="HoverRowBackgroundBrush" Color="#F0F6FF"/>
     </Window.Resources>
 
@@ -111,7 +113,6 @@
                           HeadersVisibility="Column" GridLinesVisibility="None"
                           RowHeight="28" FontSize="12" FontFamily="微软雅黑"
                           BorderThickness="0" Background="Transparent"
-                          RowBackground="Transparent" AlternatingRowBackground="#F8F8F8"
                           SelectedCellsChanged="CommandsGrid_SelectedCellsChanged"
                           LoadingRow="CommandsGrid_LoadingRow"
                           SelectionMode="Single" SelectionUnit="FullRow"
@@ -188,42 +189,16 @@
                         </Style>
                     </DataGrid.RowHeaderStyle>
 
-                    <!-- RowStyle：选中行背景色使用 DynamicResource，可在代码中切换 -->
+                    <!-- 简洁的行样式：选中高亮 -->
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
-                            <Setter Property="Margin" Value="0"/>
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            <Setter Property="BorderBrush" Value="#E8E8E8"/>
-                            <Setter Property="Background" Value="Transparent"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource SelectedRowBackgroundBrush}"/>
-                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="Background" Value="#FF6B35"/>
                                 </Trigger>
-                                <MultiTrigger>
-                                    <MultiTrigger.Conditions>
-                                        <Condition Property="IsMouseOver" Value="True"/>
-                                        <Condition Property="IsSelected" Value="False"/>
-                                    </MultiTrigger.Conditions>
-                                    <Setter Property="Background" Value="{DynamicResource HoverRowBackgroundBrush}"/>
-                                </MultiTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>
-
-                    <!-- CellStyle：透明背景和文字颜色，让行样式控制选中背景色 -->
-                    <DataGrid.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="Padding" Value="6,0"/>
-                            <Setter Property="Margin" Value="0"/>
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                            <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=Foreground}"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                        </Style>
-                    </DataGrid.CellStyle>
 
                     <DataGrid.Columns>
                         <DataGridTextColumn x:Name="KeywordColumn" Header="关键字" Binding="{Binding Keyword}" Width="70"/>
@@ -239,6 +214,7 @@
                             </DataGridComboBoxColumn.ItemsSource>
                         </DataGridComboBoxColumn>
                         <DataGridTextColumn x:Name="PathColumn" Header="路径/URL" Binding="{Binding Path}" Width="*"/>
+                        <DataGridCheckBoxColumn x:Name="AdminColumn" Header="管理员" Binding="{Binding RunAsAdmin}" Width="55"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

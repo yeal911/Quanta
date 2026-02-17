@@ -114,6 +114,10 @@ public partial class MainWindow : Window
         _windowHandle = new WindowInteropHelper(this).Handle;
         var config = ConfigLoader.Load();
 
+        // 初始化 Toast 主题
+        var isDarkTheme = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
+        ToastService.Instance.SetTheme(isDarkTheme);
+
         var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
         if (!registered)
@@ -189,6 +193,9 @@ public partial class MainWindow : Window
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.ToggleThemeCommand.Execute(null);
+
+        // 同步更新 Toast 服务主题
+        ToastService.Instance.SetTheme(_viewModel.IsDarkTheme);
 
         Dispatcher.Invoke(() =>
         {
