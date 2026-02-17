@@ -61,6 +61,25 @@ public partial class CommandSettingsWindow : Window
     }
 
     /// <summary>
+    /// 窗口加载完成后播放显示动画
+    /// </summary>
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        // Fancy show animation: scale + fade in on the root border
+        RootBorder.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+        var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
+        RootBorder.RenderTransform = scaleTransform;
+
+        RootBorder.Opacity = 0;
+        var fadeIn = new System.Windows.Media.Animation.DoubleAnimation { From = 0, To = 1, Duration = System.TimeSpan.FromMilliseconds(100) };
+        var scaleIn = new System.Windows.Media.Animation.DoubleAnimation { From = 0.9, To = 1, Duration = System.TimeSpan.FromMilliseconds(100) };
+
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleIn);
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleIn);
+        RootBorder.BeginAnimation(System.Windows.UIElement.OpacityProperty, fadeIn);
+    }
+
+    /// <summary>
     /// 设置当前主题（明/暗），并立即应用主题样式
     /// </summary>
     /// <param name="isDark">是否为暗色主题</param>
@@ -95,51 +114,11 @@ public partial class CommandSettingsWindow : Window
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
             CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 38, 38));
 
-            // 更新行样式：暗色主题下悬浮行用深蓝色，行边框用深灰色
-            var darkRowStyle = new Style(typeof(DataGridRow));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.MarginProperty, new Thickness(0)));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.PaddingProperty, new Thickness(0)));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(50, 50, 50))));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            darkRowStyle.Setters.Add(new Setter(DataGridRow.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220))));
-            // 选中行：蓝色背景 + 白色文字
-            var selectedTrigger = new Trigger { Property = DataGridRow.IsSelectedProperty, Value = true };
-            selectedTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212))));
-            selectedTrigger.Setters.Add(new Setter(DataGridRow.ForegroundProperty, System.Windows.Media.Brushes.White));
-            darkRowStyle.Triggers.Add(selectedTrigger);
-            // 悬浮行（非选中时）：深灰色背景
-            var hoverTrigger = new MultiTrigger();
-            hoverTrigger.Conditions.Add(new Condition(DataGridRow.IsMouseOverProperty, true));
-            hoverTrigger.Conditions.Add(new Condition(DataGridRow.IsSelectedProperty, false));
-            hoverTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(45, 45, 48))));
-            darkRowStyle.Triggers.Add(hoverTrigger);
-            CommandsGrid.RowStyle = darkRowStyle;
-
-            // 列头样式
-            var darkHeaderStyle = new Style(typeof(DataGridColumnHeader));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(140, 140, 140))));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 11.0));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.Normal));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(6, 4, 6, 4)));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
-            darkHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(50, 50, 50))));
-            CommandsGrid.ColumnHeaderStyle = darkHeaderStyle;
-
-            // 单元格样式：确保文字颜色随行变化
-            var darkCellStyle = new Style(typeof(DataGridCell));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(6, 0, 6, 0)));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.MarginProperty, new Thickness(0)));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.VerticalAlignmentProperty, VerticalAlignment.Center));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.FocusVisualStyleProperty, null));
-            darkCellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(DataGridRow), 1) }));
-            var cellSelectedTrigger = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
-            cellSelectedTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            cellSelectedTrigger.Setters.Add(new Setter(DataGridCell.ForegroundProperty, System.Windows.Media.Brushes.White));
-            darkCellStyle.Triggers.Add(cellSelectedTrigger);
-            CommandsGrid.CellStyle = darkCellStyle;
+            // 暗色主题：选中行黄色背景，悬停行深色背景
+            if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
+                selectedBrush.Color = System.Windows.Media.Color.FromRgb(255, 215, 0); // 黄色
+            if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
+                hoverBrush.Color = System.Windows.Media.Color.FromRgb(50, 50, 50); // 暗色悬停
         }
         else
         {
@@ -159,49 +138,11 @@ public partial class CommandSettingsWindow : Window
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
             CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(248, 248, 248));
 
-            // 亮色行样式
-            var lightRowStyle = new Style(typeof(DataGridRow));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.MarginProperty, new Thickness(0)));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.PaddingProperty, new Thickness(0)));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            lightRowStyle.Setters.Add(new Setter(DataGridRow.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51))));
-            var lightSelectedTrigger = new Trigger { Property = DataGridRow.IsSelectedProperty, Value = true };
-            lightSelectedTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212))));
-            lightSelectedTrigger.Setters.Add(new Setter(DataGridRow.ForegroundProperty, System.Windows.Media.Brushes.White));
-            lightRowStyle.Triggers.Add(lightSelectedTrigger);
-            var lightHoverTrigger = new MultiTrigger();
-            lightHoverTrigger.Conditions.Add(new Condition(DataGridRow.IsMouseOverProperty, true));
-            lightHoverTrigger.Conditions.Add(new Condition(DataGridRow.IsSelectedProperty, false));
-            lightHoverTrigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(240, 246, 255))));
-            lightRowStyle.Triggers.Add(lightHoverTrigger);
-            CommandsGrid.RowStyle = lightRowStyle;
-
-            // 亮色列头样式
-            var lightHeaderStyle = new Style(typeof(DataGridColumnHeader));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.ForegroundProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136))));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 11.0));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.Normal));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(6, 4, 6, 4)));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
-            lightHeaderStyle.Setters.Add(new Setter(DataGridColumnHeader.BorderBrushProperty, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
-            CommandsGrid.ColumnHeaderStyle = lightHeaderStyle;
-
-            // 亮色单元格样式
-            var lightCellStyle = new Style(typeof(DataGridCell));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(6, 0, 6, 0)));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.MarginProperty, new Thickness(0)));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.VerticalAlignmentProperty, VerticalAlignment.Center));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.FocusVisualStyleProperty, null));
-            lightCellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(DataGridRow), 1) }));
-            var lightCellSelectedTrigger = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
-            lightCellSelectedTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            lightCellSelectedTrigger.Setters.Add(new Setter(DataGridCell.ForegroundProperty, System.Windows.Media.Brushes.White));
-            lightCellStyle.Triggers.Add(lightCellSelectedTrigger);
-            CommandsGrid.CellStyle = lightCellStyle;
+            // 亮色主题：选中行橙色背景，悬停行浅色背景
+            if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
+                selectedBrush.Color = System.Windows.Media.Color.FromRgb(230, 126, 34); // 橙色
+            if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
+                hoverBrush.Color = System.Windows.Media.Color.FromRgb(240, 246, 255); // 亮色悬停
         }
     }
 

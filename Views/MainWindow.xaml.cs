@@ -105,8 +105,8 @@ public partial class MainWindow : Window
         // Load language setting
         LocalizationService.LoadFromConfig();
 
-        // Set placeholder text
-        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
+        // Update placeholder with current hotkey
+        UpdatePlaceholderWithHotkey();
 
         // Initialize ToastService with main window
         ToastService.Instance.SetMainWindow(this);
@@ -167,8 +167,18 @@ public partial class MainWindow : Window
         // Update toast position
         ToastService.Instance.SetMainWindow(this);
 
-        Opacity = 0;
-        BeginAnimation(OpacityProperty, new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(150) });
+        // Fancy show animation: scale + fade in
+        RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+        var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
+        RenderTransform = scaleTransform;
+        
+        var fadeIn = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(100) };
+        var scaleIn = new DoubleAnimation { From = 0.9, To = 1, Duration = TimeSpan.FromMilliseconds(100) };
+        
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleIn);
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleIn);
+        BeginAnimation(OpacityProperty, fadeIn);
+        
         _isVisible = true;
     }
 
@@ -212,13 +222,66 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 隐藏主窗口，播放淡出动画后执行 Hide()。
+    /// 主题切换按钮右键点击，显示上下文菜单（与托盘菜单相同）
+    /// </summary>
+    private void ThemeToggleButton_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // Build a context menu similar to tray menu
+        var menu = new System.Windows.Controls.ContextMenu();
+        
+        // Settings
+        var settingsItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TraySettings") };
+        settingsItem.Click += (s, args) => OpenCommandSettings();
+        menu.Items.Add(settingsItem);
+        
+        // Language submenu
+        var langItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayLanguage") };
+        var zhItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayChinese"), IsChecked = LocalizationService.CurrentLanguage == "zh-CN" };
+        zhItem.Click += (s, args) => { LocalizationService.CurrentLanguage = "zh-CN"; RefreshLocalization(); _trayService?.Initialize(); };
+        var enItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayEnglish"), IsChecked = LocalizationService.CurrentLanguage == "en-US" };
+        enItem.Click += (s, args) => { LocalizationService.CurrentLanguage = "en-US"; RefreshLocalization(); _trayService?.Initialize(); };
+        langItem.Items.Add(zhItem);
+        langItem.Items.Add(enItem);
+        menu.Items.Add(langItem);
+        
+        menu.Items.Add(new System.Windows.Controls.Separator());
+        
+        // About
+        var aboutItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayAbout") };
+        aboutItem.Click += (s, args) => ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
+        menu.Items.Add(aboutItem);
+        
+        // Exit
+        var exitItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayExit") };
+        exitItem.Click += (s, args) => { _trayService?.Dispose(); System.Windows.Application.Current.Shutdown(); };
+        menu.Items.Add(exitItem);
+        
+        // Show menu
+        menu.IsOpen = true;
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 隐藏主窗口，播放淡出+缩小动画后执行 Hide()。
     /// </summary>
     private void HideWindow()
     {
-        var animation = new DoubleAnimation { From = 1, To = 0, Duration = TimeSpan.FromMilliseconds(100) };
-        animation.Completed += (s, e) => Hide();
-        BeginAnimation(OpacityProperty, animation);
+        // Fancy hide animation: scale + fade out
+        var fadeOut = new DoubleAnimation { From = 1, To = 0, Duration = TimeSpan.FromMilliseconds(100) };
+        
+        var scaleTransform = RenderTransform as System.Windows.Media.ScaleTransform;
+        if (scaleTransform == null)
+        {
+            scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
+            RenderTransform = scaleTransform;
+        }
+        var scaleOut = new DoubleAnimation { From = 1, To = 0.9, Duration = TimeSpan.FromMilliseconds(100) };
+        
+        fadeOut.Completed += (s, e) => Hide();
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleOut);
+        scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleOut);
+        BeginAnimation(OpacityProperty, fadeOut);
+        
         _isVisible = false;
     }
 
@@ -283,6 +346,42 @@ public partial class MainWindow : Window
             case Key.Tab:
                 HandleTabKey();
                 e.Handled = true;
+                break;
+
+            case Key.Back:
+                if (_viewModel.IsParamMode)
+                {
+                    // 参数模式下的删除逻辑：
+                    // 情况3→情况2：SearchBox有参数，删除参数字符，参数空了进入情况2
+                    // 情况2→情况1：SearchBox为空，删除">"，退出参数模式但保留命令关键字
+                    
+                    if (string.IsNullOrEmpty(SearchBox.Text))
+                    {
+                        // 情况2：SearchBox已空，删除">"退出参数模式
+                        // 保留命令关键字到 SearchBox，让用户可以继续删除命令
+                        var keyword = _viewModel.CommandKeyword;
+                        _viewModel.SwitchToNormalModeCommand.Execute(null);
+                        SearchBox.Text = keyword;
+                        SearchBox.CaretIndex = SearchBox.Text.Length;
+                        ParamIndicator.Visibility = Visibility.Collapsed;
+                        SearchBox.Padding = new Thickness(6, 4, 0, 4);
+                        PlaceholderText.Visibility = Visibility.Collapsed; // 有内容时不显示占位符
+                        e.Handled = true;
+                    }
+                    else if (SearchBox.Text.Length == 1)
+                    {
+                        // 情况3→情况2：只剩一个参数字符，删除后变成空
+                        // 先让系统删除这个字符，然后变成情况2
+                        _viewModel.CommandParam = "";
+                        // 不拦截，让系统处理删除
+                    }
+                    else
+                    {
+                        // 情况3：有多个参数字符，正常删除
+                        _viewModel.CommandParam = SearchBox.Text.Substring(0, SearchBox.Text.Length - 1);
+                        // 不拦截，让系统处理删除
+                    }
+                }
                 break;
         }
     }
@@ -391,8 +490,19 @@ public partial class MainWindow : Window
     /// </summary>
     public void RefreshLocalization()
     {
-        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder");
+        UpdatePlaceholderWithHotkey();
         BuildSearchIconMenu();
+    }
+
+    /// <summary>
+    /// 更新搜索框占位符，包含当前快捷键信息
+    /// </summary>
+    private void UpdatePlaceholderWithHotkey()
+    {
+        var config = ConfigLoader.Load();
+        var hotkey = config.Hotkey;
+        var hotkeyStr = $"{hotkey.Modifier}+{hotkey.Key}";
+        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder") + " | " + hotkeyStr;
     }
 
     /// <summary>
@@ -470,6 +580,7 @@ public partial class MainWindow : Window
             var config = ConfigLoader.Load();
             var registered = _hotkeyManager.Reregister(config.Hotkey);
             _viewModel.SearchEngine.ReloadCommands();
+            UpdatePlaceholderWithHotkey(); // Refresh hotkey hint in placeholder
             if (!registered)
             {
                 ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed"));

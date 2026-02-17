@@ -8,7 +8,14 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="CanResize"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="Window_Loaded">
+
+    <!-- 资源：选中行背景色，可在代码中动态修改 -->
+    <Window.Resources>
+        <SolidColorBrush x:Key="SelectedRowBackgroundBrush" Color="#E67E22"/>
+        <SolidColorBrush x:Key="HoverRowBackgroundBrush" Color="#F0F6FF"/>
+    </Window.Resources>
 
     <Border x:Name="RootBorder" Background="White" CornerRadius="6" BorderBrush="#E0E0E0" BorderThickness="1">
         <Grid>
@@ -181,7 +188,7 @@
                         </Style>
                     </DataGrid.RowHeaderStyle>
 
-                    <!-- 行样式：无间距，紧凑布局，支持明暗主题 -->
+                    <!-- RowStyle：选中行背景色使用 DynamicResource，可在代码中切换 -->
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Margin" Value="0"/>
@@ -191,7 +198,7 @@
                             <Setter Property="Background" Value="Transparent"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#0078D4"/>
+                                    <Setter Property="Background" Value="{DynamicResource SelectedRowBackgroundBrush}"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
                                 <MultiTrigger>
@@ -199,12 +206,13 @@
                                         <Condition Property="IsMouseOver" Value="True"/>
                                         <Condition Property="IsSelected" Value="False"/>
                                     </MultiTrigger.Conditions>
-                                    <Setter Property="Background" Value="#F0F6FF"/>
+                                    <Setter Property="Background" Value="{DynamicResource HoverRowBackgroundBrush}"/>
                                 </MultiTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>
 
+                    <!-- CellStyle：透明背景和文字颜色，让行样式控制选中背景色 -->
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="BorderThickness" Value="0"/>
@@ -213,12 +221,7 @@
                             <Setter Property="VerticalAlignment" Value="Center"/>
                             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                             <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=Foreground}"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                            </Style.Triggers>
+                            <Setter Property="Background" Value="Transparent"/>
                         </Style>
                     </DataGrid.CellStyle>
 
@@ -242,7 +245,7 @@
 
             <!-- Footer -->
             <Border Grid.Row="2" BorderBrush="#EEE" BorderThickness="0,1,0,0">
-                <TextBlock x:Name="FooterText" Text="拖动标题栏移动 | 输入关键字搜索 | 回车执行"
+                <TextBlock x:Name="FooterText" Text="提示：命令参数占位符{%p}"
                            Foreground="#AAA" FontSize="10" FontFamily="微软雅黑"
                            Margin="12,0" VerticalAlignment="Center"/>
             </Border>
