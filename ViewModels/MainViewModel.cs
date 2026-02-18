@@ -6,6 +6,8 @@
 // ============================================================================
 
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -67,8 +69,14 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     public string DisplayText => IsParamMode ? $"{CommandKeyword} {CommandParam}" : SearchText;
 
-    /// <summary>搜索结果的可观察集合，绑定到结果列表控件</summary>
+    /// <summary>搜索结果的可观察集合，作为 ResultsView 的数据源</summary>
     public ObservableCollection<SearchResult> Results { get; } = new();
+
+    /// <summary>
+    /// 带分组支持的结果视图，绑定到 ListBox.ItemsSource。
+    /// 当搜索结果包含多种类型时（命令/应用/文件/窗口）自动按 GroupLabel 分组显示。
+    /// </summary>
+    public ICollectionView ResultsView { get; }
 
     /// <summary>公开搜索引擎实例，供视图层直接调用执行命令</summary>
     public SearchEngine SearchEngine => _searchEngine;
@@ -82,6 +90,10 @@ public partial class MainViewModel : ObservableObject
     {
         _searchEngine = searchEngine;
         _usageTracker = usageTracker;
+
+        // 构建带分组描述的结果视图（按 GroupLabel 分组，空 GroupLabel 归为同一组不显示标题）
+        ResultsView = CollectionViewSource.GetDefaultView(Results);
+        ResultsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SearchResult.GroupLabel)));
     }
 
     /// <summary>

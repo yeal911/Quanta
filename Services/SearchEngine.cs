@@ -51,6 +51,21 @@ public class SearchEngine
     private readonly CommandRouter _commandRouter;
 
     /// <summary>
+    /// 窗口管理器，负责枚举并切换到系统中的可见应用窗口
+    /// </summary>
+    private readonly WindowManager _windowManager;
+
+    /// <summary>
+    /// 应用程序搜索提供程序，扫描开始菜单中已安装的应用程序（.lnk 快捷方式）
+    /// </summary>
+    private readonly ApplicationSearchProvider _appSearchProvider;
+
+    /// <summary>
+    /// 文件搜索提供程序，在桌面和下载目录中搜索文件
+    /// </summary>
+    private readonly FileSearchProvider _fileSearchProvider;
+
+    /// <summary>
     /// 用户自定义命令列表，从配置文件 config.json 中加载
     /// </summary>
     private List<CommandConfig> _customCommands = new();
@@ -62,31 +77,39 @@ public class SearchEngine
 
     /// <summary>
     /// Windows 系统内置命令列表
-    /// 包含常用的系统工具（如命令提示符、计算器、任务管理器等）和网络诊断命令（如 ping、ipconfig 等）。
-    /// 这些命令无需用户配置即可直接使用，作为默认的命令候选项。
+    /// 包含常用的系统工具（如命令提示符、计算器、任务管理器等）、网络诊断命令和系统控制命令。
+    /// 这些命令无需用户配置即可直接使用，IsBuiltIn=true 标记，不会出现在用户设置界面中。
     /// </summary>
     private static readonly List<CommandConfig> BuiltInCommands = new()
     {
-        new() { Keyword = "cmd", Name = "命令提示符", Type = "Program", Path = "cmd.exe", Arguments = "/k {param}", Description = "打开CMD" },
-        new() { Keyword = "powershell", Name = "PowerShell", Type = "Program", Path = "powershell.exe", Arguments = "-NoExit -Command \"{param}\"", Description = "打开PowerShell" },
-        new() { Keyword = "notepad", Name = "记事本", Type = "Program", Path = "notepad.exe", Arguments = "{param}", Description = "打开记事本" },
-        new() { Keyword = "calc", Name = "计算器", Type = "Program", Path = "calc.exe", Description = "打开计算器" },
-        new() { Keyword = "mspaint", Name = "画图", Type = "Program", Path = "mspaint.exe", Description = "打开画图" },
-        new() { Keyword = "explorer", Name = "资源管理器", Type = "Program", Path = "explorer.exe", Arguments = "{param}", Description = "打开资源管理器" },
-        new() { Keyword = "taskmgr", Name = "任务管理器", Type = "Program", Path = "taskmgr.exe", Description = "打开任务管理器" },
-        new() { Keyword = "devmgmt", Name = "设备管理器", Type = "Program", Path = "devmgmt.msc", Description = "打开设备管理器" },
-        new() { Keyword = "services", Name = "服务", Type = "Program", Path = "services.msc", Description = "打开服务" },
-        new() { Keyword = "regedit", Name = "注册表", Type = "Program", Path = "regedit.exe", Description = "打开注册表" },
-        new() { Keyword = "control", Name = "控制面板", Type = "Program", Path = "control.exe", Description = "打开控制面板" },
-        new() { Keyword = "ipconfig", Name = "IP配置", Type = "Shell", Path = "ipconfig {param}", Description = "查看IP配置" },
-        new() { Keyword = "ping", Name = "Ping", Type = "Shell", Path = "ping {param}", Description = "Ping命令" },
-        new() { Keyword = "tracert", Name = "路由追踪", Type = "Shell", Path = "tracert {param}", Description = "追踪路由" },
-        new() { Keyword = "nslookup", Name = "DNS查询", Type = "Shell", Path = "nslookup {param}", Description = "DNS查询" },
-        new() { Keyword = "netstat", Name = "网络状态", Type = "Shell", Path = "netstat -an", Description = "查看网络状态" },
+        // ── 常用系统工具 ──────────────────────────────────────────
+        new() { Keyword = "cmd",       Name = "命令提示符",  Type = "Program", Path = "cmd.exe",      Arguments = "/k {param}", Description = "打开CMD",          IsBuiltIn = true },
+        new() { Keyword = "powershell",Name = "PowerShell",  Type = "Program", Path = "powershell.exe",Arguments = "-NoExit -Command \"{param}\"", Description = "打开PowerShell", IsBuiltIn = true },
+        new() { Keyword = "notepad",   Name = "记事本",      Type = "Program", Path = "notepad.exe",  Arguments = "{param}",    Description = "打开记事本",       IsBuiltIn = true },
+        new() { Keyword = "calc",      Name = "计算器",      Type = "Program", Path = "calc.exe",                               Description = "打开计算器",       IsBuiltIn = true },
+        new() { Keyword = "mspaint",   Name = "画图",        Type = "Program", Path = "mspaint.exe",                            Description = "打开画图",         IsBuiltIn = true },
+        new() { Keyword = "explorer",  Name = "资源管理器",  Type = "Program", Path = "explorer.exe", Arguments = "{param}",    Description = "打开资源管理器",   IsBuiltIn = true },
+        new() { Keyword = "taskmgr",   Name = "任务管理器",  Type = "Program", Path = "taskmgr.exe",                            Description = "打开任务管理器",   IsBuiltIn = true },
+        new() { Keyword = "devmgmt",   Name = "设备管理器",  Type = "Program", Path = "devmgmt.msc",                            Description = "打开设备管理器",   IsBuiltIn = true },
+        new() { Keyword = "services",  Name = "服务",        Type = "Program", Path = "services.msc",                           Description = "打开服务",         IsBuiltIn = true },
+        new() { Keyword = "regedit",   Name = "注册表",      Type = "Program", Path = "regedit.exe",                            Description = "打开注册表",       IsBuiltIn = true },
+        new() { Keyword = "control",   Name = "控制面板",    Type = "Program", Path = "control.exe",                            Description = "打开控制面板",     IsBuiltIn = true },
+        // ── 网络诊断 ──────────────────────────────────────────────
+        new() { Keyword = "ipconfig",  Name = "IP配置",      Type = "Shell",   Path = "ipconfig {param}",                       Description = "查看IP配置",       IsBuiltIn = true },
+        new() { Keyword = "ping",      Name = "Ping",        Type = "Shell",   Path = "ping {param}",                           Description = "Ping命令",         IsBuiltIn = true },
+        new() { Keyword = "tracert",   Name = "路由追踪",    Type = "Shell",   Path = "tracert {param}",                        Description = "追踪路由",         IsBuiltIn = true },
+        new() { Keyword = "nslookup",  Name = "DNS查询",     Type = "Shell",   Path = "nslookup {param}",                       Description = "DNS查询",          IsBuiltIn = true },
+        new() { Keyword = "netstat",   Name = "网络状态",    Type = "Shell",   Path = "netstat -an",                            Description = "查看网络状态",     IsBuiltIn = true },
+        // ── 系统控制 ──────────────────────────────────────────────
+        new() { Keyword = "lock",      Name = "锁屏",        Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", Description = "锁定计算机", IsBuiltIn = true, IconPath = "🔒" },
+        new() { Keyword = "shutdown",  Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻" },
+        new() { Keyword = "restart",   Name = "重启",        Type = "Shell",   Path = "shutdown /r /t 10",                      Description = "10秒后重启",       IsBuiltIn = true, IconPath = "🔄" },
+        new() { Keyword = "sleep",     Name = "睡眠",        Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤" },
+        new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑" },
     };
 
     /// <summary>
-    /// 搜索引擎构造函数
+    /// 搜索引擎构造函数，初始化所有搜索提供程序
     /// </summary>
     /// <param name="usageTracker">使用频率追踪器实例</param>
     /// <param name="commandRouter">命令路由器实例</param>
@@ -94,6 +117,9 @@ public class SearchEngine
     {
         _usageTracker = usageTracker;
         _commandRouter = commandRouter;
+        _windowManager = new WindowManager();
+        _appSearchProvider = new ApplicationSearchProvider();
+        _fileSearchProvider = new FileSearchProvider();
 
         LoadCustomCommands();
     }
@@ -142,13 +168,13 @@ public class SearchEngine
     }
 
     /// <summary>
-    /// 执行异步搜索的核心方法
-    /// 当查询为空时返回默认结果；否则依次搜索自定义命令和内置命令路由，
-    /// 最终按匹配分数和使用频次降序排列，返回前 10 条结果。
+    /// 执行异步搜索的核心方法。
+    /// 当查询为空时返回最近使用的命令；否则并发搜索自定义命令、应用程序、文件和窗口，
+    /// 最终按分组优先级和匹配分数排序，返回前 N 条结果（N 由配置决定）。
     /// </summary>
     /// <param name="query">用户输入的搜索关键词</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>排序后的搜索结果列表（最多 10 条）</returns>
+    /// <returns>按分组+分数排序的搜索结果列表</returns>
     public async Task<List<SearchResult>> SearchAsync(string query, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -156,21 +182,109 @@ public class SearchEngine
 
         var results = new ConcurrentBag<SearchResult>();
 
-        // 优先搜索自定义命令和内置命令
+        // ── 1. 搜索自定义命令和内置命令（同步，始终执行）──────────
         var customResults = SearchCustomCommands(query);
-        foreach (var r in customResults)
-            results.Add(r);
+        foreach (var r in customResults) results.Add(r);
 
-        // 通过命令路由器检查是否匹配特殊命令（如计算器、网页搜索等）
+        // ── 2. 通过命令路由器处理特殊命令（计算、网页搜索、单位换算）──
         var commandResult = await _commandRouter.TryHandleCommandAsync(query);
         if (commandResult != null)
         {
+            commandResult.GroupLabel = commandResult.Type == SearchResultType.Calculator ? "Calc" : "Web";
+            commandResult.GroupOrder = commandResult.Type == SearchResultType.Calculator ? 4 : 5;
             results.Add(commandResult);
         }
 
-        // 按匹配分数降序、使用次数降序排列，取前 10 条并设置索引
-        var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(_maxResults).ToList();
-        for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i + 1;
+        // ── 3. 查询长度 >= 2 时并发搜索应用程序、文件和窗口 ────────
+        if (query.Length >= 2)
+        {
+            var providerTasks = new List<Task>();
+
+            // 3a. 搜索已安装应用（开始菜单 .lnk 文件）
+            providerTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var appResults = await _appSearchProvider.SearchAsync(query, cancellationToken);
+                    foreach (var r in appResults)
+                    {
+                        r.GroupLabel = "App";
+                        r.GroupOrder = 1;
+                        r.IconText = "📦";
+                        r.QueryMatch = query;
+                        results.Add(r);
+                    }
+                }
+                catch (Exception ex) { Logger.Warn($"App search failed: {ex.Message}"); }
+            }, cancellationToken));
+
+            // 3b. 搜索文件（桌面+下载目录）
+            providerTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var fileResults = await _fileSearchProvider.SearchAsync(query, cancellationToken);
+                    foreach (var r in fileResults)
+                    {
+                        r.GroupLabel = "File";
+                        r.GroupOrder = 2;
+                        r.IconText = "📄";
+                        r.QueryMatch = query;
+                        results.Add(r);
+                    }
+                }
+                catch (Exception ex) { Logger.Warn($"File search failed: {ex.Message}"); }
+            }, cancellationToken));
+
+            // 3c. 搜索当前打开的窗口（同步快速）
+            providerTasks.Add(Task.Run(() =>
+            {
+                try
+                {
+                    var windows = _windowManager.GetVisibleWindows();
+                    foreach (var w in windows)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var score = CalculateFuzzyScore(query, w.Title);
+                        if (score > 0)
+                        {
+                            w.MatchScore = score;
+                            w.GroupLabel = "Window";
+                            w.GroupOrder = 3;
+                            w.IconText = "🪟";
+                            w.QueryMatch = query;
+                            results.Add(w);
+                        }
+                    }
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) { Logger.Warn($"Window search failed: {ex.Message}"); }
+            }, cancellationToken));
+
+            await Task.WhenAll(providerTasks);
+        }
+
+        // ── 4. 每个分组内部按匹配分数降序排列，分组间按 GroupOrder 升序 ──
+        var finalList = results
+            .OrderBy(r => r.GroupOrder)
+            .ThenByDescending(r => r.MatchScore)
+            .ThenByDescending(r => _usageTracker.GetUsageCount(r.Id))
+            .Take(_maxResults)
+            .ToList();
+
+        // 若只有一种分组，清空 GroupLabel 以避免显示多余的分组标题
+        var distinctGroups = finalList.Select(r => r.GroupLabel).Distinct().Count();
+        if (distinctGroups <= 1)
+        {
+            foreach (var r in finalList) r.GroupLabel = "";
+        }
+
+        for (int i = 0; i < finalList.Count; i++)
+        {
+            finalList[i].Index = i + 1;
+            if (string.IsNullOrEmpty(finalList[i].QueryMatch))
+                finalList[i].QueryMatch = query;
+        }
         return finalList;
     }
 
@@ -204,7 +318,9 @@ public class SearchEngine
                     IconText = GetIconText(cmd),
                     Type = SearchResultType.CustomCommand,
                     CommandConfig = cmd,
-                    MatchScore = 1.0
+                    MatchScore = 1.0,
+                    GroupLabel = "Command",
+                    GroupOrder = 0
                 });
             }
             else
@@ -235,7 +351,9 @@ public class SearchEngine
                         IconText = GetIconText(cmd),
                         Type = SearchResultType.CustomCommand,
                         CommandConfig = cmd,
-                        MatchScore = score
+                        MatchScore = score,
+                        GroupLabel = "Command",
+                        GroupOrder = 0
                     });
                 }
             }
@@ -245,46 +363,75 @@ public class SearchEngine
     }
 
     /// <summary>
-    /// 获取默认搜索结果（当用户未输入任何查询时显示）
-    /// 优先展示用户自定义命令，其次展示内置命令，最多返回 8 条。
-    /// 每条结果会根据命令类型添加对应的图标前缀（如 URL、程序、目录、Shell 等）。
+    /// 获取默认搜索结果（当用户未输入任何查询时显示）。
+    /// 优先展示最近使用过的命令，剩余位置用用户命令和内置命令补充，最多返回 MaxResults 条。
     /// </summary>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>默认展示的搜索结果列表</returns>
+    /// <returns>默认展示的搜索结果列表（最近使用优先）</returns>
     private async Task<List<SearchResult>> GetDefaultResultsAsync(CancellationToken cancellationToken)
     {
-        var results = new ConcurrentBag<SearchResult>();
-        int index = 1;
+        var results = new List<SearchResult>();
+        var allCommands = _customCommands.Concat(BuiltInCommands).ToList();
 
-        // 优先显示用户命令，然后显示内置命令，最多取 8 条
-        foreach (var cmd in _customCommands.Concat(BuiltInCommands).Take(_maxResults))
+        // 将所有命令按关键字索引，方便按使用记录 ID 查找
+        var commandByKey = allCommands.ToDictionary(c => $"cmd:{c.Keyword}", c => c);
+
+        // ── 1. 优先展示最近使用过的命令 ──────────────────────────
+        var recentIds = _usageTracker.GetRecentItemIds(_maxResults);
+        var addedKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var id in recentIds)
         {
-            // 根据命令类型添加对应的图标前缀
-            var typeName = cmd.Type.ToLower() switch
+            if (commandByKey.TryGetValue(id, out var cmd))
             {
-                "url" => "🌐 " + cmd.Name,
-                "program" => "📦 " + cmd.Name,
-                "directory" => "📁 " + cmd.Name,
-                "shell" => "⚡ " + cmd.Name,
-                "calculator" => "🔢 " + cmd.Name,
-                _ => cmd.Name
-            };
-
-            results.Add(new SearchResult
-            {
-                Index = index++,
-                Id = $"cmd:{cmd.Keyword}",
-                Title = cmd.Keyword,
-                Subtitle = typeName,
-                Path = cmd.Path,
-                IconText = GetIconText(cmd),
-                Type = SearchResultType.CustomCommand,
-                CommandConfig = cmd,
-                MatchScore = 0.5
-            });
+                results.Add(BuildDefaultResult(cmd, results.Count + 1));
+                addedKeywords.Add(cmd.Keyword);
+            }
         }
 
-        return results.ToList();
+        // ── 2. 用剩余命令填充，直到达到 MaxResults ───────────────
+        foreach (var cmd in allCommands)
+        {
+            if (results.Count >= _maxResults) break;
+            if (!addedKeywords.Contains(cmd.Keyword))
+            {
+                results.Add(BuildDefaultResult(cmd, results.Count + 1));
+                addedKeywords.Add(cmd.Keyword);
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 构建默认显示状态下的搜索结果对象（无查询关键字时的展示格式）
+    /// </summary>
+    private SearchResult BuildDefaultResult(CommandConfig cmd, int index)
+    {
+        var typeName = cmd.Type.ToLower() switch
+        {
+            "url"        => "🌐 " + cmd.Name,
+            "program"    => "📦 " + cmd.Name,
+            "directory"  => "📁 " + cmd.Name,
+            "shell"      => "⚡ " + cmd.Name,
+            "calculator" => "🔢 " + cmd.Name,
+            _            => cmd.Name
+        };
+
+        return new SearchResult
+        {
+            Index = index,
+            Id = $"cmd:{cmd.Keyword}",
+            Title = cmd.Keyword,
+            Subtitle = typeName,
+            Path = cmd.Path,
+            IconText = GetIconText(cmd),
+            Type = SearchResultType.CustomCommand,
+            CommandConfig = cmd,
+            MatchScore = 0.5,
+            GroupLabel = "",
+            GroupOrder = 0
+        };
     }
 
     /// <summary>
@@ -340,13 +487,34 @@ public class SearchEngine
             case SearchResultType.File:
             case SearchResultType.RecentFile:
                 return await LaunchFileAsync(result);
-            case SearchResultType.Command:
-            case SearchResultType.Calculator:
-            case SearchResultType.WebSearch:
+
             case SearchResultType.Window:
+                // 激活（切换到）对应的系统窗口
+                return _windowManager.ActivateWindow(result);
+
+            case SearchResultType.Calculator:
+                // 将计算结果复制到剪贴板
+                var calcOutput = "";
+                if (result.Data is CommandResult cr && cr.Success)
+                    calcOutput = cr.Output;
+                else if (!string.IsNullOrEmpty(result.Subtitle))
+                    calcOutput = result.Subtitle;
+
+                if (!string.IsNullOrEmpty(calcOutput))
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        System.Windows.Clipboard.SetText(calcOutput));
+                    ToastService.Instance.ShowSuccess(LocalizationService.Get("CopiedToClipboard"));
+                }
                 return true;
+
+            case SearchResultType.Command:
+            case SearchResultType.WebSearch:
+                return true;
+
             case SearchResultType.CustomCommand:
                 return await ExecuteCustomCommandAsync(result, "");
+
             default:
                 return false;
         }

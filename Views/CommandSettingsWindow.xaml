@@ -100,6 +100,9 @@
                         <Button x:Name="DeleteButton" Content="删除" Click="DeleteCommand_Click"
                                 Background="#E74C3C" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                 BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
+                        <Button x:Name="TestButton" Content="测试" Click="TestCommand_Click"
+                                Background="#8E44AD" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
                         <Button x:Name="SaveButton" Content="保存" Click="SaveCommand_Click"
                                 Background="#27AE60" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                 BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand"/>

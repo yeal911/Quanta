@@ -114,9 +114,11 @@ public partial class MainWindow : Window
         _windowHandle = new WindowInteropHelper(this).Handle;
         var config = ConfigLoader.Load();
 
-        // 初始化 Toast 主题
-        var isDarkTheme = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
-        ToastService.Instance.SetTheme(isDarkTheme);
+        // 恢复上次保存的主题（Dark/Light）
+        var savedTheme = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
+        _viewModel.IsDarkTheme = savedTheme;
+        ApplyTheme(savedTheme);
+        ToastService.Instance.SetTheme(savedTheme);
 
         var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
@@ -188,44 +190,52 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 主题切换按钮点击事件处理。
-    /// 切换 ViewModel 的主题状态，并即时更新窗口边框、搜索框、图标等 UI 元素的颜色。
+    /// 切换 ViewModel 的主题状态，更新 UI 颜色，并将新主题持久化到配置文件。
     /// </summary>
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.ToggleThemeCommand.Execute(null);
-
-        // 同步更新 Toast 服务主题
+        ApplyTheme(_viewModel.IsDarkTheme);
         ToastService.Instance.SetTheme(_viewModel.IsDarkTheme);
 
-        Dispatcher.Invoke(() =>
-        {
-            var border = FindName("MainBorder") as Border;
-            var icon = FindName("ThemeIcon") as TextBlock;
+        // 持久化主题设置到配置文件
+        var config = ConfigLoader.Load();
+        config.Theme = _viewModel.IsDarkTheme ? "Dark" : "Light";
+        ConfigLoader.Save(config);
+    }
 
-            if (border != null && icon != null)
-            {
-                if (_viewModel.IsDarkTheme)
-                {
-                    // Switch to Dark mode
-                    border.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-                    border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-                    SearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-                    SearchBox.CaretBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-                    icon.Text = "☀";
-                    icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-                }
-                else
-                {
-                    // Switch to Light mode
-                    border.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-                    border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
-                    SearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-                    SearchBox.CaretBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-                    icon.Text = "🌙";
-                    icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-                }
-            }
-        });
+    /// <summary>
+    /// 将指定主题的颜色方案应用到主窗口的各 UI 元素。
+    /// 统一供启动时恢复主题和切换主题时使用。
+    /// </summary>
+    /// <param name="isDark">是否为暗色主题</param>
+    private void ApplyTheme(bool isDark)
+    {
+        var border = FindName("MainBorder") as Border;
+        var icon   = FindName("ThemeIcon") as TextBlock;
+
+        if (border == null || icon == null) return;
+
+        if (isDark)
+        {
+            border.Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+            SearchBox.Foreground  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+            SearchBox.CaretBrush  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+            PlaceholderText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            icon.Text       = "☀";
+            icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+        }
+        else
+        {
+            border.Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+            border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
+            SearchBox.Foreground  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+            SearchBox.CaretBrush  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+            PlaceholderText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            icon.Text       = "🌙";
+            icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+        }
     }
 
     /// <summary>
@@ -596,7 +606,7 @@ public partial class MainWindow : Window
     /// <param name="e">路由事件参数（可选）</param>
     private void OpenCommandSettings(object? sender = null, RoutedEventArgs? e = null)
     {
-        var win = new CommandSettingsWindow { Owner = this };
+        var win = new CommandSettingsWindow(_viewModel.SearchEngine) { Owner = this };
         win.SetDarkTheme(_viewModel.IsDarkTheme);
         win.Show();
 

@@ -28,3 +28,5 @@ E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\refint\Quanta.dll
 E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Quanta.genruntimeconfig.cache
 E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\ref\Quanta.dll
 E:\VS-STUDIO-CODES\Quanta\bin\Debug\net8.0-windows\quanta.ico
+E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
+E:\VS-STUDIO-CODES\Quanta\obj\Debug\net8.0-windows\Quanta_MarkupCompile.lref

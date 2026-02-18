@@ -17,6 +17,7 @@ using System.Windows.Input;
 using Quanta.Models;
 using Quanta.Helpers;
 using Quanta.Services;
+using System.Threading.Tasks;
 
 namespace Quanta.Views;
 
@@ -44,12 +45,17 @@ public partial class CommandSettingsWindow : Window
     /// <summary>当前是否为暗色主题</summary>
     private bool _isDarkTheme;
 
+    /// <summary>搜索引擎实例，用于执行"测试命令"功能；为 null 时禁用测试按钮</summary>
+    private readonly SearchEngine? _searchEngine;
+
     /// <summary>
     /// 构造函数，初始化组件、加载配置、应用本地化文本，
     /// 并设置命令列表的过滤视图。
     /// </summary>
-    public CommandSettingsWindow()
+    /// <param name="searchEngine">搜索引擎实例（可选），用于测试命令执行</param>
+    public CommandSettingsWindow(SearchEngine? searchEngine = null)
     {
+        _searchEngine = searchEngine;
         Logger.Log("[CommandSettingsWindow] Constructor started");
         InitializeComponent();
         LoadConfig();
@@ -217,6 +223,7 @@ public partial class CommandSettingsWindow : Window
         ExportButton.Content = LocalizationService.Get("ExportCommand");
         AddButton.Content = LocalizationService.Get("AddCommand");
         DeleteButton.Content = LocalizationService.Get("DeleteCommand");
+        TestButton.Content = LocalizationService.Get("TestCommand");
         SaveButton.Content = LocalizationService.Get("SaveCommand");
         KeywordColumn.Header = LocalizationService.Get("Keyword");
         NameColumn.Header = LocalizationService.Get("Name");
@@ -533,5 +540,51 @@ public partial class CommandSettingsWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    /// <summary>
+    /// 测试命令按钮点击事件处理。
+    /// 获取当前选中的命令，调用搜索引擎执行，并以 Toast 通知显示执行结果。
+    /// </summary>
+    private async void TestCommand_Click(object sender, RoutedEventArgs e)
+    {
+        if (CommandsGrid.SelectedItem is not CommandConfig cmd)
+        {
+            ToastService.Instance.ShowWarning("请先选中要测试的命令");
+            return;
+        }
+
+        if (_searchEngine == null)
+        {
+            ToastService.Instance.ShowWarning("测试功能不可用");
+            return;
+        }
+
+        var result = new SearchResult
+        {
+            Id = $"cmd:{cmd.Keyword}",
+            Title = cmd.Keyword,
+            Type = SearchResultType.CustomCommand,
+            CommandConfig = cmd,
+            Path = cmd.Path
+        };
+
+        TestButton.IsEnabled = false;
+        try
+        {
+            bool success = await _searchEngine.ExecuteCustomCommandAsync(result, "");
+            if (success)
+                ToastService.Instance.ShowSuccess(LocalizationService.Get("TestExecuted") + $": {cmd.Name}");
+            else
+                ToastService.Instance.ShowError(LocalizationService.Get("TestFailed") + $": {cmd.Name}");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Instance.ShowError($"{LocalizationService.Get("TestFailed")}: {ex.Message}");
+        }
+        finally
+        {
+            TestButton.IsEnabled = true;
+        }
     }
 }

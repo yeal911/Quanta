@@ -206,6 +206,24 @@ public class UsageTracker : IDisposable
     }
 
     /// <summary>
+    /// 获取最近使用过的项目 ID 列表，按最后使用时间倒序排列。
+    /// </summary>
+    /// <param name="maxCount">最多返回的条目数</param>
+    /// <returns>最近使用项目 ID 的列表</returns>
+    public List<string> GetRecentItemIds(int maxCount)
+    {
+        lock (_lock)
+        {
+            return _usageData.Items
+                .Where(kv => kv.Value.LastUsedTime != DateTime.MinValue)
+                .OrderByDescending(kv => kv.Value.LastUsedTime)
+                .Take(maxCount)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+    /// <summary>
     /// 释放使用跟踪器占用的资源。
     /// 停止并释放定时保存计时器，并执行最终一次数据保存以防止数据丢失。
     /// </summary>

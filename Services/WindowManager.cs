@@ -136,9 +136,11 @@ public class WindowManager
             int exStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
             if ((exStyle & WS_EX_TOOLWINDOW) != 0 && (exStyle & WS_EX_APPWINDOW) == 0) return true;
 
-            // 过滤掉无所有者且不具有 WS_EX_APPWINDOW 样式的窗口
+            // 仅显示顶级窗口（无所有者）或显式标记为应用窗口的窗口
+            // 有所有者的窗口（如对话框/弹出框）通常不应出现在列表中
             IntPtr owner = GetWindow(hWnd, GW_OWNER);
-            if (owner == IntPtr.Zero && (exStyle & WS_EX_APPWINDOW) == 0) return true;
+            bool hasOwner = owner != IntPtr.Zero;
+            if (hasOwner && (exStyle & WS_EX_APPWINDOW) == 0) return true;
 
             // 将符合条件的窗口添加到结果列表中
             windows.Add(new SearchResult { Title = title, Type = SearchResultType.Window, WindowHandle = hWnd, Path = $"Window: {title}" });

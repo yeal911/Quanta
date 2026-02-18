@@ -72,6 +72,15 @@ public class SearchResult
 
     /// <summary>显示图标文本（emoji），根据命令类型或自定义 IconPath 生成</summary>
     public string IconText { get; set; } = "";
+
+    /// <summary>分组标签，用于搜索结果在界面中按类型分组显示（Command/App/File/Window/Calc/Web）</summary>
+    public string GroupLabel { get; set; } = "Command";
+
+    /// <summary>分组排序权重，数值越小越靠前（Command=0, App=1, File=2, Window=3, Calc=4, Web=5）</summary>
+    public int GroupOrder { get; set; } = 0;
+
+    /// <summary>触发本次匹配的搜索词，用于在 Title 中高亮显示匹配字符</summary>
+    public string QueryMatch { get; set; } = "";
 }
 
 /// <summary>
