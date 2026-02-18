@@ -241,17 +241,27 @@ public class SearchEngine
             }, cancellationToken));
 
             // 3c. 搜索当前打开的窗口（同步快速）
+            // 使用包含匹配（%keyword%），不使用模糊子序列匹配
             providerTasks.Add(Task.Run(() =>
             {
                 try
                 {
                     var windows = _windowManager.GetVisibleWindows();
+                    var queryLower = query.ToLower();
+                    
                     foreach (var w in windows)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var score = CalculateFuzzyScore(query, w.Title);
-                        if (score > 0)
+                        var titleLower = w.Title.ToLower();
+                        
+                        // 使用包含匹配
+                        if (titleLower.Contains(queryLower))
                         {
+                            // 完全匹配 = 1.0，前缀匹配 = 0.9，包含匹配 = 0.8
+                            double score = titleLower == queryLower ? 1.0 
+                                : titleLower.StartsWith(queryLower) ? 0.9 
+                                : 0.8;
+                            
                             w.MatchScore = score;
                             w.GroupLabel = "Window";
                             w.GroupOrder = 3;
@@ -262,7 +272,7 @@ public class SearchEngine
                     }
                 }
                 catch (OperationCanceledException) { throw; }
-                catch (Exception ex) { Logger.Warn($"Window search failed: {ex.Message}"); }
+                catch (Exception ex) { DebugLog.Log("Window search failed: {0}", ex.Message); }
             }, cancellationToken));
 
             await Task.WhenAll(providerTasks);
@@ -892,7 +902,7 @@ public class FileSearchProvider : ISearchProvider
 
     /// <summary>
     /// 在桌面和下载目录中搜索匹配的文件
-    /// 对每个目录并行搜索，使用模糊匹配算法评估文件名与查询的相似度。
+    /// 仅匹配文件名（不搜索内容），使用包含匹配（%keyword%），不使用模糊子序列匹配。
     /// </summary>
     /// <param name="query">用户输入的搜索关键词</param>
     /// <param name="cancellationToken">取消令牌</param>
@@ -900,6 +910,12 @@ public class FileSearchProvider : ISearchProvider
     public async Task<List<SearchResult>> SearchAsync(string query, CancellationToken cancellationToken = default)
     {
         var results = new ConcurrentBag<SearchResult>();
+        
+        if (string.IsNullOrWhiteSpace(query))
+            return results.ToList();
+
+        // 转小写用于不区分大小写匹配
+        var queryLower = query.ToLower();
 
         // 并行搜索各个目录
         var tasks = _searchDirectories.Select(async dir =>
@@ -915,9 +931,16 @@ public class FileSearchProvider : ISearchProvider
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     var fileName = Path.GetFileName(file);
-                    var score = SearchEngine.CalculateFuzzyScore(query, fileName);
-                    if (score > 0)
+                    var fileNameLower = fileName.ToLower();
+
+                    // 使用包含匹配（%keyword%），不使用模糊子序列匹配
+                    if (fileNameLower.Contains(queryLower))
                     {
+                        // 完全匹配 = 1.0，前缀匹配 = 0.9，包含匹配 = 0.8
+                        double score = fileNameLower == queryLower ? 1.0 
+                            : fileNameLower.StartsWith(queryLower) ? 0.9 
+                            : 0.8;
+
                         results.Add(new SearchResult
                         {
                             Title = fileName,
@@ -932,7 +955,7 @@ public class FileSearchProvider : ISearchProvider
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failed to search directory: {dir}", ex);
+                DebugLog.Log("Failed to search directory: {0} - {1}", dir, ex.Message);
             }
         });
 
