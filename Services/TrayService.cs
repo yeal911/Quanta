@@ -228,19 +228,22 @@ public class TrayService : IDisposable
 
         _mainWindow.Dispatcher.Invoke(() =>
         {
-            // 如果是 MainWindow，设置最近显示时间
             if (_mainWindow is Quanta.Views.MainWindow mainWin)
             {
+                // 先设置时间戳，防止 Window_Deactivated 在动画期间误触发隐藏
                 mainWin.LastShownFromTray = DateTime.Now;
+                // 使用 MainWindow 自己的 ShowWindow()，确保 Opacity / _isVisible / 动画全部正确初始化
+                mainWin.ShowWindow();
             }
+            else
+            {
+                if (_mainWindow.WindowState == WindowState.Minimized)
+                    _mainWindow.WindowState = WindowState.Normal;
 
-            // 如果窗口处于最小化状态，先恢复为正常窗口
-            if (_mainWindow.WindowState == WindowState.Minimized)
-                _mainWindow.WindowState = WindowState.Normal;
-
-            _mainWindow.Show();
-            _mainWindow.Activate();
-            _mainWindow.Focus();
+                _mainWindow.Show();
+                _mainWindow.Activate();
+                _mainWindow.Focus();
+            }
         });
     }
 

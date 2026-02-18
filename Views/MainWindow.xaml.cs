@@ -178,7 +178,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// 显示主窗口：居中定位、清空搜索状态、播放淡入动画、聚焦搜索框。
     /// </summary>
-    private void ShowWindow()
+    public void ShowWindow()
     {
         var screen = SystemParameters.WorkArea;
         Left = (screen.Width - Width) / 2;
