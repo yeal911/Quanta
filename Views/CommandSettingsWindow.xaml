@@ -201,8 +201,21 @@
                     </DataGrid.RowStyle>
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn x:Name="KeywordColumn" Header="关键字" Binding="{Binding Keyword}" Width="70"/>
-                        <DataGridTextColumn x:Name="NameColumn" Header="名称" Binding="{Binding Name}" Width="90"/>
+                        <DataGridTextColumn x:Name="KeywordColumn" Header="关键字" Binding="{Binding Keyword}" Width="70">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding Keyword}"/>
+                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn x:Name="NameColumn" Header="名称" Binding="{Binding Name}" Width="90">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding Name}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                         <DataGridComboBoxColumn x:Name="TypeColumn" Header="类型" SelectedItemBinding="{Binding Type}" Width="70">
                             <DataGridComboBoxColumn.ItemsSource>
                                 <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
@@ -212,8 +225,20 @@
                                     <sys:String>Directory</sys:String>
                                 </x:Array>
                             </DataGridComboBoxColumn.ItemsSource>
+                            <DataGridComboBoxColumn.ElementStyle>
+                                <Style TargetType="ComboBox">
+                                    <Setter Property="ToolTip" Value="{Binding Type}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.ElementStyle>
                         </DataGridComboBoxColumn>
-                        <DataGridTextColumn x:Name="PathColumn" Header="路径/URL" Binding="{Binding Path}" Width="*"/>
+                        <DataGridTextColumn x:Name="PathColumn" Header="路径/URL" Binding="{Binding Path}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding Path}"/>
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                         <DataGridCheckBoxColumn x:Name="AdminColumn" Header="管理员" Binding="{Binding RunAsAdmin}" Width="55"/>
                     </DataGrid.Columns>
                 </DataGrid>

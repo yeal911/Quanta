@@ -56,6 +56,11 @@ public class SearchEngine
     private List<CommandConfig> _customCommands = new();
 
     /// <summary>
+    /// 搜索结果最大显示条数，从配置文件 AppSettings.MaxResults 读取
+    /// </summary>
+    private int _maxResults = 10;
+
+    /// <summary>
     /// Windows 系统内置命令列表
     /// 包含常用的系统工具（如命令提示符、计算器、任务管理器等）和网络诊断命令（如 ping、ipconfig 等）。
     /// 这些命令无需用户配置即可直接使用，作为默认的命令候选项。
@@ -101,6 +106,7 @@ public class SearchEngine
     {
         var config = ConfigLoader.Load();
         _customCommands = config.Commands ?? new List<CommandConfig>();
+        _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
     }
 
     /// <summary>
@@ -111,6 +117,28 @@ public class SearchEngine
     {
         var config = ConfigLoader.Reload();
         _customCommands = config.Commands ?? new List<CommandConfig>();
+        _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
+    }
+
+    /// <summary>
+    /// 获取命令的显示图标文本。
+    /// 优先使用命令自定义的 IconPath（如果是 emoji 字符串），否则根据命令类型返回默认图标。
+    /// </summary>
+    private static string GetIconText(CommandConfig cmd)
+    {
+        // 如果 IconPath 非空且看起来是 emoji（短字符串，不是文件路径），直接使用
+        if (!string.IsNullOrEmpty(cmd.IconPath) && cmd.IconPath.Length <= 4 && !cmd.IconPath.Contains('.'))
+            return cmd.IconPath;
+
+        return cmd.Type.ToLower() switch
+        {
+            "url" => "\U0001f310",       // 🌐
+            "program" => "\U0001f4e6",   // 📦
+            "directory" => "\U0001f4c1", // 📁
+            "shell" => "\u26a1",         // ⚡
+            "calculator" => "\U0001f522",// 🔢
+            _ => "\u2699"                // ⚙
+        };
     }
 
     /// <summary>
@@ -141,7 +169,7 @@ public class SearchEngine
         }
 
         // 按匹配分数降序、使用次数降序排列，取前 10 条并设置索引
-        var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(10).ToList();
+        var finalList = results.OrderByDescending(r => r.MatchScore).ThenByDescending(r => r.UsageCount).Take(_maxResults).ToList();
         for (int i = 0; i < finalList.Count; i++) finalList[i].Index = i + 1;
         return finalList;
     }
@@ -173,6 +201,7 @@ public class SearchEngine
                     Title = cmd.Keyword,
                     Subtitle = cmd.Name,
                     Path = cmd.Path,
+                    IconText = GetIconText(cmd),
                     Type = SearchResultType.CustomCommand,
                     CommandConfig = cmd,
                     MatchScore = 1.0
@@ -203,6 +232,7 @@ public class SearchEngine
                         Title = cmd.Keyword,
                         Subtitle = cmd.Name,
                         Path = cmd.Path,
+                        IconText = GetIconText(cmd),
                         Type = SearchResultType.CustomCommand,
                         CommandConfig = cmd,
                         MatchScore = score
@@ -227,7 +257,7 @@ public class SearchEngine
         int index = 1;
 
         // 优先显示用户命令，然后显示内置命令，最多取 8 条
-        foreach (var cmd in _customCommands.Concat(BuiltInCommands).Take(8))
+        foreach (var cmd in _customCommands.Concat(BuiltInCommands).Take(_maxResults))
         {
             // 根据命令类型添加对应的图标前缀
             var typeName = cmd.Type.ToLower() switch
@@ -247,6 +277,7 @@ public class SearchEngine
                 Title = cmd.Keyword,
                 Subtitle = typeName,
                 Path = cmd.Path,
+                IconText = GetIconText(cmd),
                 Type = SearchResultType.CustomCommand,
                 CommandConfig = cmd,
                 MatchScore = 0.5
@@ -344,13 +375,16 @@ public class SearchEngine
 
         try
         {
-            // 替换路径和参数中的多种参数占位符
+            // 替换路径和参数中的参数占位符（支持自定义占位符和内置占位符）
+            var placeholder = !string.IsNullOrEmpty(cmd.ParamPlaceholder) ? cmd.ParamPlaceholder : "{param}";
             var processedPath = cmd.Path
+                .Replace(placeholder, param)
                 .Replace("{param}", param)
                 .Replace("{query}", param)
                 .Replace("{%p}", param);
 
             var processedArgs = cmd.Arguments
+                .Replace(placeholder, param)
                 .Replace("{param}", param)
                 .Replace("{query}", param)
                 .Replace("{%p}", param);

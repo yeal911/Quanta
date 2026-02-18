@@ -269,6 +269,16 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// 窗口失去焦点时自动隐藏。
+    /// 若有子窗口（如设置窗口）打开则跳过，避免误隐藏。
+    /// </summary>
+    private void Window_Deactivated(object sender, EventArgs e)
+    {
+        if (OwnedWindows.Count > 0) return;
+        HideWindow();
+    }
+
+    /// <summary>
     /// 隐藏主窗口，播放淡出+缩小动画后执行 Hide()。
     /// </summary>
     private void HideWindow()

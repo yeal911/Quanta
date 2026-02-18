@@ -162,8 +162,8 @@ public partial class CommandSettingsWindow : Window
     /// <returns>如果匹配搜索条件返回 true</returns>
     private bool CommandFilter(object obj)
     {
-        if (string.IsNullOrWhiteSpace(_commandSearchText)) return true;
         if (obj is not CommandConfig cmd) return false;
+        if (string.IsNullOrWhiteSpace(_commandSearchText)) return true;
         var q = _commandSearchText;
         return cmd.Keyword.Contains(q, StringComparison.OrdinalIgnoreCase)
             || cmd.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
@@ -222,6 +222,7 @@ public partial class CommandSettingsWindow : Window
         NameColumn.Header = LocalizationService.Get("Name");
         TypeColumn.Header = LocalizationService.Get("Type");
         PathColumn.Header = LocalizationService.Get("Path");
+        AdminColumn.Header = LocalizationService.Get("Admin");
         FooterText.Text = LocalizationService.Get("Footer");
         CommandSearchPlaceholder.Text = LocalizationService.Get("CommandSearchPlaceholder");
     }

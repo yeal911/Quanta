@@ -69,6 +69,9 @@ public class SearchResult
 
     /// <summary>显示序号，用于界面列表中的排列顺序</summary>
     public int Index { get; set; }
+
+    /// <summary>显示图标文本（emoji），根据命令类型或自定义 IconPath 生成</summary>
+    public string IconText { get; set; } = "";
 }
 
 /// <summary>

@@ -7,6 +7,9 @@
 using System;
 using System.Diagnostics;
 using System.Windows;
+using Microsoft.Win32;
+using Quanta.Helpers;
+using Quanta.Services;
 
 namespace Quanta;
 
@@ -25,6 +28,44 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         if (!EnsureSingleInstance()) { Current.Shutdown(); return; }
+        ApplyStartWithWindows();
+    }
+
+    /// <summary>
+    /// 根据配置同步开机自启注册表项。
+    /// StartWithWindows=true 时写入 Run 注册表键；=false 时移除。
+    /// </summary>
+    private void ApplyStartWithWindows()
+    {
+        try
+        {
+            var config = ConfigLoader.Load();
+            var startWithWindows = config.AppSettings?.StartWithWindows ?? false;
+            const string appName = "Quanta";
+            var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+            if (string.IsNullOrEmpty(exePath)) return;
+
+            using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key == null) return;
+
+            if (startWithWindows)
+            {
+                key.SetValue(appName, $"\"{exePath}\"");
+                Logger.Log("[App] StartWithWindows enabled - registry key set");
+            }
+            else
+            {
+                if (key.GetValue(appName) != null)
+                {
+                    key.DeleteValue(appName, false);
+                    Logger.Log("[App] StartWithWindows disabled - registry key removed");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[App] Failed to apply StartWithWindows: {ex.Message}", ex);
+        }
     }
 
     /// <summary>
