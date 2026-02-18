@@ -13,6 +13,87 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <h:GroupLabelConverter x:Key="GroupLabelConverter"/>
         
+        <!-- 半透明滚动条样式 -->
+        <Style x:Key="TransparentScrollBarThumb" TargetType="Thumb">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#20000000" CornerRadius="4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#40000000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <ControlTemplate x:Key="ScrollBarLineButton" TargetType="RepeatButton">
+            <Border Background="Transparent" Height="16"/>
+        </ControlTemplate>
+        <ControlTemplate x:Key="ScrollBarPageButton" TargetType="RepeatButton">
+            <Border Background="Transparent"/>
+        </ControlTemplate>
+
+        <Style x:Key="ModernScrollBar" TargetType="ScrollBar">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="MinWidth" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid>
+                            <Border Background="#10000000" CornerRadius="4" Opacity="0"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Template="{StaticResource ScrollBarPageButton}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource TransparentScrollBarThumb}" Margin="1,0"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Template="{StaticResource ScrollBarPageButton}"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Width" Value="Auto"/>
+                                <Setter Property="Height" Value="8"/>
+                                <Setter Property="MinHeight" Value="8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernScrollViewer" TargetType="ScrollViewer">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ScrollContentPresenter Grid.Column="0"/>
+                            <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                       Grid.Column="1" 
+                                       Style="{StaticResource ModernScrollBar}"
+                                       Value="{TemplateBinding VerticalOffset}"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
         <Style x:Key="ResultItemStyle" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="0"/>
@@ -116,16 +197,23 @@
                     </Button>
                 </Grid>
 
-                <ListBox Grid.Row="2" x:Name="ResultsList"
-                         ItemsSource="{Binding ResultsView}"
-                         SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
-                         SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
-                         Background="Transparent" BorderThickness="0"
-                         Padding="4,0"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemContainerStyle="{StaticResource ResultItemStyle}"
-                         SelectionChanged="ResultsList_SelectionChanged"
-                         PreviewMouseLeftButtonUp="ResultsList_MouseClick">
+                <ScrollViewer Grid.Row="2" 
+                             VerticalScrollBarVisibility="Auto" 
+                             HorizontalScrollBarVisibility="Disabled"
+                             Background="Transparent">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ModernScrollBar}"/>
+                    </ScrollViewer.Resources>
+                    <ListBox x:Name="ResultsList"
+                             ItemsSource="{Binding ResultsView}"
+                             SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0"
+                             Padding="4,0"
+                             ItemContainerStyle="{StaticResource ResultItemStyle}"
+                             SelectionChanged="ResultsList_SelectionChanged"
+                             PreviewMouseLeftButtonUp="ResultsList_MouseClick"
+                             Loaded="ResultsList_Loaded">
 
                     <!-- 分组标题样式：仅当有多种结果类型时才显示分组标题 -->
                     <ListBox.GroupStyle>
@@ -182,7 +270,18 @@
 
                                 <!-- Icon -->
                                 <TextBlock Grid.Column="1" Text="{Binding IconText}" FontSize="12"
-                                           VerticalAlignment="Center"/>
+                                           x:Name="ResultIcon" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1A1A1A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
 
                                 <!-- Command（带关键字高亮） -->
                                 <TextBlock Grid.Column="2" FontSize="13" Foreground="#0078D4"
@@ -212,6 +311,7 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                </ScrollViewer>
 
                 <ProgressBar Grid.Row="2" x:Name="LoadingRing" 
                             IsIndeterminate="True" 

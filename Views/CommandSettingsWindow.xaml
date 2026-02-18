@@ -31,7 +31,7 @@
             <Grid Grid.Row="0" Margin="12,0">
                 <TextBlock x:Name="TitleText" Text="命令设置" FontSize="13" FontWeight="SemiBold"
                            FontFamily="微软雅黑" VerticalAlignment="Center"/>
-                <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" Foreground="#999"
+                <Button x:Name="CloseButton" Content="✕" HorizontalAlignment="Right" Background="Transparent" Foreground="#999"
                         BorderThickness="0" Padding="6,2" Click="Cancel_Click" FontSize="13" Cursor="Hand"
                         FontFamily="微软雅黑" Height="24" MinWidth="24"/>
             </Grid>

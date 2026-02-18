@@ -102,7 +102,7 @@ public partial class CommandSettingsWindow : Window
 
     /// <summary>
     /// 根据 _isDarkTheme 标志，统一应用明暗主题的颜色方案
-    /// 确保在任何主题下，表格文字、选中行、悬浮行都清晰可见
+    /// 确保在任何主题下，表格文字、选中行、悬停行都清晰可见
     /// </summary>
     private void ApplyTheme()
     {
@@ -112,18 +112,24 @@ public partial class CommandSettingsWindow : Window
             RootBorder.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
             TitleText.Foreground = System.Windows.Media.Brushes.White;
+            CloseButton.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
             HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
             HotkeyTextBox.Foreground = System.Windows.Media.Brushes.White;
             HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             CommandSearchBox.Foreground = System.Windows.Media.Brushes.White;
             CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150));
             FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
 
             // DataGrid 整体前景色（未选中行的文字颜色）
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
             CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 38, 38));
+
+            // DataGrid 列头样式 - 暗色主题
+            CommandsGrid.ColumnHeaderStyle = CreateColumnHeaderStyle(isDark: true);
+            CommandsGrid.RowHeaderStyle = CreateRowHeaderStyle(isDark: true);
 
             // 暗色主题：选中行黄色背景，悬停行深色背景
             if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
@@ -139,17 +145,23 @@ public partial class CommandSettingsWindow : Window
             RootBorder.Background = System.Windows.Media.Brushes.White;
             RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
             TitleText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            CloseButton.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
             HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
             HotkeyTextBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
             CommandSearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(187, 187, 187));
+            SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
             FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
 
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
             CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(248, 248, 248));
+
+            // DataGrid 列头样式 - 亮色主题
+            CommandsGrid.ColumnHeaderStyle = CreateColumnHeaderStyle(isDark: false);
+            CommandsGrid.RowHeaderStyle = CreateRowHeaderStyle(isDark: false);
 
             // 亮色主题：选中行橙色背景，悬停行浅色背景
             if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
@@ -159,6 +171,55 @@ public partial class CommandSettingsWindow : Window
             if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
                 hoverBrush.Color = System.Windows.Media.Color.FromRgb(240, 246, 255); // 亮色悬停
         }
+    }
+
+    /// <summary>
+    /// 创建 DataGrid 列头样式
+    /// </summary>
+    private System.Windows.Style CreateColumnHeaderStyle(bool isDark)
+    {
+        var style = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridColumnHeader));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.ForegroundProperty, 
+            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170)) 
+                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136))));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.FontSizeProperty, 11.0));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.FontWeightProperty, System.Windows.FontWeights.Normal));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.PaddingProperty, new System.Windows.Thickness(6, 4, 6, 4)));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BorderThicknessProperty, new System.Windows.Thickness(0, 0, 0, 1)));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BorderBrushProperty, 
+            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60))
+                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
+        return style;
+    }
+
+    /// <summary>
+    /// 创建 DataGrid 行号样式
+    /// </summary>
+    private System.Windows.Style CreateRowHeaderStyle(bool isDark)
+    {
+        var style = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridRowHeader));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.WidthProperty, 30.0));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.BorderThicknessProperty, new System.Windows.Thickness(0)));
+        
+        var template = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Primitives.DataGridRowHeader));
+        var border = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
+        border.SetValue(System.Windows.Controls.Border.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
+        var textBlock = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
+        textBlock.SetValue(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding("{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"));
+        textBlock.SetValue(System.Windows.Controls.TextBlock.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
+        textBlock.SetValue(System.Windows.Controls.TextBlock.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
+        textBlock.SetValue(System.Windows.Controls.TextBlock.ForegroundProperty, 
+            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150))
+                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153)));
+        textBlock.SetValue(System.Windows.Controls.TextBlock.FontSizeProperty, 10.0);
+        textBlock.SetValue(System.Windows.Controls.TextBlock.FontFamilyProperty, new System.Windows.Media.FontFamily("Consolas"));
+        border.AppendChild(textBlock);
+        template.VisualTree = border;
+        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.TemplateProperty, template));
+        
+        return style;
     }
 
     /// <summary>

@@ -6,16 +6,22 @@
 // ============================================================================
 
 using System;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 using Quanta.ViewModels;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
+using SolidColorBrush = System.Windows.Media.SolidColorBrush;
 
 namespace Quanta.Views;
 
@@ -216,6 +222,11 @@ public partial class MainWindow : Window
 
         if (border == null || icon == null) return;
 
+        // 搜索结果图标颜色（亮色白色，暗色也用白色更显眼）
+        var iconForeground = isDark 
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
+
         if (isDark)
         {
             border.Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
@@ -236,6 +247,31 @@ public partial class MainWindow : Window
             icon.Text       = "🌙";
             icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
         }
+    }
+
+    /// <summary>
+    /// 搜索结果列表加载完成时，订阅集合变化事件以自动更新新项的图标颜色
+    /// </summary>
+    private void ResultsList_Loaded(object sender, RoutedEventArgs e)
+    {
+        // 图标颜色现在通过 XAML DataTrigger 自动处理
+    }
+
+    /// <summary>
+    /// 递归查找子元素
+    /// </summary>
+    private static T? FindVisualChild<T>(System.Windows.DependencyObject parent) where T : System.Windows.DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T result)
+                return result;
+            var childOfChild = FindVisualChild<T>(child);
+            if (childOfChild != null)
+                return childOfChild;
+        }
+        return null;
     }
 
     /// <summary>

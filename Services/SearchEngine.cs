@@ -629,20 +629,20 @@ public class SearchEngine
                     Logger.Warn($"Directory not found: {dirPath}");
                     return false;
 
-                // Shell 类型：通过 cmd.exe 执行命令行命令
+                // Shell 类型：通过 PowerShell 执行命令行命令（隐藏窗口）
                 case "shell":
                     {
                         var shellCmd = processedPath;
                         if (!string.IsNullOrEmpty(processedArgs))
                             shellCmd += " " + processedArgs;
 
-                        // 优化：直接使用 cmd.exe 执行，不等待输出（更快的执行速度）
+                        // 使用 PowerShell 执行命令，设置隐藏窗口不显示控制台
                         var shellPsi = new ProcessStartInfo
                         {
-                            FileName = "cmd.exe",
-                            Arguments = $"/c {shellCmd}",
-                            UseShellExecute = !cmd.RunHidden,
-                            CreateNoWindow = cmd.RunHidden,
+                            FileName = "powershell.exe",
+                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{shellCmd}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
                             WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory)
                                 ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
                                 : cmd.WorkingDirectory
@@ -653,6 +653,7 @@ public class SearchEngine
                         {
                             shellPsi.Verb = "runas";
                             shellPsi.UseShellExecute = true;
+                            shellPsi.CreateNoWindow = true;
                         }
 
                         // 启动进程后不等待完成（即发即忘，提升响应速度）
