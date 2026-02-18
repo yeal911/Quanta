@@ -43,12 +43,14 @@ public partial class MainWindow : Window
     /// <summary>窗口当前是否可见</summary>
     private bool _isVisible;
 
+    /// <summary>托盘双击显示窗口的时间戳，用于短暂阻止自动隐藏</summary>
+    public DateTime LastShownFromTray { get; set; }
+
     /// <summary>系统托盘服务，管理托盘图标和右键菜单</summary>
     private TrayService? _trayService;
 
     /// <summary>
-    /// 构造函数，初始化组件并创建各服务实例（使用追踪器、命令路由器、搜索引擎）。
-    /// 设置数据上下文和事件处理程序。
+    /// 构造函数，初始化组件并创建各服务实例。
     /// </summary>
     public MainWindow()
     {
@@ -64,8 +66,21 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
 
-        // Enable dragging
         MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
+    }
+
+    /// <summary>
+    /// 窗口失去焦点时自动隐藏。
+    /// 若有子窗口（如设置窗口）打开则跳过，避免误隐藏。
+    /// </summary>
+    private void Window_Deactivated(object sender, EventArgs e)
+    {
+        if (OwnedWindows.Count > 0) return;
+        
+        // 如果窗口是最近1秒内从托盘显示的，不隐藏（避免双击托盘图标时闪烁）
+        if ((DateTime.Now - LastShownFromTray).TotalMilliseconds < 1000) return;
+        
+        HideWindow();
     }
 
     /// <summary>
@@ -312,16 +327,6 @@ public partial class MainWindow : Window
         // Show menu
         menu.IsOpen = true;
         e.Handled = true;
-    }
-
-    /// <summary>
-    /// 窗口失去焦点时自动隐藏。
-    /// 若有子窗口（如设置窗口）打开则跳过，避免误隐藏。
-    /// </summary>
-    private void Window_Deactivated(object sender, EventArgs e)
-    {
-        if (OwnedWindows.Count > 0) return;
-        HideWindow();
     }
 
     /// <summary>

@@ -228,6 +228,12 @@ public class TrayService : IDisposable
 
         _mainWindow.Dispatcher.Invoke(() =>
         {
+            // 如果是 MainWindow，设置最近显示时间
+            if (_mainWindow is Quanta.Views.MainWindow mainWin)
+            {
+                mainWin.LastShownFromTray = DateTime.Now;
+            }
+
             // 如果窗口处于最小化状态，先恢复为正常窗口
             if (_mainWindow.WindowState == WindowState.Minimized)
                 _mainWindow.WindowState = WindowState.Normal;
