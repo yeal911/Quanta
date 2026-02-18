@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("A fast Windows 11 launcher with global hotkey support")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b3ec06df9d82e571344c611ee33cb48dcdf947d9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79941ae1552b270627a5cc4d0f863b01fa1eea51")]
 [assembly: System.Reflection.AssemblyProductAttribute("Quanta")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Quanta")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

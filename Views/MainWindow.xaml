@@ -192,9 +192,13 @@
                                            h:HighlightHelper.Query="{Binding QueryMatch}"/>
 
                                 <!-- Type -->
-                                <TextBlock Grid.Column="3" Text="{Binding CommandConfig.Type}" FontSize="10" Foreground="#888"
+                                <TextBlock Grid.Column="3" FontSize="10" Foreground="#888"
                                            VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
-                                           Opacity="0.8"/>
+                                           Opacity="0.8">
+                                    <TextBlock.Text>
+                                        <Binding Path="CommandConfig.Type" FallbackValue="" TargetNullValue=""/>
+                                    </TextBlock.Text>
+                                </TextBlock>
 
                                 <!-- Path -->
                                 <TextBlock Grid.Column="4" Text="{Binding Path}" FontSize="10" Foreground="#AAA"

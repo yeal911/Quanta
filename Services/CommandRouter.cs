@@ -158,6 +158,12 @@ public class CommandRouter
     private static readonly Regex CalcRegex = new(@"^calc\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
+    /// 匹配纯数学表达式的正则表达式（无 calc 前缀）。
+    /// 例如: 2+2, 100*5, 2^3, 10%3 等
+    /// </summary>
+    private static readonly Regex PureMathRegex = new(@"^[\d\s\+\-\*\/%\^\(\)\.]+$", RegexOptions.Compiled);
+
+    /// <summary>
     /// 匹配 Google 搜索的正则表达式，格式为: g 关键字
     /// </summary>
     private static readonly Regex GoogleSearchRegex = new(@"^g\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -167,7 +173,7 @@ public class CommandRouter
     /// 例如: 100 km to mile, 30 c to f
     /// </summary>
     private static readonly Regex UnitConvertRegex = new(
-        @"^(-?\d+\.?\d*)\s*([a-zA-Z°/\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/\u4e00-\u9fff]+)$",
+        @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+|[\u4e00-\u9fff]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
@@ -186,16 +192,30 @@ public class CommandRouter
     {
         if (string.IsNullOrWhiteSpace(input)) return null;
 
+        DebugLog.Log("Input: '{0}'", input);
+
         // PowerShell 命令（> command）
         var psMatch = PowerShellRegex.Match(input);
+        DebugLog.Log("PowerShellRegex: {0}", psMatch.Success);
         if (psMatch.Success) return await ExecutePowerShellAsync(psMatch.Groups[1].Value);
 
         // 数学计算（calc expression）
         var calcMatch = CalcRegex.Match(input);
+        DebugLog.Log("CalcRegex: {0}, Groups[1]: '{1}'", calcMatch.Success, calcMatch.Groups[1].Value);
         if (calcMatch.Success) return Calculate(calcMatch.Groups[1].Value);
+
+        // 纯数学表达式（无 calc 前缀，例如 2+2）
+        var pureMathMatch = PureMathRegex.Match(input);
+        DebugLog.Log("PureMathRegex: {0}", pureMathMatch.Success);
+        if (pureMathMatch.Success)
+        {
+            var trimmed = input.Trim();
+            if (trimmed.Length > 0) return Calculate(trimmed);
+        }
 
         // 单位换算（优先于 Google 搜索，避免被 "g" 误匹配）
         var unitMatch = UnitConvertRegex.Match(input);
+        DebugLog.Log("UnitConvertRegex: {0}", unitMatch.Success);
         if (unitMatch.Success)
         {
             var converted = ConvertUnit(unitMatch.Groups[1].Value, unitMatch.Groups[2].Value, unitMatch.Groups[3].Value);
@@ -252,7 +272,10 @@ public class CommandRouter
             result.Data = new CommandResult { Success = true, Output = computed.ToString() ?? "" };
             _usageTracker.RecordUsage($"calc:{expression}");
         }
-        catch (Exception ex) { result.Subtitle = $"Error: {ex.Message}"; result.Data = new CommandResult { Success = false, Error = ex.Message }; }
+        catch (Exception ex) { 
+            result.Subtitle = $"Error: {ex.Message}"; 
+            result.Data = new CommandResult { Success = false, Error = ex.Message }; 
+        }
         return result;
     }
 
@@ -284,8 +307,12 @@ public class CommandRouter
     /// <returns>换算结果的搜索结果对象；无法识别单位时返回 null</returns>
     private SearchResult? ConvertUnit(string valueStr, string fromUnit, string toUnit)
     {
-        if (!double.TryParse(valueStr, out double value)) return null;
-        if (!UnitConverter.TryConvert(value, fromUnit, toUnit, out string converted)) return null;
+        if (!double.TryParse(valueStr, out double value)) {
+            return null;
+        }
+        if (!UnitConverter.TryConvert(value, fromUnit, toUnit, out string converted)) {
+            return null;
+        }
 
         return new SearchResult
         {

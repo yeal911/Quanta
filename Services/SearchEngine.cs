@@ -191,7 +191,11 @@ public class SearchEngine
         if (commandResult != null)
         {
             commandResult.GroupLabel = commandResult.Type == SearchResultType.Calculator ? "Calc" : "Web";
-            commandResult.GroupOrder = commandResult.Type == SearchResultType.Calculator ? 4 : 5;
+            // Calculator 和 Web 结果应该排在最前面（GroupOrder=0），优先级高于 App/File/Window
+            commandResult.GroupOrder = 0;
+            // 如果没有设置 MatchScore，给一个默认高分确保显示
+            if (commandResult.MatchScore <= 0)
+                commandResult.MatchScore = 1.0;
             results.Add(commandResult);
         }
 
