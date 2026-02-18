@@ -39,7 +39,7 @@ public static class ConfigLoader
     {
         if (_cachedConfig != null)
         {
-            Logger.Log("[ConfigLoader] Using cached config");
+            DebugLog.Log("Using cached config");
             return _cachedConfig;
         }
 
@@ -47,27 +47,27 @@ public static class ConfigLoader
         {
             // 获取绝对路径并打印
             var fullPath = Path.GetFullPath(ConfigPath);
-            Logger.Log($"[ConfigLoader] Config file path: {fullPath}");
-            Logger.Log($"[ConfigLoader] File exists: {File.Exists(ConfigPath)}");
+            DebugLog.Log("Config file path: {0}", fullPath);
+            DebugLog.Log("File exists: {0}", File.Exists(ConfigPath));
 
             if (File.Exists(ConfigPath))
             {
                 var json = File.ReadAllText(ConfigPath);
-                Logger.Log($"[ConfigLoader] Config file content length: {json.Length} characters");
+                DebugLog.Log("Config file content length: {0} characters", json.Length);
                 
                 _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
                 
                 if (_cachedConfig != null)
                 {
-                    Logger.Log($"[ConfigLoader] Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
+                    Logger.Log($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
                     if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
                     {
                         var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                        Logger.Log($"[ConfigLoader] Commands from file: {commandKeywords}");
+                        Logger.Log($"Commands from file: {commandKeywords}");
                     }
                     else
                     {
-                        Logger.Log("[ConfigLoader] No commands found in file");
+                        Logger.Log("No commands found in file");
                     }
                     
                     // Migrate if needed
@@ -75,19 +75,19 @@ public static class ConfigLoader
                 }
                 else
                 {
-                    Logger.Log("[ConfigLoader] Failed to deserialize config, creating default");
+                    Logger.Log("Failed to deserialize config, creating default");
                     _cachedConfig = CreateDefaultConfig();
                 }
             }
             else
             {
-                Logger.Log("[ConfigLoader] Config file not found, creating default config");
+                Logger.Log("Config file not found, creating default config");
                 _cachedConfig = CreateDefaultConfig();
             }
         }
         catch (Exception ex)
         {
-            Logger.Error($"[ConfigLoader] Failed to load config: {ex.Message}", ex);
+            Logger.Error($"Failed to load config: {ex.Message}", ex);
             _cachedConfig = CreateDefaultConfig();
         }
 

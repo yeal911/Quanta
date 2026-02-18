@@ -654,7 +654,7 @@ public class SearchEngine
                 // 计算器类型：对表达式求值
                 case "calculator":
                     var calcResult = CalculateInternal(processedPath);
-                    Logger.Log($"Calculator result: {calcResult}");
+                    DebugLog.Log("Calculator result: {0}", calcResult);
                     return true;
 
                 default:
@@ -854,7 +854,7 @@ public class ApplicationSearchProvider : ISearchProvider
                         }
                         catch (Exception ex)
                         {
-                            Logger.Debug($"Failed to load app: {file} - {ex.Message}");
+                            DebugLog.Log("Failed to load app: {0} - {1}", file, ex.Message);
                         }
                     }
                 }

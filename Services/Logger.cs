@@ -2,7 +2,7 @@
 // 文件名: Logger.cs
 // 文件用途: 提供应用程序全局日志记录服务，支持按日期生成日志文件，
 //          包含不同日志级别（INFO、ERROR、WARN、DEBUG）的记录功能。
-//          日志文件存储在用户本地应用数据目录下的 Quanta/logs 文件夹中。
+//          日志文件存储在运行目录下的 logs 文件夹中。
 // ============================================================================
 
 using System.IO;
@@ -11,7 +11,7 @@ namespace Quanta.Services;
 
 /// <summary>
 /// 全局静态日志服务类，负责将应用程序运行时的日志信息写入本地日志文件。
-/// 日志文件按日期命名，存储在 LocalApplicationData/Quanta/logs 目录下。
+/// 日志文件按日期命名，存储在运行目录下的 logs 目录下。
 /// 所有写入操作通过锁机制保证线程安全。
 /// </summary>
 public static class Logger
@@ -34,12 +34,13 @@ public static class Logger
     /// <summary>
     /// 静态构造函数，初始化日志目录和日志文件路径。
     /// 如果日志目录不存在则自动创建。
+    /// 日志文件存储在 exe 运行的目录下。
     /// </summary>
     static Logger()
     {
-        LogDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Quanta", "logs");
+        // 获取 exe 运行的目录
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        LogDirectory = Path.Combine(baseDir, "logs");
         Directory.CreateDirectory(LogDirectory);
         LogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMMdd}.log");
     }

@@ -140,7 +140,7 @@ public partial class MainWindow : Window
         Hide();
         _isVisible = false;
 
-        Logger.Log("MainWindow loaded");
+        DebugLog.Log("MainWindow loaded");
     }
 
     /// <summary>

@@ -297,7 +297,7 @@ public partial class MainViewModel : ObservableObject
         catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            Logger.Log($"Search error: {ex.Message}");
+            DebugLog.Log("Search error: {0}", ex.Message);
         }
         finally
         {

@@ -56,7 +56,7 @@ public partial class CommandSettingsWindow : Window
     public CommandSettingsWindow(SearchEngine? searchEngine = null)
     {
         _searchEngine = searchEngine;
-        Logger.Log("[CommandSettingsWindow] Constructor started");
+        DebugLog.Log("Constructor started");
         InitializeComponent();
         LoadConfig();
         ApplyLocalization();
@@ -66,8 +66,8 @@ public partial class CommandSettingsWindow : Window
         _commandsView.Filter = CommandFilter;
         CommandsGrid.ItemsSource = _commandsView;
         
-        Logger.Log($"[CommandSettingsWindow] CommandsGrid ItemsSource set with {Commands.Count} commands");
-        Logger.Log($"[CommandSettingsWindow] CommandsGrid actual items count: {CommandsGrid.Items.Count}");
+        DebugLog.Log("CommandsGrid ItemsSource set with {0} commands", Commands.Count);
+        DebugLog.Log("CommandsGrid actual items count: {0}", CommandsGrid.Items.Count);
     }
 
     /// <summary>
@@ -240,7 +240,7 @@ public partial class CommandSettingsWindow : Window
     /// </summary>
     private void LoadConfig()
     {
-        Logger.Log("[CommandSettingsWindow] Loading config...");
+        DebugLog.Log("Loading config...");
         _config = ConfigLoader.Load();
         
         if (_config?.Commands != null)
@@ -248,16 +248,16 @@ public partial class CommandSettingsWindow : Window
             Commands = new ObservableCollection<CommandConfig>(
                 _config.Commands.OrderByDescending(c => c.ModifiedAt));
             
-            Logger.Log($"[CommandSettingsWindow] Loaded {Commands.Count} commands into ObservableCollection");
+            Logger.Log($"Loaded {Commands.Count} commands into ObservableCollection");
             if (Commands.Count > 0)
             {
                 var commandList = string.Join(", ", Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                Logger.Log($"[CommandSettingsWindow] Commands in UI: {commandList}");
+                DebugLog.Log("Commands in UI: {0}", commandList);
             }
         }
         else
         {
-            Logger.Log("[CommandSettingsWindow] No commands found in config");
+            Logger.Log("No commands found in config");
             Commands = new ObservableCollection<CommandConfig>();
         }
 
