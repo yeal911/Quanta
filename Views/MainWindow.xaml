@@ -186,6 +186,9 @@
                              Foreground="#1A1A1A" CaretBrush="#1A1A1A"
                              FontFamily="微软雅黑"
                              VerticalAlignment="Center"
+                             AcceptsReturn="True"
+                             MaxHeight="28"
+                             TextWrapping="Wrap"
                              TextChanged="SearchBox_TextChanged"/>
 
                     <Button x:Name="ThemeToggleButton" Grid.Column="2"
@@ -255,59 +258,78 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="22"/>
-                                    <ColumnDefinition Width="16"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                                <!-- Normal results -->
+                                <Grid x:Name="NormalContainer">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <!-- Index -->
-                                <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11" Foreground="#999"
-                                           VerticalAlignment="Center" FontFamily="Consolas"/>
+                                    <!-- Index -->
+                                    <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11" Foreground="#999"
+                                               VerticalAlignment="Center" FontFamily="Consolas"/>
 
-                                <!-- Icon -->
-                                <TextBlock Grid.Column="1" Text="{Binding IconText}" FontSize="12"
-                                           x:Name="ResultIcon" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="#1A1A1A"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                    <!-- Icon -->
+                                    <TextBlock Grid.Column="1" Text="{Binding IconText}" FontSize="12"
+                                               x:Name="ResultIcon" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#1A1A1A"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
 
-                                <!-- Command（带关键字高亮） -->
-                                <TextBlock Grid.Column="2" FontSize="13" Foreground="#0078D4"
-                                           VerticalAlignment="Center" FontFamily="Consolas" FontWeight="SemiBold"
-                                           MaxWidth="100" Margin="4,0,0,0"
-                                           h:HighlightHelper.Text="{Binding Title}"
-                                           h:HighlightHelper.Query="{Binding QueryMatch}"/>
+                                    <!-- Command -->
+                                    <TextBlock Grid.Column="2" FontSize="13" Foreground="#0078D4"
+                                               VerticalAlignment="Center" FontFamily="Consolas" FontWeight="SemiBold"
+                                               MaxWidth="200" Margin="4,0,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Title}"
+                                               h:HighlightHelper.Text="{Binding Title}"
+                                               h:HighlightHelper.Query="{Binding QueryMatch}"/>
 
-                                <!-- Type -->
-                                <TextBlock Grid.Column="3" FontSize="10" Foreground="#888"
-                                           VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
-                                           Opacity="0.8">
-                                    <TextBlock.Text>
-                                        <Binding Path="CommandConfig.Type" FallbackValue="" TargetNullValue=""/>
-                                    </TextBlock.Text>
-                                </TextBlock>
+                                    <!-- Type -->
+                                    <TextBlock Grid.Column="3" FontSize="10" Foreground="#888"
+                                               VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
+                                               Opacity="0.8">
+                                        <TextBlock.Text>
+                                            <Binding Path="CommandConfig.Type" FallbackValue="" TargetNullValue=""/>
+                                        </TextBlock.Text>
+                                    </TextBlock>
 
-                                <!-- Path -->
-                                <TextBlock Grid.Column="4" Text="{Binding Path}" FontSize="10" Foreground="#AAA"
-                                           VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
-                                           MaxWidth="150" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+                                    <!-- Path -->
+                                    <TextBlock Grid.Column="4" Text="{Binding Path}" FontSize="10" Foreground="#AAA"
+                                               VerticalAlignment="Center" Margin="8,0,0,0" FontFamily="Consolas"
+                                               MaxWidth="150" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
 
-                                <!-- Description -->
-                                <TextBlock Grid.Column="5" Text="{Binding Subtitle}" FontSize="12" Foreground="#666"
-                                           VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                    <!-- Description -->
+                                    <TextBlock Grid.Column="5" Text="{Binding Subtitle}" FontSize="12" Foreground="#666"
+                                               VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+
+                                <!-- QRCode results: show only the QR image, large size -->
+                                <Grid x:Name="QRCodeContainer" Visibility="Collapsed">
+                                    <Image Source="{Binding QRCodeImage}" Width="200" Height="200"
+                                           Stretch="Uniform" HorizontalAlignment="Center"/>
+                                </Grid>
                             </Grid>
+
+                            <!-- Trigger to switch between normal and QRCode -->
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Type}" Value="QRCode">
+                                    <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="QRCodeContainer" Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

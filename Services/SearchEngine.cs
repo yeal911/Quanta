@@ -76,6 +76,11 @@ public class SearchEngine
     private int _maxResults = 10;
 
     /// <summary>
+    /// 自动生成二维码的文本长度阈值，超过此长度自动生成二维码
+    /// </summary>
+    private int _qrCodeThreshold = 10;
+
+    /// <summary>
     /// Windows 系统内置命令列表
     /// 包含常用的系统工具（如命令提示符、计算器、任务管理器等）、网络诊断命令和系统控制命令。
     /// 这些命令无需用户配置即可直接使用，IsBuiltIn=true 标记，不会出现在用户设置界面中。
@@ -133,6 +138,7 @@ public class SearchEngine
         var config = ConfigLoader.Load();
         _customCommands = config.Commands ?? new List<CommandConfig>();
         _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
+        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 10;
     }
 
     /// <summary>
@@ -144,6 +150,7 @@ public class SearchEngine
         var config = ConfigLoader.Reload();
         _customCommands = config.Commands ?? new List<CommandConfig>();
         _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
+        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 10;
     }
 
     /// <summary>
@@ -197,6 +204,43 @@ public class SearchEngine
             if (commandResult.MatchScore <= 0)
                 commandResult.MatchScore = 1.0;
             results.Add(commandResult);
+        }
+
+        // ── 2.5. 如果查询长度超过阈值，自动生成二维码 ──────────────────
+        if (query.Length > _qrCodeThreshold && QRCodeService.CanGenerateQRCode(query))
+        {
+            var qrCodeResult = new SearchResult
+            {
+                Title = "生成二维码",
+                Subtitle = query.Length > 50 ? query.Substring(0, 50) + "..." : query,
+                Path = query,
+                Type = SearchResultType.QRCode,
+                GroupLabel = "QRCode",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "📱",
+                QueryMatch = query,
+                QRCodeContent = query,
+                QRCodeImage = QRCodeService.GenerateQRCodeAutoSize(query)
+            };
+            results.Add(qrCodeResult);
+        }
+        // ── 2.6. 如果文本超过2000字符，显示提示信息 ─────────────────────
+        else if (query.Length > 2000)
+        {
+            var hintResult = new SearchResult
+            {
+                Title = LocalizationService.Get("QRCodeTooLong"),
+                Subtitle = "",
+                Path = "",
+                Type = SearchResultType.Command,
+                GroupLabel = "",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "⚠️",
+                QueryMatch = ""
+            };
+            results.Add(hintResult);
         }
 
         // ── 3. 查询长度 >= 2 时并发搜索应用程序、文件和窗口 ────────
@@ -528,6 +572,27 @@ public class SearchEngine
 
             case SearchResultType.CustomCommand:
                 return await ExecuteCustomCommandAsync(result, "");
+
+            case SearchResultType.QRCode:
+                // 将二维码图片复制到剪贴板
+                if (result.QRCodeImage != null)
+                {
+                    try
+                    {
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            // 将 BitmapImage 转换为 BitmapSource 并复制到剪贴板
+                            System.Windows.Clipboard.SetImage(result.QRCodeImage);
+                        });
+                        ToastService.Instance.ShowSuccess("二维码已复制到剪贴板");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Failed to copy QRCode to clipboard: {ex.Message}");
+                        ToastService.Instance.ShowError("复制失败");
+                    }
+                }
+                return true;
 
             default:
                 return false;

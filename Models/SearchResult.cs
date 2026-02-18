@@ -4,6 +4,8 @@
 //          以及命令执行结果模型。这些模型用于在搜索引擎与界面层之间传递数据。
 // ============================================================================
 
+using System.Windows.Media.Imaging;
+
 namespace Quanta.Models;
 
 /// <summary>
@@ -26,7 +28,9 @@ public enum SearchResultType
     /// <summary>网页搜索</summary>
     WebSearch,
     /// <summary>用户自定义命令</summary>
-    CustomCommand
+    CustomCommand,
+    /// <summary>二维码生成</summary>
+    QRCode
 }
 
 /// <summary>
@@ -81,6 +85,12 @@ public class SearchResult
 
     /// <summary>触发本次匹配的搜索词，用于在 Title 中高亮显示匹配字符</summary>
     public string QueryMatch { get; set; } = "";
+
+    /// <summary>二维码图片，当结果类型为 QRCode 时使用</summary>
+    public System.Windows.Media.Imaging.BitmapImage? QRCodeImage { get; set; }
+
+    /// <summary>二维码对应的原始文本内容</summary>
+    public string QRCodeContent { get; set; } = "";
 }
 
 /// <summary>

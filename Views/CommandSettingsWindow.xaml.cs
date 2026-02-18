@@ -367,6 +367,7 @@ public partial class CommandSettingsWindow : Window
         var config = ConfigLoader.Load();
         StartWithWindowsCheck.IsChecked = IsStartWithWindowsEnabled();
         MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
+        QRCodeThresholdBox.Text = config.AppSettings.QRCodeThreshold.ToString();
     }
 
     /// <summary>查询注册表，判断 Quanta 是否已设置为开机启动。</summary>
@@ -432,6 +433,28 @@ public partial class CommandSettingsWindow : Window
         {
             var config = ConfigLoader.Load();
             MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
+        }
+    }
+
+    /// <summary>二维码阈值输入框：只允许输入数字。</summary>
+    private void QRCodeThresholdBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = !e.Text.All(char.IsDigit);
+    }
+
+    /// <summary>二维码阈值输入框失焦时保存（范围 5-100，非法值还原）。</summary>
+    private void QRCodeThresholdBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(QRCodeThresholdBox.Text, out int val) && val >= 5 && val <= 100)
+        {
+            var config = ConfigLoader.Load();
+            config.AppSettings.QRCodeThreshold = val;
+            ConfigLoader.Save(config);
+        }
+        else
+        {
+            var config = ConfigLoader.Load();
+            QRCodeThresholdBox.Text = config.AppSettings.QRCodeThreshold.ToString();
         }
     }
 

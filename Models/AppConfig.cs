@@ -167,6 +167,9 @@ public class AppSettings
     /// <summary>搜索结果最大显示条数</summary>
     [JsonPropertyName("MaxResults")] public int MaxResults { get; set; } = 10;
 
+    /// <summary>自动生成二维码的文本长度阈值，超过此长度自动生成二维码</summary>
+    [JsonPropertyName("QRCodeThreshold")] public int QRCodeThreshold { get; set; } = 10;
+
     /// <summary>是否启用自动更新</summary>
     [JsonPropertyName("AutoUpdate")] public bool AutoUpdate { get; set; } = true;
 

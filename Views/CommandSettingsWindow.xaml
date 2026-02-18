@@ -101,6 +101,16 @@
                              PreviewTextInput="MaxResultsBox_PreviewTextInput"
                              LostFocus="MaxResultsBox_LostFocus" VerticalAlignment="Center"/>
                     <TextBlock x:Name="MaxResultsSuffix" Text=" 条结果" FontSize="12" FontFamily="微软雅黑"
+                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                    
+                    <TextBlock x:Name="QRCodeThresholdLabel" Text="长文本生成二维码：" FontSize="12" FontFamily="微软雅黑"
+                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox x:Name="QRCodeThresholdBox" Width="44" Padding="4,2"
+                             FontSize="12" FontFamily="Consolas" TextAlignment="Center"
+                             BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                             PreviewTextInput="QRCodeThresholdBox_PreviewTextInput"
+                             LostFocus="QRCodeThresholdBox_LostFocus" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="QRCodeThresholdSuffix" Text=" 字符" FontSize="12" FontFamily="微软雅黑"
                                Foreground="#666" VerticalAlignment="Center"/>
                 </StackPanel>
 
