@@ -53,22 +53,22 @@ internal static class UnitConverter
     };
 
     /// <summary>
-    /// 尝试进行单位换算。
+    /// 尝试进行单位换算，返回原始 double 值由调用方格式化。
     /// </summary>
     /// <param name="value">数值</param>
     /// <param name="from">源单位</param>
     /// <param name="to">目标单位</param>
-    /// <param name="result">换算结果（带单位的字符串）</param>
+    /// <param name="result">换算后的原始数值</param>
     /// <returns>换算是否成功</returns>
-    public static bool TryConvert(double value, string from, string to, out string result)
+    public static bool TryConvert(double value, string from, string to, out double result)
     {
-        result = "";
+        result = 0;
 
         // 温度特殊处理
         var tempResult = ConvertTemperature(value, from, to);
         if (tempResult.HasValue)
         {
-            result = $"{value} {from} = {FormatNumber(tempResult.Value)} {to}";
+            result = tempResult.Value;
             return true;
         }
 
@@ -77,12 +77,22 @@ internal static class UnitConverter
         {
             if (table.TryGetValue(from, out double fromFactor) && table.TryGetValue(to, out double toFactor))
             {
-                double converted = value * fromFactor / toFactor;
-                result = $"{value} {from} = {FormatNumber(converted)} {to}";
+                result = value * fromFactor / toFactor;
                 return true;
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// 判断单位是否为温度单位。温度转换是仿射变换，不存在线性基准换算率。
+    /// </summary>
+    internal static bool IsTemperature(string unit)
+    {
+        string norm = unit.ToLower().Trim('°', ' ');
+        return norm is "c" or "celsius" or "摄氏" or "摄氏度"
+                    or "f" or "fahrenheit" or "华氏" or "华氏度"
+                    or "k" or "kelvin" or "开" or "开尔文";
     }
 
     private static double? ConvertTemperature(double value, string from, string to)
@@ -122,12 +132,14 @@ internal static class UnitConverter
         };
     }
 
-    private static string FormatNumber(double n)
+    /// <summary>
+    /// 将 double 格式化为简洁字符串（最多 2 位小数，超大/超小数用科学计数法）。
+    /// </summary>
+    internal static string FormatNumber(double n)
     {
-        if (Math.Abs(n) >= 1e9 || (Math.Abs(n) < 0.0001 && n != 0))
-            return n.ToString("G6");
-        // 最多显示 6 位有效数字，去掉末尾零
-        return n.ToString("G6").TrimEnd('0').TrimEnd('.');
+        if (Math.Abs(n) >= 1e9 || (Math.Abs(n) < 0.005 && n != 0))
+            return n.ToString("G4");
+        return Math.Round(n, 2, MidpointRounding.AwayFromZero).ToString("0.##");
     }
 }
 
@@ -263,18 +275,25 @@ public class CommandRouter
     /// <returns>包含计算结果的搜索结果对象</returns>
     private SearchResult Calculate(string expression)
     {
-        var result = new SearchResult { Title = $"= {expression}", Type = SearchResultType.Calculator, Path = expression };
+        var result = new SearchResult { Title = expression, Type = SearchResultType.Calculator, Path = expression };
         try
         {
             string sanitized = Regex.Replace(expression, @"[^0-9+\-*/().%^]", "");
-            var computed = new System.Data.DataTable().Compute(sanitized, null);
-            result.Subtitle = computed.ToString() ?? "Error";
-            result.Data = new CommandResult { Success = true, Output = computed.ToString() ?? "" };
+            double computed = MathParser.Evaluate(sanitized);
+            string computedStr = double.IsPositiveInfinity(computed) ? "∞"
+                               : double.IsNegativeInfinity(computed) ? "-∞"
+                               : double.IsNaN(computed) ? "NaN"
+                               : (Math.Abs(computed) >= 1e9 || (Math.Abs(computed) < 0.005 && computed != 0))
+                                 ? computed.ToString("G4")
+                                 : Math.Round(computed, 2, MidpointRounding.AwayFromZero).ToString("0.##");
+            // 结果作为主标题；表达式在搜索框已可见，副标题留空
+            result.Title = computedStr;
+            result.Data = new CommandResult { Success = true, Output = computedStr };
             _usageTracker.RecordUsage($"calc:{expression}");
         }
-        catch (Exception ex) { 
-            result.Subtitle = $"Error: {ex.Message}"; 
-            result.Data = new CommandResult { Success = false, Error = ex.Message }; 
+        catch (Exception ex) {
+            result.Subtitle = $"Error: {ex.Message}";
+            result.Data = new CommandResult { Success = false, Error = ex.Message };
         }
         return result;
     }
@@ -305,24 +324,48 @@ public class CommandRouter
     /// <param name="fromUnit">源单位</param>
     /// <param name="toUnit">目标单位</param>
     /// <returns>换算结果的搜索结果对象；无法识别单位时返回 null</returns>
+    /// <summary>
+    /// 判断格式化后的字符串与原始值是否存在精度损失（用于选择 ≈ 或 =）。
+    /// </summary>
+    private static bool IsFormattedApprox(double original, string formatted)
+        => double.TryParse(formatted, System.Globalization.NumberStyles.Any,
+               System.Globalization.CultureInfo.InvariantCulture, out double back)
+           && Math.Abs(back - original) > 1e-10 * Math.Abs(original) + 1e-12;
+
     private SearchResult? ConvertUnit(string valueStr, string fromUnit, string toUnit)
     {
-        if (!double.TryParse(valueStr, out double value)) {
+        if (!double.TryParse(valueStr, out double value))
             return null;
-        }
-        if (!UnitConverter.TryConvert(value, fromUnit, toUnit, out string converted)) {
+        if (!UnitConverter.TryConvert(value, fromUnit, toUnit, out double convertedValue))
             return null;
+
+        // 实际换算结果
+        string formatted = UnitConverter.FormatNumber(convertedValue);
+        string symbol = IsFormattedApprox(convertedValue, formatted) ? "≈" : "=";
+        string title = $"{formatted} {toUnit}";
+
+        // 温度是仿射变换（非线性比例），不存在有意义的基准换算率
+        string? subtitle = null;
+        if (!UnitConverter.IsTemperature(fromUnit) && !UnitConverter.IsTemperature(toUnit))
+        {
+            UnitConverter.TryConvert(1, fromUnit, toUnit, out double fwdRate);
+            UnitConverter.TryConvert(1, toUnit, fromUnit, out double bwdRate);
+            string fmtFwd = UnitConverter.FormatNumber(fwdRate);
+            string fmtBwd = UnitConverter.FormatNumber(bwdRate);
+            string symFwd = IsFormattedApprox(fwdRate, fmtFwd) ? "≈" : "=";
+            string symBwd = IsFormattedApprox(bwdRate, fmtBwd) ? "≈" : "=";
+            subtitle = $"1 {fromUnit} {symFwd} {fmtFwd} {toUnit}  |  1 {toUnit} {symBwd} {fmtBwd} {fromUnit}";
         }
 
         return new SearchResult
         {
-            Title = $"= {converted}",
-            Subtitle = $"{valueStr} {fromUnit} → {toUnit}",
+            Title = title,
+            Subtitle = subtitle,
             Type = SearchResultType.Calculator,
-            Path = converted,
+            Path = title,
             IconText = "📐",
             MatchScore = 2.0,
-            Data = new CommandResult { Success = true, Output = converted }
+            Data = new CommandResult { Success = true, Output = title }
         };
     }
 
@@ -336,4 +379,83 @@ public class CommandRouter
         new() { Title = "calc expression", Subtitle = "Calculate expression", Type = SearchResultType.Calculator },
         new() { Title = "g keyword", Subtitle = "Search in browser", Type = SearchResultType.WebSearch }
     };
+
+    // ─────────────────────────────────────────────────────────────
+    // 数学表达式解析器（递归下降），支持 +、-、*、/、%、^ 和括号
+    // 优先级（由低到高）：加减 < 乘除模 < 幂 < 一元符号 < 括号/数字
+    // ─────────────────────────────────────────────────────────────
+    private static class MathParser
+    {
+        public static double Evaluate(string expression)
+        {
+            string expr = expression.Replace(" ", "");
+            int pos = 0;
+            double result = ParseAddSub(expr, ref pos);
+            if (pos != expr.Length)
+                throw new FormatException($"Unexpected character '{expr[pos]}' at position {pos}");
+            return result;
+        }
+
+        private static double ParseAddSub(string expr, ref int pos)
+        {
+            double result = ParseMulDiv(expr, ref pos);
+            while (pos < expr.Length && (expr[pos] == '+' || expr[pos] == '-'))
+            {
+                char op = expr[pos++];
+                double right = ParseMulDiv(expr, ref pos);
+                result = op == '+' ? result + right : result - right;
+            }
+            return result;
+        }
+
+        private static double ParseMulDiv(string expr, ref int pos)
+        {
+            double result = ParsePow(expr, ref pos);
+            while (pos < expr.Length && (expr[pos] == '*' || expr[pos] == '/' || expr[pos] == '%'))
+            {
+                char op = expr[pos++];
+                double right = ParsePow(expr, ref pos);
+                result = op == '*' ? result * right
+                       : op == '/' ? result / right
+                       : result % right;
+            }
+            return result;
+        }
+
+        // ^ 右结合：2^3^2 = 2^(3^2) = 512
+        private static double ParsePow(string expr, ref int pos)
+        {
+            double result = ParseUnary(expr, ref pos);
+            if (pos < expr.Length && expr[pos] == '^')
+            {
+                pos++;
+                double exp = ParsePow(expr, ref pos);
+                result = Math.Pow(result, exp);
+            }
+            return result;
+        }
+
+        private static double ParseUnary(string expr, ref int pos)
+        {
+            if (pos < expr.Length && expr[pos] == '-') { pos++; return -ParseFactor(expr, ref pos); }
+            if (pos < expr.Length && expr[pos] == '+') { pos++; }
+            return ParseFactor(expr, ref pos);
+        }
+
+        private static double ParseFactor(string expr, ref int pos)
+        {
+            if (pos < expr.Length && expr[pos] == '(')
+            {
+                pos++; // 跳过 '('
+                double val = ParseAddSub(expr, ref pos);
+                if (pos < expr.Length && expr[pos] == ')') pos++; // 跳过 ')'
+                return val;
+            }
+            int start = pos;
+            while (pos < expr.Length && (char.IsDigit(expr[pos]) || expr[pos] == '.')) pos++;
+            if (pos == start) throw new FormatException($"Expected number at position {pos}");
+            return double.Parse(expr.Substring(start, pos - start),
+                                System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
 }
