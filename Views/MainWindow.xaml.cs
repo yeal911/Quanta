@@ -183,7 +183,20 @@ public partial class MainWindow : Window
         var screen = SystemParameters.WorkArea;
         Left = (screen.Width - Width) / 2;
         Top = (screen.Height - Height) / 2;
+
+        // 动画优先级 > 本地值，必须先清除旧动画（HoldEnd 持有的 Opacity=1）
+        // 再设本地值为 0，否则 Show() 时 Opacity 仍是 1，出现闪白
+        BeginAnimation(OpacityProperty, null);
+        Opacity = 0;
+
         Show(); Activate(); Focus();
+
+        // WPF Window 只允许 Identity Transform（ScaleX=ScaleY=1），非 Identity 会抛异常
+        // 保持 (1,1) 初始化；动画 From=0.9 在 BeginAnimation 调用瞬间即覆盖为 0.9
+        // 此时 Opacity=0，窗口透明，用户看不到 Scale=1 的那一帧
+        RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+        var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
+        RenderTransform = scaleTransform;
 
         _viewModel.ClearSearchCommand.Execute(null);
         ParamIndicator.Visibility = Visibility.Collapsed;
@@ -194,14 +207,10 @@ public partial class MainWindow : Window
         // Update toast position
         ToastService.Instance.SetMainWindow(this);
 
-        // Fancy show animation: scale + fade in
-        RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
-        var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
-        RenderTransform = scaleTransform;
-        
+        // 淡入 + 缩放动画
         var fadeIn = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(100) };
         var scaleIn = new DoubleAnimation { From = 0.9, To = 1, Duration = TimeSpan.FromMilliseconds(100) };
-        
+
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleIn);
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleIn);
         BeginAnimation(OpacityProperty, fadeIn);

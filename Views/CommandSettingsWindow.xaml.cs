@@ -18,6 +18,7 @@ using Quanta.Models;
 using Quanta.Helpers;
 using Quanta.Services;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace Quanta.Views;
 
@@ -47,6 +48,9 @@ public partial class CommandSettingsWindow : Window
 
     /// <summary>搜索引擎实例，用于执行"测试命令"功能；为 null 时禁用测试按钮</summary>
     private readonly SearchEngine? _searchEngine;
+
+    private const string StartupRegistryKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    private const string AppRegistryName = "Quanta";
 
     /// <summary>
     /// 构造函数，初始化组件、加载配置、应用本地化文本，
@@ -121,6 +125,15 @@ public partial class CommandSettingsWindow : Window
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
             SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150));
             FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            StartWithWindowsCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
+            MaxResultsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            MaxResultsBox.Foreground = System.Windows.Media.Brushes.White;
+            MaxResultsBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
+            MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
+            GeneralSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
+            CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
+            CommandsSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
 
             // DataGrid 整体前景色（未选中行的文字颜色）
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
@@ -154,6 +167,15 @@ public partial class CommandSettingsWindow : Window
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(187, 187, 187));
             SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
             FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            StartWithWindowsCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+            MaxResultsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
+            MaxResultsBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            MaxResultsBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
+            MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
+            GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
+            GeneralSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232));
+            CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
+            CommandsSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232));
 
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
@@ -331,6 +353,85 @@ public partial class CommandSettingsWindow : Window
         else
         {
             HotkeyTextBox.Text = LocalizationService.Get("HotkeyPress");
+        }
+
+        LoadAppSettings();
+    }
+
+    /// <summary>
+    /// 从配置和注册表加载通用设置，填充对应控件。
+    /// StartWithWindows 以注册表为准（真实状态），MaxResults 从配置读取。
+    /// </summary>
+    private void LoadAppSettings()
+    {
+        var config = ConfigLoader.Load();
+        StartWithWindowsCheck.IsChecked = IsStartWithWindowsEnabled();
+        MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
+    }
+
+    /// <summary>查询注册表，判断 Quanta 是否已设置为开机启动。</summary>
+    private bool IsStartWithWindowsEnabled()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryKeyPath);
+        return key?.GetValue(AppRegistryName) != null;
+    }
+
+    /// <summary>
+    /// 向注册表写入或删除开机启动项，并同步保存到配置文件。
+    /// </summary>
+    private void ApplyStartWithWindows(bool enable)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryKeyPath, writable: true);
+            if (key == null) return;
+
+            if (enable)
+            {
+                var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exePath))
+                    key.SetValue(AppRegistryName, $"\"{exePath}\"");
+            }
+            else
+            {
+                key.DeleteValue(AppRegistryName, throwOnMissingValue: false);
+            }
+
+            var config = ConfigLoader.Load();
+            config.AppSettings.StartWithWindows = enable;
+            ConfigLoader.Save(config);
+        }
+        catch (Exception ex)
+        {
+            ToastService.Instance.ShowError($"开机启动设置失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>开机启动 CheckBox 状态变更，立即写入注册表。</summary>
+    private void StartWithWindowsCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        ApplyStartWithWindows(StartWithWindowsCheck.IsChecked == true);
+    }
+
+    /// <summary>最多显示条数输入框：只允许输入数字。</summary>
+    private void MaxResultsBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = !e.Text.All(char.IsDigit);
+    }
+
+    /// <summary>最多显示条数输入框失焦时保存（范围 1-50，非法值还原）。</summary>
+    private void MaxResultsBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(MaxResultsBox.Text, out int val) && val >= 1 && val <= 50)
+        {
+            var config = ConfigLoader.Load();
+            config.AppSettings.MaxResults = val;
+            ConfigLoader.Save(config);
+        }
+        else
+        {
+            var config = ConfigLoader.Load();
+            MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
         }
     }
 
