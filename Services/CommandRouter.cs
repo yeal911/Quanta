@@ -5,6 +5,9 @@
 // ============================================================================
 
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Quanta.Models;
 
@@ -188,6 +191,14 @@ public class CommandRouter
         @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+|[\u4e00-\u9fff]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    // ── 文本工具 ──────────────────────────────────────────────
+    private static readonly Regex Base64Regex      = new(@"^base64\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Base64DecodeRegex = new(@"^base64d\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Md5Regex         = new(@"^md5\s+(.+)$",     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Sha256Regex      = new(@"^sha256\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex UrlToolRegex     = new(@"^url\s+(.+)$",     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex JsonToolRegex    = new(@"^json\s+(.+)$",    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
     /// <summary>
     /// 初始化命令路由器
     /// </summary>
@@ -233,6 +244,25 @@ public class CommandRouter
             var converted = ConvertUnit(unitMatch.Groups[1].Value, unitMatch.Groups[2].Value, unitMatch.Groups[3].Value);
             if (converted != null) return converted;
         }
+
+        // 文本工具（base64 / base64d / md5 / sha256 / url / json）
+        var base64Match = Base64Regex.Match(input);
+        if (base64Match.Success) return TextBase64Encode(base64Match.Groups[1].Value);
+
+        var base64dMatch = Base64DecodeRegex.Match(input);
+        if (base64dMatch.Success) return TextBase64Decode(base64dMatch.Groups[1].Value);
+
+        var md5Match = Md5Regex.Match(input);
+        if (md5Match.Success) return TextHash(md5Match.Groups[1].Value, "MD5");
+
+        var sha256Match = Sha256Regex.Match(input);
+        if (sha256Match.Success) return TextHash(sha256Match.Groups[1].Value, "SHA256");
+
+        var urlMatch = UrlToolRegex.Match(input);
+        if (urlMatch.Success) return TextUrl(urlMatch.Groups[1].Value);
+
+        var jsonMatch = JsonToolRegex.Match(input);
+        if (jsonMatch.Success) return TextJson(jsonMatch.Groups[1].Value);
 
         // Google 搜索（g keyword）
         var gMatch = GoogleSearchRegex.Match(input);
@@ -345,7 +375,7 @@ public class CommandRouter
         string title = $"{formatted} {toUnit}";
 
         // 温度是仿射变换（非线性比例），不存在有意义的基准换算率
-        string? subtitle = null;
+        string subtitle = string.Empty;
         if (!UnitConverter.IsTemperature(fromUnit) && !UnitConverter.IsTemperature(toUnit))
         {
             UnitConverter.TryConvert(1, fromUnit, toUnit, out double fwdRate);
@@ -367,6 +397,133 @@ public class CommandRouter
             MatchScore = 2.0,
             Data = new CommandResult { Success = true, Output = title }
         };
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // 文本工具处理器
+    // ═════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 构建文本工具通用结果。
+    /// label（短标签）放 Title（蓝字窄列），output（实际结果）放 Subtitle（宽列 Width=*），
+    /// Data.Output 存放完整结果供剪贴板复制。
+    /// </summary>
+    private static SearchResult MakeTextResult(string output, string label, string icon) => new()
+    {
+        Title      = label,
+        Subtitle   = output,
+        Type       = SearchResultType.Calculator,
+        IconText   = icon,
+        GroupLabel = "Text",
+        GroupOrder = 5,
+        MatchScore = 2.0,
+        Data       = new CommandResult { Success = true, Output = output }
+    };
+
+    /// <summary>Base64 编码（始终编码，无歧义）。</summary>
+    private static SearchResult TextBase64Encode(string input)
+    {
+        string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(input));
+        return MakeTextResult(encoded, "Base64 编码", "B");
+    }
+
+    /// <summary>
+    /// Base64 解码（始终解码）。
+    /// 使用严格 UTF-8 解码器：字节序列不合法时返回错误提示而非乱码。
+    /// </summary>
+    private static SearchResult TextBase64Decode(string input)
+    {
+        string trimmed = input.Trim();
+        try
+        {
+            byte[] bytes = Convert.FromBase64String(trimmed);
+            // throwOnInvalidBytes=true：遇到非法 UTF-8 字节序列直接抛异常，而非替换为乱码
+            string decoded = new UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
+            return MakeTextResult(decoded, "Base64 解码", "B");
+        }
+        catch
+        {
+            return new SearchResult
+            {
+                Title      = "Base64 解码失败",
+                Subtitle   = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
+                Type       = SearchResultType.Calculator,
+                IconText   = "B",
+                GroupLabel = "Text",
+                GroupOrder = 5,
+                Data       = new CommandResult { Success = false }
+            };
+        }
+    }
+
+    /// <summary>计算字符串的 MD5 或 SHA256 哈希（小写十六进制）。</summary>
+    private static SearchResult TextHash(string input, string algo)
+    {
+        byte[] hash = algo == "SHA256"
+            ? SHA256.HashData(Encoding.UTF8.GetBytes(input))
+            : MD5.HashData(Encoding.UTF8.GetBytes(input));
+
+        string result = BitConverter.ToString(hash).Replace("-", "").ToLower();
+        return MakeTextResult(result, algo, "#");
+    }
+
+    /// <summary>
+    /// URL 编码/解码。
+    /// 自动检测：含 %XX 转义序列 → 解码；否则编码。
+    /// </summary>
+    private static SearchResult TextUrl(string input)
+    {
+        if (Regex.IsMatch(input, @"%[0-9A-Fa-f]{2}"))
+        {
+            string decoded = Uri.UnescapeDataString(input);
+            return MakeTextResult(decoded, "URL 解码", "U");
+        }
+        string encoded = Uri.EscapeDataString(input);
+        return MakeTextResult(encoded, "URL 编码", "U");
+    }
+
+    /// <summary>
+    /// JSON 格式化（缩进美化）。格式错误时返回错误提示。
+    /// Subtitle 显示单行压缩预览，Data.Output 存放完整格式化内容供剪贴板复制。
+    /// </summary>
+    private static SearchResult TextJson(string input)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(input.Trim());
+            string formatted = JsonSerializer.Serialize(
+                doc.RootElement,
+                new JsonSerializerOptions { WriteIndented = true });
+
+            int lines   = formatted.Split('\n').Length;
+            string preview = formatted.ReplaceLineEndings(" ");
+            if (preview.Length > 120) preview = preview[..120] + "…";
+
+            return new SearchResult
+            {
+                Title      = $"JSON ({lines} 行)",
+                Subtitle   = preview,
+                Type       = SearchResultType.Calculator,
+                IconText   = "{",
+                GroupLabel = "Text",
+                GroupOrder = 5,
+                MatchScore = 2.0,
+                Data       = new CommandResult { Success = true, Output = formatted }
+            };
+        }
+        catch (JsonException ex)
+        {
+            return new SearchResult
+            {
+                Title      = "JSON 格式错误",
+                Subtitle   = ex.Message,
+                Type       = SearchResultType.Calculator,
+                IconText   = "{",
+                GroupLabel = "Text",
+                GroupOrder = 5,
+                Data       = new CommandResult { Success = false, Error = ex.Message }
+            };
+        }
     }
 
     /// <summary>

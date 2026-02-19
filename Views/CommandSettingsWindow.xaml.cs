@@ -120,6 +120,14 @@ public partial class CommandSettingsWindow : Window
             HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
             HotkeyTextBox.Foreground = System.Windows.Media.Brushes.White;
             HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
+            LanguageLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            LanguageComboBox.Foreground = System.Windows.Media.Brushes.White;
+            LanguageComboBox.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            foreach (System.Windows.Controls.ComboBoxItem item in LanguageComboBox.Items)
+            {
+                item.Foreground = System.Windows.Media.Brushes.White;
+                item.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40));
+            }
             CommandSearchBox.Foreground = System.Windows.Media.Brushes.White;
             CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
@@ -130,6 +138,10 @@ public partial class CommandSettingsWindow : Window
             MaxResultsBox.Foreground = System.Windows.Media.Brushes.White;
             MaxResultsBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            QRCodeThresholdLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+            QRCodeThresholdBox.Foreground = System.Windows.Media.Brushes.White;
+            QRCodeThresholdBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
+            QRCodeThresholdSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
             GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
             GeneralSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
             CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
@@ -162,6 +174,14 @@ public partial class CommandSettingsWindow : Window
             HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
             HotkeyTextBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
+            LanguageLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
+            LanguageComboBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+            LanguageComboBox.Background = System.Windows.Media.Brushes.White;
+            foreach (System.Windows.Controls.ComboBoxItem item in LanguageComboBox.Items)
+            {
+                item.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+                item.Background = System.Windows.Media.Brushes.White;
+            }
             CommandSearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
             CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
             CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(187, 187, 187));
@@ -301,20 +321,40 @@ public partial class CommandSettingsWindow : Window
     private void ApplyLocalization()
     {
         TitleText.Text = LocalizationService.Get("SettingsTitle");
-        HotkeyLabel.Text = LocalizationService.Get("HotkeyLabel") + "：";
+        GeneralSectionLabel.Text = LocalizationService.Get("GeneralSettings");
+        CommandsSectionLabel.Text = LocalizationService.Get("CommandManagement");
+        HotkeyLabel.Text = LocalizationService.Get("Hotkey");
         ImportButton.Content = LocalizationService.Get("ImportCommand");
         ExportButton.Content = LocalizationService.Get("ExportCommand");
-        AddButton.Content = LocalizationService.Get("AddCommand");
-        DeleteButton.Content = LocalizationService.Get("DeleteCommand");
+        StartWithWindowsCheck.Content = LocalizationService.Get("StartWithWindows");
+        MaxResultsLabel.Text = LocalizationService.Get("MaxResults");
+        MaxResultsSuffix.Text = LocalizationService.Get("MaxResultsSuffix");
+        QRCodeThresholdLabel.Text = LocalizationService.Get("QRCodeThreshold");
+        QRCodeThresholdSuffix.Text = LocalizationService.Get("QRCodeThresholdSuffix");
+        LanguageLabel.Text = LocalizationService.Get("LanguageLabel");
+
+        // 设置语言 ComboBox 的当前选中项
+        var currentLang = LocalizationService.CurrentLanguage;
+        foreach (ComboBoxItem item in LanguageComboBox.Items)
+        {
+            if (item.Tag?.ToString() == currentLang)
+            {
+                LanguageComboBox.SelectedItem = item;
+                break;
+            }
+        }
+        
+        AddButton.Content = LocalizationService.Get("Add");
+        DeleteButton.Content = LocalizationService.Get("Delete");
         TestButton.Content = LocalizationService.Get("TestCommand");
-        SaveButton.Content = LocalizationService.Get("SaveCommand");
+        SaveButton.Content = LocalizationService.Get("Save");
         KeywordColumn.Header = LocalizationService.Get("Keyword");
         NameColumn.Header = LocalizationService.Get("Name");
         TypeColumn.Header = LocalizationService.Get("Type");
         PathColumn.Header = LocalizationService.Get("Path");
         AdminColumn.Header = LocalizationService.Get("Admin");
         FooterText.Text = LocalizationService.Get("Footer");
-        CommandSearchPlaceholder.Text = LocalizationService.Get("CommandSearchPlaceholder");
+        CommandSearchPlaceholder.Text = LocalizationService.Get("SearchCommands");
     }
 
     /// <summary>
@@ -412,6 +452,20 @@ public partial class CommandSettingsWindow : Window
     private void StartWithWindowsCheck_Changed(object sender, RoutedEventArgs e)
     {
         ApplyStartWithWindows(StartWithWindowsCheck.IsChecked == true);
+    }
+
+    /// <summary>语言切换 ComboBox 选择变更，立即切换语言并刷新界面。</summary>
+    private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (LanguageComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string langCode)
+        {
+            if (LocalizationService.CurrentLanguage != langCode)
+            {
+                LocalizationService.CurrentLanguage = langCode;
+                ApplyLocalization();
+                ApplyTheme();
+            }
+        }
     }
 
     /// <summary>最多显示条数输入框：只允许输入数字。</summary>
