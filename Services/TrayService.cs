@@ -177,8 +177,8 @@ public class TrayService : IDisposable
     {
         try
         {
-            // 优先从程序运行目录加载 quanta.ico
-            var icoPath = System.IO.Path.Combine(AppContext.BaseDirectory, "quanta.ico");
+            // 优先从程序运行目录的 Resources/img 子目录加载 quanta.ico
+            var icoPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Resources", "imgs", "quanta.ico");
             if (System.IO.File.Exists(icoPath))
             {
                 return new Icon(icoPath);
