@@ -56,11 +56,6 @@ public class SearchEngine
     private readonly WindowManager _windowManager;
 
     /// <summary>
-    /// 应用程序搜索提供程序，扫描开始菜单中已安装的应用程序（.lnk 快捷方式）
-    /// </summary>
-    private readonly ApplicationSearchProvider _appSearchProvider;
-
-    /// <summary>
     /// 文件搜索提供程序，在桌面和下载目录中搜索文件
     /// </summary>
     private readonly FileSearchProvider _fileSearchProvider;
@@ -128,7 +123,6 @@ public class SearchEngine
         _usageTracker = usageTracker;
         _commandRouter = commandRouter;
         _windowManager = new WindowManager();
-        _appSearchProvider = new ApplicationSearchProvider();
         _fileSearchProvider = new FileSearchProvider();
 
         LoadCustomCommands();
@@ -277,25 +271,7 @@ public class SearchEngine
         {
             var providerTasks = new List<Task>();
 
-            // 3a. 搜索已安装应用（开始菜单 .lnk 文件）
-            providerTasks.Add(Task.Run(async () =>
-            {
-                try
-                {
-                    var appResults = await _appSearchProvider.SearchAsync(query, cancellationToken);
-                    foreach (var r in appResults)
-                    {
-                        r.GroupLabel = "App";
-                        r.GroupOrder = 1;
-                        r.IconText = "📦";
-                        r.QueryMatch = query;
-                        results.Add(r);
-                    }
-                }
-                catch (Exception ex) { Logger.Warn($"App search failed: {ex.Message}"); }
-            }, cancellationToken));
-
-            // 3b. 搜索文件（桌面+下载目录）
+            // 3a. 搜索文件（桌面+下载目录）
             providerTasks.Add(Task.Run(async () =>
             {
                 try
