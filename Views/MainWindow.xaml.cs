@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -48,6 +49,18 @@ public partial class MainWindow : Window
 
     /// <summary>系统托盘服务，管理托盘图标和右键菜单</summary>
     private TrayService? _trayService;
+
+    /// <summary>剪贴板变化监听器</summary>
+    private readonly ClipboardMonitor _clipboardMonitor = new();
+
+    /// <summary>执行完毕后是否需要向前台窗口发送 Ctrl+V 粘贴</summary>
+    private bool _pendingPaste;
+
+    // ── Win32：模拟键盘输入 ────────────────────────────────────
+    [DllImport("user32.dll")] private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr extra);
+    private const byte VK_CONTROL = 0x11;
+    private const byte VK_V = 0x56;
+    private const uint KEYEVENTF_KEYUP = 0x0002;
 
     /// <summary>
     /// 构造函数，初始化组件并创建各服务实例。
@@ -156,6 +169,10 @@ public partial class MainWindow : Window
         _trayService.Initialize();
 
         BuildSearchIconMenu();
+
+        // 启动剪贴板监听（窗口 Handle 在 Loaded 后可用）
+        _clipboardMonitor.Start(_windowHandle);
+        _clipboardMonitor.ClipboardChanged += text => ClipboardHistoryService.Instance.Add(text);
 
         SearchBox.Focus();
         Hide();
@@ -354,7 +371,22 @@ public partial class MainWindow : Window
         }
         var scaleOut = new DoubleAnimation { From = 1, To = 0.9, Duration = TimeSpan.FromMilliseconds(100) };
         
-        fadeOut.Completed += (s, e) => Hide();
+        fadeOut.Completed += (s, e) =>
+        {
+            Hide();
+            if (_pendingPaste)
+            {
+                _pendingPaste = false;
+                // 等待前台窗口重新获得焦点后再发送 Ctrl+V
+                Task.Delay(150).ContinueWith(_ => Dispatcher.Invoke(() =>
+                {
+                    keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
+                    keybd_event(VK_V, 0, 0, UIntPtr.Zero);
+                    keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                }));
+            }
+        };
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleOut);
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleOut);
         BeginAnimation(OpacityProperty, fadeOut);
@@ -712,10 +744,20 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task ExecuteSelectedAsync()
     {
+        // 剪贴板历史项：执行后自动粘贴到前台窗口
+        if (_viewModel.SelectedResult?.GroupLabel == "Clip")
+            _pendingPaste = true;
+
         await _viewModel.ExecuteSelectedCommand.ExecuteAsync(null);
         if (string.IsNullOrEmpty(_viewModel.SearchText))
         {
             HideWindow();
         }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _clipboardMonitor.Stop();
+        base.OnClosed(e);
     }
 }

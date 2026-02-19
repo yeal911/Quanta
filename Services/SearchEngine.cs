@@ -192,6 +192,15 @@ public class SearchEngine
         if (string.IsNullOrWhiteSpace(query))
             return await GetDefaultResultsAsync(cancellationToken);
 
+        // ── 0. 剪贴板历史（clip 前缀短路，不混入其他结果）─────────
+        var clipMatch = System.Text.RegularExpressions.Regex.Match(
+            query, @"^clip(?:\s+(.*))?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (clipMatch.Success)
+        {
+            string keyword = clipMatch.Groups[1].Value.Trim();
+            return ClipboardHistoryService.Instance.Search(keyword);
+        }
+
         var results = new ConcurrentBag<SearchResult>();
 
         // ── 1. 搜索自定义命令和内置命令（同步，始终执行）──────────

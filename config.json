@@ -22,12 +22,6 @@
       "Name": "GitHub",
       "Type": "Url",
       "Path": "https://github.com/search?q={param}"
-    },
-    {
-      "Keyword": ">",
-      "Name": "PowerShell",
-      "Type": "Shell",
-      "Path": "{param}"
     }
   ]
 }
