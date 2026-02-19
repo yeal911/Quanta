@@ -713,19 +713,32 @@ public partial class MainWindow : Window
     private void ExecuteSelected()
     {
         // Execute immediately without waiting
-        if (_viewModel.SelectedResult == null) return;
+        if (_viewModel.SelectedResult == null) 
+        {
+            DebugLog.Log("ExecuteSelected: SelectedResult is null!");
+            return;
+        }
+
+        DebugLog.Log("ExecuteSelected: IsParamMode={0}, Type={1}, CommandConfig={2}, CommandParam='{3}'",
+            _viewModel.IsParamMode, 
+            _viewModel.SelectedResult.Type,
+            _viewModel.SelectedResult.CommandConfig?.Keyword,
+            _viewModel.CommandParam);
 
         // Fire and forget - execute in background
         Task.Run(async () =>
         {
             bool success;
-            if (_viewModel.IsParamMode && _viewModel.SelectedResult.Type == SearchResultType.CustomCommand)
+            // 参数模式下执行自定义命令（支持 Shell、Program 等类型）
+            if (_viewModel.IsParamMode && _viewModel.SelectedResult?.CommandConfig != null)
             {
                 success = await _viewModel.SearchEngine.ExecuteCustomCommandAsync(_viewModel.SelectedResult, _viewModel.CommandParam);
             }
             else
             {
-                success = await _viewModel.SearchEngine.ExecuteResultAsync(_viewModel.SelectedResult);
+                success = _viewModel.SelectedResult != null 
+                    ? await _viewModel.SearchEngine.ExecuteResultAsync(_viewModel.SelectedResult) 
+                    : false;
             }
 
             if (success)

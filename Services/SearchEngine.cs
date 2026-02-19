@@ -106,11 +106,11 @@ public class SearchEngine
         new() { Keyword = "nslookup",  Name = "DNS查询",     Type = "Shell",   Path = "nslookup {param}",                       Description = "DNS查询",          IsBuiltIn = true },
         new() { Keyword = "netstat",   Name = "网络状态",    Type = "Shell",   Path = "netstat -an",                            Description = "查看网络状态",     IsBuiltIn = true },
         // ── 系统控制 ──────────────────────────────────────────────
-        new() { Keyword = "lock",      Name = "锁屏",        Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", Description = "锁定计算机", IsBuiltIn = true, IconPath = "🔒" },
-        new() { Keyword = "shutdown",   Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻" },
-        new() { Keyword = "restart",   Name = "重启",        Type = "Shell",   Path = "shutdown /r /t 10",                      Description = "10秒后重启",       IsBuiltIn = true, IconPath = "🔄" },
-        new() { Keyword = "sleep",     Name = "睡眠",        Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤" },
-        new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑" },
+        new() { Keyword = "lock",      Name = "锁屏",        Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", Description = "锁定计算机", IsBuiltIn = true, IconPath = "🔒", RunHidden = true },
+        new() { Keyword = "shutdown",   Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻", RunHidden = true },
+        new() { Keyword = "restart",   Name = "重启",        Type = "Shell",   Path = "shutdown /r /t 10",                      Description = "10秒后重启",       IsBuiltIn = true, IconPath = "🔄", RunHidden = true },
+        new() { Keyword = "sleep",     Name = "睡眠",        Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤", RunHidden = true },
+        new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑", RunHidden = true },
         // ── 应用快捷命令 ──────────────────────────────────────────
         new() { Keyword = "setting",   Name = "打开设置",    Type = "SystemAction", Path = "setting", Description = "打开设置界面", IsBuiltIn = true, IconPath = "⚙" },
         new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
@@ -562,9 +562,7 @@ public class SearchEngine
     /// 执行搜索结果对应的操作
     /// 根据结果类型分派到不同的执行逻辑：文件启动、自定义命令执行等。
     /// </summary>
-    /// <param name="result">要执行的搜索结果</param>
-    /// <returns>执行是否成功</returns>
-    public async Task<bool> ExecuteResultAsync(SearchResult result)
+    public async Task<bool> ExecuteResultAsync(SearchResult result, string param = "")
     {
         switch (result.Type)
         {
@@ -598,7 +596,7 @@ public class SearchEngine
                 return true;
 
             case SearchResultType.CustomCommand:
-                return await ExecuteCustomCommandAsync(result, "");
+                return await ExecuteCustomCommandAsync(result, param);
 
             case SearchResultType.QRCode:
                 // 将二维码图片复制到剪贴板
@@ -703,7 +701,14 @@ public class SearchEngine
     /// <returns>命令执行是否成功</returns>
     public async Task<bool> ExecuteCustomCommandAsync(SearchResult result, string param)
     {
-        if (result.CommandConfig == null) return false;
+        DebugLog.Log("ExecuteCustomCommandAsync called: Keyword={0}, Type={1}, Param='{2}'", 
+            result.CommandConfig?.Keyword, result.CommandConfig?.Type, param);
+        
+        if (result.CommandConfig == null) 
+        {
+            DebugLog.Log("ExecuteCustomCommandAsync: CommandConfig is null!");
+            return false;
+        }
 
         var cmd = result.CommandConfig;
 
@@ -713,6 +718,9 @@ public class SearchEngine
             Logger.Warn($"Command is disabled: {cmd.Keyword}");
             return false;
         }
+
+        DebugLog.Log("ExecuteCustomCommandAsync: Executing {0} with Path='{1}', Arguments='{2}'", 
+            cmd.Type, cmd.Path, cmd.Arguments);
 
         try
         {
@@ -729,6 +737,9 @@ public class SearchEngine
                 .Replace("{param}", param)
                 .Replace("{query}", param)
                 .Replace("{%p}", param);
+
+            DebugLog.Log("ExecuteCustomCommandAsync: After replace - processedPath='{0}', processedArgs='{1}'",
+                processedPath, processedArgs);
 
             switch (cmd.Type.ToLower())
             {
@@ -788,35 +799,51 @@ public class SearchEngine
                     Logger.Warn($"Directory not found: {dirPath}");
                     return false;
 
-                // Shell 类型：通过 PowerShell 执行命令行命令（隐藏窗口）
+                // Shell 类型：通过 PowerShell 执行命令行命令
                 case "shell":
                     {
                         var shellCmd = processedPath;
                         if (!string.IsNullOrEmpty(processedArgs))
                             shellCmd += " " + processedArgs;
 
-                        // 使用 PowerShell 执行命令，设置隐藏窗口不显示控制台
-                        var shellPsi = new ProcessStartInfo
-                        {
-                            FileName = "powershell.exe",
-                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{shellCmd}\"",
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory)
-                                ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
-                                : cmd.WorkingDirectory
-                        };
+                        DebugLog.Log("ExecuteCustomCommandAsync Shell: shellCmd='{0}', RunHidden={1}", shellCmd, cmd.RunHidden);
 
-                        // 以管理员身份运行时需要启用 UseShellExecute
-                        if (cmd.RunAsAdmin)
+                        ProcessStartInfo shellPsi;
+                        if (cmd.RunHidden)
                         {
-                            shellPsi.Verb = "runas";
-                            shellPsi.UseShellExecute = true;
-                            shellPsi.CreateNoWindow = true;
+                            // 隐藏窗口执行
+                            shellPsi = new ProcessStartInfo
+                            {
+                                FileName = "powershell.exe",
+                                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{shellCmd}\"",
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                                WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory)
+                                    ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                                    : cmd.WorkingDirectory
+                            };
+                        }
+                        else
+                        {
+                            // 显示窗口执行（以便查看输出）
+                            shellPsi = new ProcessStartInfo
+                            {
+                                FileName = "cmd.exe",
+                                Arguments = $"/c {shellCmd}",
+                                UseShellExecute = true,
+                                CreateNoWindow = false,
+                                WorkingDirectory = string.IsNullOrEmpty(cmd.WorkingDirectory)
+                                    ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                                    : cmd.WorkingDirectory
+                            };
                         }
 
+                        DebugLog.Log("ExecuteCustomCommandAsync Shell: Starting process with FileName='{0}', Arguments='{1}'", 
+                            shellPsi.FileName, shellPsi.Arguments);
+
                         // 启动进程后不等待完成（即发即忘，提升响应速度）
-                        Process.Start(shellPsi);
+                        var process = Process.Start(shellPsi);
+                        DebugLog.Log("ExecuteCustomCommandAsync Shell: Process started, Id={0}", process?.Id);
                         _usageTracker.RecordUsage(result.Id);
                         return true;
                     }

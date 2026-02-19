@@ -160,16 +160,25 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanExecuteSelected))]
     private async Task ExecuteSelectedAsync()
     {
-        if (SelectedResult == null) return;
+        if (SelectedResult == null) 
+        {
+            DebugLog.Log("ExecuteSelectedAsync: SelectedResult is null!");
+            return;
+        }
+
+        DebugLog.Log("ExecuteSelectedAsync: IsParamMode={0}, Type={1}, CommandParam='{2}'",
+            IsParamMode, SelectedResult.Type, CommandParam);
 
         bool success;
         if (IsParamMode && SelectedResult.Type == SearchResultType.CustomCommand)
         {
+            DebugLog.Log("ExecuteSelectedAsync: Using ExecuteCustomCommandAsync");
             success = await _searchEngine.ExecuteCustomCommandAsync(SelectedResult, CommandParam);
         }
         else
         {
-            success = await _searchEngine.ExecuteResultAsync(SelectedResult);
+            DebugLog.Log("ExecuteSelectedAsync: Using ExecuteResultAsync");
+            success = await _searchEngine.ExecuteResultAsync(SelectedResult, "");
         }
 
         if (success)
