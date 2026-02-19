@@ -30,7 +30,9 @@ public enum SearchResultType
     /// <summary>用户自定义命令</summary>
     CustomCommand,
     /// <summary>二维码生成</summary>
-    QRCode
+    QRCode,
+    /// <summary>系统操作（设置、关于、切换语言）</summary>
+    SystemAction
 }
 
 /// <summary>

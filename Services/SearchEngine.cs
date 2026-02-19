@@ -107,10 +107,15 @@ public class SearchEngine
         new() { Keyword = "netstat",   Name = "网络状态",    Type = "Shell",   Path = "netstat -an",                            Description = "查看网络状态",     IsBuiltIn = true },
         // ── 系统控制 ──────────────────────────────────────────────
         new() { Keyword = "lock",      Name = "锁屏",        Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", Description = "锁定计算机", IsBuiltIn = true, IconPath = "🔒" },
-        new() { Keyword = "shutdown",  Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻" },
+        new() { Keyword = "shutdown",   Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻" },
         new() { Keyword = "restart",   Name = "重启",        Type = "Shell",   Path = "shutdown /r /t 10",                      Description = "10秒后重启",       IsBuiltIn = true, IconPath = "🔄" },
         new() { Keyword = "sleep",     Name = "睡眠",        Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤" },
         new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑" },
+        // ── 应用快捷命令 ──────────────────────────────────────────
+        new() { Keyword = "setting",   Name = "打开设置",    Type = "SystemAction", Path = "setting", Description = "打开设置界面", IsBuiltIn = true, IconPath = "⚙" },
+        new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
+        new() { Keyword = "english",   Name = "切换到英文",  Type = "SystemAction", Path = "english", Description = "切换界面语言为英文", IsBuiltIn = true, IconPath = "EN" },
+        new() { Keyword = "chinese",   Name = "切换到中文",  Type = "SystemAction", Path = "chinese", Description = "切换界面语言为中文", IsBuiltIn = true, IconPath = "中" },
     };
 
     /// <summary>
@@ -197,13 +202,28 @@ public class SearchEngine
         var commandResult = await _commandRouter.TryHandleCommandAsync(query);
         if (commandResult != null)
         {
-            commandResult.GroupLabel = commandResult.Type == SearchResultType.Calculator ? "Calc" : "Web";
-            // Calculator 和 Web 结果应该排在最前面（GroupOrder=0），优先级高于 App/File/Window
-            commandResult.GroupOrder = 0;
-            // 如果没有设置 MatchScore，给一个默认高分确保显示
-            if (commandResult.MatchScore <= 0)
-                commandResult.MatchScore = 1.0;
-            results.Add(commandResult);
+            // 避免重复：如果 SearchCustomCommands 已经添加了同名的系统操作命令，则跳过
+            bool alreadyExists = customResults.Any(r => 
+                r.Type == SearchResultType.SystemAction && 
+                r.Path?.Equals(commandResult.Subtitle, StringComparison.OrdinalIgnoreCase) == true);
+            if (!alreadyExists)
+            {
+                // 根据类型设置分组标签：计算器为 Calc，二维码为 QRCode，系统操作为 System，网页搜索为 Web
+                if (commandResult.Type == SearchResultType.Calculator)
+                    commandResult.GroupLabel = "Calc";
+                else if (commandResult.Type == SearchResultType.QRCode)
+                    commandResult.GroupLabel = "QRCode";
+                else if (commandResult.Type == SearchResultType.SystemAction)
+                    commandResult.GroupLabel = "快捷命令";
+                else if (commandResult.Type == SearchResultType.WebSearch)
+                    commandResult.GroupLabel = "Web";
+                // Calculator 和 Web 结果应该排在最前面（GroupOrder=0），优先级高于 App/File/Window
+                commandResult.GroupOrder = 0;
+                // 如果没有设置 MatchScore，给一个默认高分确保显示
+                if (commandResult.MatchScore <= 0)
+                    commandResult.MatchScore = 1.0;
+                results.Add(commandResult);
+            }
         }
 
         // ── 2.5. 如果查询长度超过阈值，自动生成二维码 ──────────────────
@@ -330,13 +350,7 @@ public class SearchEngine
             .Take(_maxResults)
             .ToList();
 
-        // 若只有一种分组，清空 GroupLabel 以避免显示多余的分组标题
-        var distinctGroups = finalList.Select(r => r.GroupLabel).Distinct().Count();
-        if (distinctGroups <= 1)
-        {
-            foreach (var r in finalList) r.GroupLabel = "";
-        }
-
+        // 为每个结果设置索引和 QueryMatch
         for (int i = 0; i < finalList.Count; i++)
         {
             finalList[i].Index = i + 1;
@@ -363,6 +377,10 @@ public class SearchEngine
 
         foreach (var cmd in allCommands)
         {
+            // 系统操作命令使用独立的分组标签
+            bool isSystemAction = cmd.Type.Equals("SystemAction", StringComparison.OrdinalIgnoreCase);
+            string groupLabel = isSystemAction ? "快捷命令" : "Command";
+
             if (string.IsNullOrEmpty(query))
             {
                 // 查询为空时，返回所有命令（默认匹配分数 1.0）
@@ -374,10 +392,10 @@ public class SearchEngine
                     Subtitle = cmd.Name,
                     Path = cmd.Path,
                     IconText = GetIconText(cmd),
-                    Type = SearchResultType.CustomCommand,
+                    Type = isSystemAction ? SearchResultType.SystemAction : SearchResultType.CustomCommand,
                     CommandConfig = cmd,
                     MatchScore = 1.0,
-                    GroupLabel = "Command",
+                    GroupLabel = groupLabel,
                     GroupOrder = 0
                 });
             }
@@ -407,10 +425,10 @@ public class SearchEngine
                         Subtitle = cmd.Name,
                         Path = cmd.Path,
                         IconText = GetIconText(cmd),
-                        Type = SearchResultType.CustomCommand,
+                        Type = isSystemAction ? SearchResultType.SystemAction : SearchResultType.CustomCommand,
                         CommandConfig = cmd,
                         MatchScore = score,
-                        GroupLabel = "Command",
+                        GroupLabel = groupLabel,
                         GroupOrder = 0
                     });
                 }
@@ -594,6 +612,73 @@ public class SearchEngine
                 }
                 return true;
 
+            case SearchResultType.SystemAction:
+                return ExecuteSystemAction(result.Path);
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// 执行系统操作（设置、关于、切换语言）
+    /// </summary>
+    private bool ExecuteSystemAction(string action)
+    {
+        var app = System.Windows.Application.Current;
+        var mainWindow = app.MainWindow;
+
+        switch (action?.ToLower())
+        {
+            case "setting":
+                // 打开设置窗口
+                app.Dispatcher.Invoke(() =>
+                {
+                    var settingsWin = new Views.CommandSettingsWindow(this) { Owner = mainWindow };
+                    settingsWin.ShowDialog();
+                });
+                return true;
+
+            case "about":
+                // 显示关于信息（使用 Toast）
+                app.Dispatcher.Invoke(() =>
+                {
+                    ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
+                });
+                return true;
+
+            case "english":
+                // 切换到英文
+                LocalizationService.CurrentLanguage = "en-US";
+                app.Dispatcher.Invoke(() =>
+                {
+                    // 通知主窗口刷新 UI
+                    if (mainWindow is Views.MainWindow mw)
+                    {
+                        var config = Helpers.ConfigLoader.Load();
+                        mw.RefreshLocalization();
+                        mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
+                    }
+                });
+                ToastService.Instance.ShowSuccess("Language switched to English");
+                return true;
+
+            case "chinese":
+                // 切换到中文
+                LocalizationService.CurrentLanguage = "zh-CN";
+                app.Dispatcher.Invoke(() =>
+                {
+                    // 通知主窗口刷新 UI
+                    if (mainWindow is Views.MainWindow mw)
+                    {
+                        var config = Helpers.ConfigLoader.Load();
+                        mw.RefreshLocalization();
+                        mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
+                    }
+                });
+                ToastService.Instance.ShowSuccess("已切换到中文");
+                return true;
+
             default:
                 return false;
         }
@@ -732,6 +817,10 @@ public class SearchEngine
                     var calcResult = CalculateInternal(processedPath);
                     DebugLog.Log("Calculator result: {0}", calcResult);
                     return true;
+
+                // 系统操作类型：设置、关于、切换语言等
+                case "systemaction":
+                    return ExecuteSystemAction(processedPath);
 
                 default:
                     Logger.Warn($"Unknown command type: {cmd.Type}");

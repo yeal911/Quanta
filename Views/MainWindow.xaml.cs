@@ -239,7 +239,7 @@ public partial class MainWindow : Window
     /// 统一供启动时恢复主题和切换主题时使用。
     /// </summary>
     /// <param name="isDark">是否为暗色主题</param>
-    private void ApplyTheme(bool isDark)
+    public void ApplyTheme(bool isDark)
     {
         var border = FindName("MainBorder") as Border;
         var icon   = FindName("ThemeIcon") as TextBlock;
@@ -415,8 +415,8 @@ public partial class MainWindow : Window
                 break;
 
             case Key.Enter:
-                // Execute immediately without await to reduce delay
-                ExecuteSelected();
+                // Execute using async method
+                _ = ExecuteSelectedAsync();
                 e.Handled = true;
                 break;
 

@@ -45,7 +45,7 @@ public class HotkeyConfig
     [JsonPropertyName("Modifier")] public string Modifier { get; set; } = "Alt";
 
     /// <summary>主键，如 "Space"、"Q" 等</summary>
-    [JsonPropertyName("Key")] public string Key { get; set; } = "Space";
+    [JsonPropertyName("Key")] public string Key { get; set; } = "R";
 }
 
 /// <summary>
