@@ -55,6 +55,9 @@ public class RecordingService : IDisposable
     // ── WASAPI 采集 ───────────────────────────────────────────────────
     private WasapiCapture? _micCapture;
     private WasapiLoopbackCapture? _loopbackCapture;
+    // 创建采集实例时立即读取并缓存设备友好名（避免 NotifyDeviceChanged 依赖系统默认设备注册表时序）
+    private string? _micDeviceName;
+    private string? _speakerDeviceName;
 
     // ── Loopback 格式转换链（native float → 16-bit PCM @ _writeFormat）──
     // 由 loopback DataAvailable 填充，由 OnLoopbackDataAvailable 消费
@@ -92,6 +95,8 @@ public class RecordingService : IDisposable
     public event EventHandler<string>? ErrorOccurred;
     public event EventHandler<RecordingState>? StateChanged;
     public event EventHandler<string>? RecordingSaved;
+    /// <summary>设备信息变更（启动时 + 每次设备重建后触发）。null 表示该路未启用。</summary>
+    public event EventHandler<(string? MicName, string? SpeakerName)>? DeviceChanged;
 
     public RecordingState State => _state;
     public string OutputFilePath => _outputFilePath;
@@ -159,10 +164,12 @@ public class RecordingService : IDisposable
     {
         lock (_stateLock) { if (_state != RecordingState.Recording) { Logger.Warn("Pause: invalid state"); return; } }
         Logger.Debug("RecordingService.Pause");
+        // 先设状态再调 StopRecording：防止 OnCaptureStopped 回调在状态设置前触发，
+        // 误判为"设备意外停止"并触发不必要的重启。
+        SetState(RecordingState.Paused);
+        _pauseStartTime = DateTime.Now;
         _micCapture?.StopRecording();
         _loopbackCapture?.StopRecording();
-        _pauseStartTime = DateTime.Now;
-        SetState(RecordingState.Paused);
     }
 
     public void Resume()
@@ -322,6 +329,14 @@ public class RecordingService : IDisposable
             if (source == "Mic" || source == "Mic&Speaker")
             {
                 _micCapture = new WasapiCapture();
+                // 在 new WasapiCapture() 后立即读取默认 Capture 设备名（此时系统注册表已确定）
+                try
+                {
+                    using var e2 = new MMDeviceEnumerator();
+                    using var d2 = e2.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
+                    _micDeviceName = d2.FriendlyName;
+                }
+                catch { _micDeviceName = null; }
                 try
                 {
                     _micCapture.WaveFormat = _writeFormat;
@@ -339,6 +354,14 @@ public class RecordingService : IDisposable
             if (source == "Speaker" || source == "Mic&Speaker")
             {
                 _loopbackCapture = new WasapiLoopbackCapture();
+                // 在 new WasapiLoopbackCapture() 后立即读取默认 Render 设备名
+                try
+                {
+                    using var e2 = new MMDeviceEnumerator();
+                    using var d2 = e2.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                    _speakerDeviceName = d2.FriendlyName;
+                }
+                catch { _speakerDeviceName = null; }
                 var nativeFmt = _loopbackCapture.WaveFormat;
                 Logger.Debug($"RecordingService: loopback native format: {nativeFmt}");
 
@@ -468,6 +491,9 @@ public class RecordingService : IDisposable
         // 刷新定时器（每30秒强制写入磁盘，崩溃安全）
         _flushTimer = new System.Threading.Timer(FlushMp3, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         Logger.Debug("RecordingService: timers started");
+
+        // 通知初始设备信息（已在后台线程中，可直接调用）
+        NotifyDeviceChanged();
 
         return true;
     }
@@ -737,43 +763,45 @@ public class RecordingService : IDisposable
         bool isLoopback = sender is WasapiLoopbackCapture;
         string tag = isLoopback ? "loopback" : "mic";
 
+        RecordingState cur;
+        lock (_stateLock) { cur = _state; }
+
         if (e.Exception != null)
+            Logger.Error($"RecordingService.OnCaptureStopped [{tag}]: exception={e.Exception.Message}, state={cur}");
+        else
+            Logger.Debug($"RecordingService.OnCaptureStopped [{tag}]: normal stop, state={cur}");
+
+        // 只有录音进行中，设备意外停止（无论有无异常）才重启。
+        // Pause()/StopAsync()/DiscardAsync() 会先将 state 设为 Paused/Stopping/Idle 再调 StopRecording()，
+        // 所以那些情况下 cur != Recording，直接跳过。
+        // Windows 切换默认音频设备时有时以"无异常的正常 stop"方式通知 loopback——
+        // 旧逻辑只在 e.Exception != null 时重启，导致 loopback 无声但不重建。
+        if (cur != RecordingState.Recording) return;
+
+        if (isLoopback)
         {
-            Logger.Error($"RecordingService.OnCaptureStopped [{tag}]: {e.Exception.Message}");
-
-            RecordingState cur;
-            lock (_stateLock) { cur = _state; }
-            if (cur != RecordingState.Recording && cur != RecordingState.Paused) return;
-
-            if (isLoopback)
+            // Interlocked 防止多个事件并发触发多次重建（设备风暴期间常见）
+            if (Interlocked.CompareExchange(ref _loopbackRestarting, 1, 0) == 0)
             {
-                // Interlocked 防止多个事件并发触发多次重建（设备风暴期间常见）
-                if (Interlocked.CompareExchange(ref _loopbackRestarting, 1, 0) == 0)
-                {
-                    Logger.Warn("RecordingService: loopback stopped unexpectedly, retrying in 500ms...");
-                    Task.Delay(500).ContinueWith(_ => TryRestartLoopback());
-                }
-                else
-                {
-                    Logger.Debug("RecordingService: loopback restart in progress, ignoring duplicate");
-                }
+                Logger.Warn($"RecordingService: loopback stopped unexpectedly (ex={e.Exception?.Message ?? "none"}), retrying in 500ms...");
+                Task.Delay(500).ContinueWith(_ => TryRestartLoopback());
             }
             else
             {
-                if (Interlocked.CompareExchange(ref _micRestarting, 1, 0) == 0)
-                {
-                    Logger.Warn("RecordingService: mic stopped unexpectedly, retrying in 500ms...");
-                    Task.Delay(500).ContinueWith(_ => TryRestartMic());
-                }
-                else
-                {
-                    Logger.Debug("RecordingService: mic restart in progress, ignoring duplicate");
-                }
+                Logger.Debug("RecordingService: loopback restart in progress, ignoring duplicate");
             }
         }
         else
         {
-            Logger.Debug($"RecordingService.OnCaptureStopped [{tag}]: normal stop");
+            if (Interlocked.CompareExchange(ref _micRestarting, 1, 0) == 0)
+            {
+                Logger.Warn($"RecordingService: mic stopped unexpectedly (ex={e.Exception?.Message ?? "none"}), retrying in 500ms...");
+                Task.Delay(500).ContinueWith(_ => TryRestartMic());
+            }
+            else
+            {
+                Logger.Debug("RecordingService: mic restart in progress, ignoring duplicate");
+            }
         }
     }
 
@@ -803,8 +831,15 @@ public class RecordingService : IDisposable
                 try { old.Dispose(); } catch { }
             }
 
-            // 2. 创建新实例（自动绑定当前默认输出设备）
+            // 2. 创建新实例（自动绑定当前默认输出设备），立即读取设备名
             var newCapture  = new WasapiLoopbackCapture();
+            try
+            {
+                using var e2 = new MMDeviceEnumerator();
+                using var d2 = e2.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                _speakerDeviceName = d2.FriendlyName;
+            }
+            catch { _speakerDeviceName = null; }
             var nativeFmt   = newCapture.WaveFormat;
             int channels    = _writeFormat.Channels;
             int sampleRate  = _writeFormat.SampleRate;
@@ -847,6 +882,7 @@ public class RecordingService : IDisposable
             newCapture.StartRecording();
 
             Logger.Debug("RecordingService: loopback rebuild done, capture resumed");
+            NotifyDeviceChanged(); // 通知界面刷新设备名称
         }
         catch (Exception ex)
         {
@@ -881,8 +917,15 @@ public class RecordingService : IDisposable
                 try { old.Dispose(); } catch { }
             }
 
-            // 2. 创建新实例
+            // 2. 创建新实例，立即读取设备名
             var newCapture = new WasapiCapture();
+            try
+            {
+                using var e2 = new MMDeviceEnumerator();
+                using var d2 = e2.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
+                _micDeviceName = d2.FriendlyName;
+            }
+            catch { _micDeviceName = null; }
             try
             {
                 newCapture.WaveFormat = _writeFormat;
@@ -909,6 +952,7 @@ public class RecordingService : IDisposable
             newCapture.StartRecording();
 
             Logger.Debug("RecordingService: mic rebuild done, capture resumed");
+            NotifyDeviceChanged(); // 通知界面刷新设备名称
         }
         catch (Exception ex)
         {
@@ -989,6 +1033,24 @@ public class RecordingService : IDisposable
         lock (_stateLock) { _state = newState; }
         Logger.Debug($"RecordingService: State → {newState}");
         StateChanged?.Invoke(this, newState);
+    }
+
+    /// <summary>
+    /// 读取当前默认麦克风 / 扬声器的友好名称，触发 DeviceChanged 事件。
+    /// 在初始化完成后及每次设备重建后调用（均在后台线程，可安全访问 COM）。
+    /// </summary>
+    private void NotifyDeviceChanged()
+    {
+        // 使用在 new WasapiCapture/WasapiLoopbackCapture() 后立即读取并缓存的设备名。
+        // 比此处再调 GetDefaultAudioEndpoint() 更准确：创建实例时系统已确定目标设备，
+        // 而 GetDefaultAudioEndpoint 在切换后短暂延迟内可能仍返回旧设备。
+        string? micName = (_settings.Source == "Mic" || _settings.Source == "Mic&Speaker")
+            ? _micDeviceName : null;
+        string? spkName = (_settings.Source == "Speaker" || _settings.Source == "Mic&Speaker")
+            ? _speakerDeviceName : null;
+
+        Logger.Debug($"RecordingService: DeviceChanged mic={micName}, spk={spkName}");
+        DeviceChanged?.Invoke(this, (micName, spkName));
     }
 
     // ════════════════════════════════════════════════════════════════════

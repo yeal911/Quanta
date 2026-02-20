@@ -337,7 +337,6 @@ public partial class CommandSettingsWindow : Window
         RecordFormatLabel.Text = LocalizationService.Get("RecordFormat") + "：";
         RecordBitrateLabel.Text = LocalizationService.Get("RecordBitrate") + "：";
         RecordChannelsLabel.Text = LocalizationService.Get("RecordChannels") + "：";
-        RecordSampleRateLabel.Text = LocalizationService.Get("RecordSampleRate") + "：";
         RecordOutputPathLabel.Text = LocalizationService.Get("RecordOutputPath") + "：";
         RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
 
@@ -389,8 +388,6 @@ public partial class CommandSettingsWindow : Window
         SelectComboByTag(RecordBitrateCombo, rec.Bitrate.ToString());
         // 声道
         SelectComboByTag(RecordChannelsCombo, rec.Channels.ToString());
-        // 采样率
-        SelectComboByTag(RecordSampleRateCombo, rec.SampleRate.ToString());
         // 输出路径
         RecordOutputPathBox.Text = string.IsNullOrEmpty(rec.OutputPath)
             ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
@@ -419,7 +416,6 @@ public partial class CommandSettingsWindow : Window
         config.RecordingSettings.Format     = GetComboTag(RecordFormatCombo) ?? "m4a";
         config.RecordingSettings.Bitrate    = int.TryParse(GetComboTag(RecordBitrateCombo),    out int br) ? br : 32;
         config.RecordingSettings.Channels   = int.TryParse(GetComboTag(RecordChannelsCombo),   out int ch) ? ch : 1;
-        config.RecordingSettings.SampleRate = int.TryParse(GetComboTag(RecordSampleRateCombo), out int sr) ? sr : 16000;
         config.RecordingSettings.OutputPath = RecordOutputPathBox.Text.Trim();
 
         ConfigLoader.Save(config);
@@ -447,11 +443,6 @@ public partial class CommandSettingsWindow : Window
     {
         if (!_suppressRecordingEvents) SaveRecordingSettings();
     }
-    private void RecordSampleRateCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_suppressRecordingEvents) SaveRecordingSettings();
-    }
-
     private void RecordOutputPathBox_LostFocus(object sender, RoutedEventArgs e)
     {
         SaveRecordingSettings();

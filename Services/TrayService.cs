@@ -53,6 +53,11 @@ public class TrayService : IDisposable
     public event EventHandler? ExitRequested;
 
     /// <summary>
+    /// 退出前检查回调。返回 false 则取消退出（例如录音进行中）。
+    /// </summary>
+    public Func<bool>? CanExit { get; set; }
+
+    /// <summary>
     /// 初始化 <see cref="TrayService"/> 类的新实例。
     /// </summary>
     /// <param name="mainWindow">应用程序主窗口的引用，用于托盘交互时操作主窗口。</param>
@@ -272,10 +277,14 @@ public class TrayService : IDisposable
 
     /// <summary>
     /// 处理"退出"菜单项的点击事件。
-    /// 依次触发 <see cref="ExitRequested"/> 事件、释放托盘资源，然后关闭整个应用程序。
+    /// 先检查 <see cref="CanExit"/> 回调，允许退出后才依次触发事件、释放资源并关闭应用。
     /// </summary>
     private void OnExitRequested()
     {
+        // 检查是否允许退出（录音进行中返回 false 则取消）
+        if (CanExit != null && !CanExit())
+            return;
+
         ExitRequested?.Invoke(this, EventArgs.Empty);
         Dispose();
         System.Windows.Application.Current.Shutdown();

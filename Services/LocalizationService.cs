@@ -135,7 +135,11 @@ public static class LocalizationService
             ["RecordStopped"] = "录音已完成",
             ["RecordSaving"] = "正在保存录音文件...",
             ["RecordSaved"] = "录音文件已保存",
-            ["RecordEncoding"] = "正在转码"
+            ["RecordEncoding"] = "正在转码",
+            ["RecordRightClickSource"] = "右键点击切换录制源",
+            ["RecordRightClickFormat"] = "右键点击切换格式",
+            ["RecordRightClickBitrate"] = "右键点击切换码率",
+            ["RecordRightClickChannels"] = "右键点击切换声道"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -248,7 +252,11 @@ public static class LocalizationService
             ["RecordStopped"] = "Recording completed",
             ["RecordSaving"] = "Saving recording file...",
             ["RecordSaved"] = "Recording file saved",
-            ["RecordEncoding"] = "Encoding"
+            ["RecordEncoding"] = "Encoding",
+            ["RecordRightClickSource"] = "Right-click to switch source",
+            ["RecordRightClickFormat"] = "Right-click to switch format",
+            ["RecordRightClickBitrate"] = "Right-click to switch bitrate",
+            ["RecordRightClickChannels"] = "Right-click to switch channels"
         }
     };
 

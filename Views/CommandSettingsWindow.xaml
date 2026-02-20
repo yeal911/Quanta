@@ -165,7 +165,6 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
@@ -217,19 +216,6 @@
                         </ComboBox>
                     </StackPanel>
 
-                    <!-- 采样率 -->
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
-                        <TextBlock x:Name="RecordSampleRateLabel" Text="采样率：" FontSize="12" FontFamily="微软雅黑"
-                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <ComboBox x:Name="RecordSampleRateCombo" Width="90" FontSize="11" VerticalAlignment="Center"
-                                  SelectionChanged="RecordSampleRateCombo_SelectionChanged">
-                            <ComboBoxItem Content="8000 Hz"  Tag="8000"/>
-                            <ComboBoxItem Content="16000 Hz" Tag="16000"/>
-                            <ComboBoxItem Content="22050 Hz" Tag="22050"/>
-                            <ComboBoxItem Content="44100 Hz" Tag="44100"/>
-                            <ComboBoxItem Content="48000 Hz" Tag="48000"/>
-                        </ComboBox>
-                    </StackPanel>
                 </Grid>
 
                 <!-- 录音输出路径行 -->

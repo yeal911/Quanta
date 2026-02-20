@@ -103,7 +103,8 @@ public partial class MainViewModel : ObservableObject
     partial void OnSearchTextChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayText));
-        if (!IsParamMode)
+        // record 参数模式需要实时搜索以更新文件名预览；其他参数模式不触发搜索
+        if (!IsParamMode || CommandKeyword == "record")
         {
             _ = SearchAsync();
         }
@@ -119,10 +120,16 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>
     /// 命令参数变更时触发，通知 DisplayText 更新。
+    /// record 参数模式下同步 SearchText 以触发实时搜索（文件名预览等）。
     /// </summary>
     partial void OnCommandParamChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayText));
+        // record 参数模式：同步 SearchText 触发 SearchAsync，使搜索结果显示录音命令
+        if (IsParamMode && CommandKeyword == "record")
+        {
+            SearchText = string.IsNullOrEmpty(value) ? "record" : "record " + value;
+        }
     }
 
     /// <summary>

@@ -341,9 +341,10 @@
                                             <Border x:Name="SourceChip" Tag="Source"
                                                     Background="#E8F4FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
                                                     Cursor="Hand"
+                                                    ToolTip="{Binding RecordData.SourceTooltip}"
                                                     MouseRightButtonUp="RecordChip_RightClick">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="🎙 " FontSize="11"/>
+                                                    <TextBlock Text="{Binding RecordData.SourceIcon}" FontSize="11" Margin="0,0,4,0"/>
                                                     <TextBlock Text="{Binding RecordData.Source}" FontSize="11" FontFamily="微软雅黑" Foreground="#0078D4"/>
                                                 </StackPanel>
                                             </Border>
@@ -352,7 +353,7 @@
                                             <Border x:Name="FormatChip" Tag="Format"
                                                     Background="#F0F8E8" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
                                                     Cursor="Hand"
-                                                    ToolTip="右键点击切换格式"
+                                                    ToolTip="{Binding RecordData.FormatTooltip}"
                                                     MouseRightButtonUp="RecordChip_RightClick">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="📄 " FontSize="11"/>
@@ -364,7 +365,7 @@
                                             <Border x:Name="BitrateChip" Tag="Bitrate"
                                                     Background="#F8E8FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
                                                     Cursor="Hand"
-                                                    ToolTip="右键点击切换码率"
+                                                    ToolTip="{Binding RecordData.BitrateTooltip}"
                                                     MouseRightButtonUp="RecordChip_RightClick">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="📶 " FontSize="11"/>
@@ -376,7 +377,7 @@
                                             <Border x:Name="ChannelsChip" Tag="Channels"
                                                     Background="#E8F4FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
                                                     Cursor="Hand"
-                                                    ToolTip="右键点击切换声道"
+                                                    ToolTip="{Binding RecordData.ChannelsTooltip}"
                                                     MouseRightButtonUp="RecordChip_RightClick">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="🔊 " FontSize="11"/>

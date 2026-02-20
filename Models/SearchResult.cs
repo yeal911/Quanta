@@ -120,7 +120,15 @@ public class RecordCommandData : INotifyPropertyChanged
     public string FilePrefix { get => _filePrefix; set { _filePrefix = value; OnPropertyChanged(); OnPropertyChanged(nameof(OutputFileName)); } }
 
     /// <summary>录制源</summary>
-    public string Source { get => _source; set { _source = value; OnPropertyChanged(); } }
+    public string Source { get => _source; set { _source = value; OnPropertyChanged(); OnPropertyChanged(nameof(SourceIcon)); } }
+
+    /// <summary>录制源对应的 Emoji 图标：Mic=🎙，Speaker=🔊，Mic&amp;Speaker=🎙🔊</summary>
+    public string SourceIcon => _source switch
+    {
+        "Speaker"     => "🔊",
+        "Mic&Speaker" => "🎙🔊",
+        _             => "🎙"
+    };
 
     /// <summary>输出格式</summary>
     public string Format { get => _format; set { _format = value; OnPropertyChanged(); OnPropertyChanged(nameof(OutputFileName)); } }
@@ -144,9 +152,21 @@ public class RecordCommandData : INotifyPropertyChanged
     public string BitrateDisplay => $"{_bitrate}kbps";
 
     /// <summary>声道显示文本</summary>
-    public string ChannelsDisplay => _channels == 1 
-        ? LocalizationService.Get("RecordChannelMono") 
+    public string ChannelsDisplay => _channels == 1
+        ? LocalizationService.Get("RecordChannelMono")
         : LocalizationService.Get("RecordChannelStereo");
+
+    /// <summary>录制源芯片 Tooltip（本地化）</summary>
+    public string SourceTooltip => LocalizationService.Get("RecordRightClickSource");
+
+    /// <summary>格式芯片 Tooltip（本地化）</summary>
+    public string FormatTooltip => LocalizationService.Get("RecordRightClickFormat");
+
+    /// <summary>码率芯片 Tooltip（本地化）</summary>
+    public string BitrateTooltip => LocalizationService.Get("RecordRightClickBitrate");
+
+    /// <summary>声道芯片 Tooltip（本地化）</summary>
+    public string ChannelsTooltip => LocalizationService.Get("RecordRightClickChannels");
 
     /// <summary>预览输出文件名</summary>
     public string OutputFileName

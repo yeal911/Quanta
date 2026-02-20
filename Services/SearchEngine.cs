@@ -73,7 +73,7 @@ public class SearchEngine
     /// <summary>
     /// 自动生成二维码的文本长度阈值，超过此长度自动生成二维码
     /// </summary>
-    private int _qrCodeThreshold = 10;
+    private int _qrCodeThreshold = 20;
 
     /// <summary>
     /// Windows 系统内置命令列表
@@ -111,7 +111,7 @@ public class SearchEngine
         new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
         new() { Keyword = "english",   Name = "切换到英文",  Type = "SystemAction", Path = "english", Description = "切换界面语言为英文", IsBuiltIn = true, IconPath = "EN" },
         new() { Keyword = "chinese",   Name = "切换到中文",  Type = "SystemAction", Path = "chinese", Description = "切换界面语言为中文", IsBuiltIn = true, IconPath = "中" },
-        new() { Keyword = "record",    Name = "录音",        Type = "SystemAction", Path = "record", Description = "启动录音", IsBuiltIn = true, IconPath = "🎙" },
+        new() { Keyword = "winrecord", Name = "Windows 录音机", Type = "SystemAction", Path = "winrecord", Description = "打开 Windows 内置录音机", IsBuiltIn = true, IconPath = "🎤" },
     };
 
     /// <summary>
@@ -138,7 +138,7 @@ public class SearchEngine
         var config = ConfigLoader.Load();
         _customCommands = config.Commands ?? new List<CommandConfig>();
         _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
-        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 10;
+        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 20;
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class SearchEngine
         var config = ConfigLoader.Reload();
         _customCommands = config.Commands ?? new List<CommandConfig>();
         _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
-        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 10;
+        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 20;
     }
 
     /// <summary>
@@ -721,8 +721,36 @@ public class SearchEngine
                 ToastService.Instance.ShowSuccess("已切换到中文");
                 return true;
 
-            case "record":
-                // record 命令通过 RecordCommand 类型处理，这里不应直接触达
+            case "winrecord":
+                // 打开 Windows 内置录音机（三级回退）
+                try
+                {
+                    // 方法一：ms-soundrecorder: URI（Windows 10 早期版本）
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "ms-soundrecorder:",
+                        UseShellExecute = true
+                    });
+                }
+                catch
+                {
+                    try
+                    {
+                        // 方法二：通过 explorer.exe 打开应用包（Windows 10/11 兼容）
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "explorer.exe",
+                            Arguments = "shell:AppsFolder\\Microsoft.WindowsSoundRecorder_8wekyb3d8bbwe!App",
+                            UseShellExecute = false
+                        });
+                    }
+                    catch
+                    {
+                        // 方法三：提示用户
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                            ToastService.Instance.ShowWarning("Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载"));
+                    }
+                }
                 return true;
 
             default:

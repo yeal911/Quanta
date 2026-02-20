@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WpfButton = System.Windows.Controls.Button;
@@ -49,6 +50,8 @@ public partial class RecordingOverlayWindow : Window
     private DispatcherTimer? _gifTimer;
     private int _gifFrameIndex;
     private bool _gifLoaded;
+    private byte[]? _pauseIconPixels;                  // 预加载的暂停图标像素（避免切换时 UI 线程阻塞）
+    private static readonly Random _iconAnimRng = new();// 过渡动画随机选择
 
     // ── 录音服务引用 ─────────────────────────────────────────────────
     private readonly RecordingService _recordingService;
@@ -70,9 +73,10 @@ public partial class RecordingOverlayWindow : Window
         InitializeComponent();
 
         _recordingService.ProgressUpdated += OnProgressUpdated;
-        _recordingService.StateChanged += OnRecordingStateChanged;
-        _recordingService.ErrorOccurred += OnRecordingError;
-        _recordingService.RecordingSaved += OnRecordingSaved;
+        _recordingService.StateChanged    += OnRecordingStateChanged;
+        _recordingService.ErrorOccurred   += OnRecordingError;
+        _recordingService.RecordingSaved  += OnRecordingSaved;
+        _recordingService.DeviceChanged   += OnDeviceChanged;
 
         PositionWindow();
 
@@ -92,6 +96,9 @@ public partial class RecordingOverlayWindow : Window
 
         // 加载按钮图标
         LoadButtonImages();
+
+        // 预加载暂停图标像素（避免暂停切换时在 UI 线程做文件 I/O）
+        _pauseIconPixels = PreloadImagePixels(ResourcePath("recording-pause.png"));
 
         // 启动 GIF 动画
         if (!_gifLoaded)
@@ -295,54 +302,141 @@ public partial class RecordingOverlayWindow : Window
         _gifTimer = null;
     }
 
-    /// <summary>暂停时：停止 GIF 定时器，将暂停静态图写入 _frameBuffer。</summary>
+    /// <summary>暂停时：随机过渡动画 → 停止 GIF 定时器并显示暂停静态图。</summary>
     private void ShowPauseIcon()
     {
-        StopGifTimer();
-        var pausePath = ResourcePath("recording-pause.png");
-        Logger.Debug($"RecordingOverlayWindow: ShowPauseIcon, exists={File.Exists(pausePath)}");
-
-        if (File.Exists(pausePath))
+        Logger.Debug("RecordingOverlayWindow: ShowPauseIcon");
+        AnimateIconTransition(() =>
         {
-            try
-            {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource   = new Uri(pausePath, UriKind.Absolute);
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-
-                var converted = new FormatConvertedBitmap(bmp, PixelFormats.Pbgra32, null, 0);
-                BitmapSource source = converted;
-                if (converted.PixelWidth != GifSize || converted.PixelHeight != GifSize)
-                {
-                    double sx = (double)GifSize / converted.PixelWidth;
-                    double sy = (double)GifSize / converted.PixelHeight;
-                    source = new TransformedBitmap(converted, new ScaleTransform(sx, sy));
-                }
-
-                var pixels = new byte[GifSize * GifSize * 4];
-                source.CopyPixels(pixels, GifSize * 4, 0);
-                WriteFrameToBuffer(pixels);
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn($"RecordingOverlayWindow: Failed to load pause icon: {ex.Message}");
+            StopGifTimer();
+            if (_pauseIconPixels != null)
+                WriteFrameToBuffer(_pauseIconPixels);
+            else
                 ClearFrameBuffer();
-            }
-        }
-        else
-        {
-            ClearFrameBuffer();
-        }
+        });
     }
 
-    /// <summary>录音时：恢复 GIF 旋转动画（帧已预加载，只需启动定时器）。</summary>
+    /// <summary>录音时：随机过渡动画 → 恢复 GIF 旋转动画。</summary>
     private void ShowRecordingIcon()
     {
         Logger.Debug("RecordingOverlayWindow: ShowRecordingIcon");
-        StartGifTimer();
+        AnimateIconTransition(() => StartGifTimer());
+    }
+
+    /// <summary>
+    /// 随机选择一种过渡动画切换图标：
+    ///   0 - 纯淡入淡出
+    ///   1 - 缩放 + 弹性回弹
+    ///   2 - 水平翻转（模拟卡片翻面）
+    /// 必须在 UI 线程调用。
+    /// </summary>
+    private void AnimateIconTransition(Action swapPixels)
+    {
+        // 先停止任何正在进行的动画，确保从干净状态开始
+        RecordingIcon.BeginAnimation(UIElement.OpacityProperty, null);
+        IconScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        IconScaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        RecordingIcon.Opacity = 1.0;
+        IconScaleTransform.ScaleX = 1.0;
+        IconScaleTransform.ScaleY = 1.0;
+
+        const int OutMs = 130;
+        const int InMs  = 180;
+
+        switch (_iconAnimRng.Next(3))
+        {
+            // ── 0: 纯淡入淡出 ─────────────────────────────────────────
+            default:
+            {
+                var fadeOut = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+                fadeOut.Completed += (_, _) =>
+                {
+                    swapPixels();
+                    RecordingIcon.BeginAnimation(UIElement.OpacityProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs))
+                            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+                };
+                RecordingIcon.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+                break;
+            }
+
+            // ── 1: 缩放 + 淡出，弹性回弹 ─────────────────────────────
+            case 1:
+            {
+                var easeIn = new QuadraticEase { EasingMode = EasingMode.EaseIn };
+                var fadeOut = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = easeIn };
+                fadeOut.Completed += (_, _) =>
+                {
+                    swapPixels();
+                    var bounce = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut };
+                    IconScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty,
+                        new DoubleAnimation(0.7, 1.0, TimeSpan.FromMilliseconds(InMs)) { EasingFunction = bounce });
+                    IconScaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty,
+                        new DoubleAnimation(0.7, 1.0, TimeSpan.FromMilliseconds(InMs)) { EasingFunction = bounce });
+                    RecordingIcon.BeginAnimation(UIElement.OpacityProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs)));
+                };
+                IconScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty,
+                    new DoubleAnimation(1.0, 0.7, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = easeIn });
+                IconScaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(1.0, 0.7, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = easeIn });
+                RecordingIcon.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+                break;
+            }
+
+            // ── 2: 水平翻转（ScaleX: 1→0→1，模拟卡片翻面） ───────────
+            case 2:
+            {
+                var flipOut = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs))
+                    { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
+                flipOut.Completed += (_, _) =>
+                {
+                    swapPixels();
+                    IconScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs))
+                            { EasingFunction = new BackEase { Amplitude = 0.25, EasingMode = EasingMode.EaseOut } });
+                };
+                IconScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, flipOut);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 预加载图片文件为 Pbgra32 像素数组（GifSize×GifSize）。
+    /// 在 Window_Loaded 中调用，避免首次切换时在 UI 线程做文件解码。
+    /// </summary>
+    private static byte[]? PreloadImagePixels(string path)
+    {
+        if (!File.Exists(path)) return null;
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource   = new Uri(path, UriKind.Absolute);
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+
+            var converted = new FormatConvertedBitmap(bmp, PixelFormats.Pbgra32, null, 0);
+            BitmapSource source = converted;
+            if (converted.PixelWidth != GifSize || converted.PixelHeight != GifSize)
+            {
+                double sx = (double)GifSize / converted.PixelWidth;
+                double sy = (double)GifSize / converted.PixelHeight;
+                source = new TransformedBitmap(converted, new ScaleTransform(sx, sy));
+            }
+
+            var pixels = new byte[GifSize * GifSize * 4];
+            source.CopyPixels(pixels, GifSize * 4, 0);
+            return pixels;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"RecordingOverlayWindow: PreloadImagePixels failed ({path}): {ex.Message}");
+            return null;
+        }
     }
 
     // ── 按钮图标加载 ─────────────────────────────────────────────────
@@ -416,6 +510,7 @@ public partial class RecordingOverlayWindow : Window
 
     private void InfoBox_Click(object sender, WpfMouseButtonEventArgs e)
     {
+        e.Handled = true; // 阻止事件冒泡到 Window，防止 DragMove() 抢占鼠标
         Logger.Debug($"RecordingOverlayWindow: InfoBox clicked, dir={_outputDirectory}");
         if (!string.IsNullOrEmpty(_outputDirectory) && Directory.Exists(_outputDirectory))
         {
@@ -476,21 +571,122 @@ public partial class RecordingOverlayWindow : Window
             Logger.Warn("RecordingOverlayWindow: NotifyIcon not initialized");
             return;
         }
-
-        Hide();
-        _notifyIcon.Visible = true;
-        Logger.Debug("RecordingOverlayWindow: Hidden to tray");
+        Logger.Debug("RecordingOverlayWindow: Animating hide to tray");
+        AnimateWindowTransition(hideOnComplete: true);
     }
 
     private void NotifyIcon_DoubleClick(object? sender, EventArgs e)
     {
-        Logger.Debug("RecordingOverlayWindow: NotifyIcon double-clicked");
+        Logger.Debug("RecordingOverlayWindow: NotifyIcon double-clicked, animating restore");
+        if (_notifyIcon != null) _notifyIcon.Visible = false;
+        // 先设 Opacity=0 让窗口不可见，再 Show()，最后动画淡入
+        this.Opacity = 0.0;
         Show();
         WindowState = WindowState.Normal;
-        Activate();
-        if (_notifyIcon != null)
+        AnimateWindowTransition(hideOnComplete: false);
+    }
+
+    /// <summary>
+    /// 随机选择一种动画切换窗口显示/隐藏：
+    ///   0 - 纯淡入/淡出
+    ///   1 - 上浮淡出 / 下落淡入
+    ///   2 - 缩放淡出 / 弹性缩放淡入
+    /// hideOnComplete=true 时动画结束后调用 Hide() 并显示托盘图标。
+    /// 必须在 UI 线程调用。
+    /// </summary>
+    private void AnimateWindowTransition(bool hideOnComplete)
+    {
+        // 停止正在进行的窗口动画
+        this.BeginAnimation(OpacityProperty, null);
+        RootScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        RootScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        RootTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+
+        const int OutMs = 220;
+        const int InMs  = 280;
+
+        if (hideOnComplete)
         {
-            _notifyIcon.Visible = false;
+            // ── 隐藏动画 ───────────────────────────────────────────────
+            // 先重置变换确保从干净状态开始
+            RootScale.ScaleX = RootScale.ScaleY = 1.0;
+            RootTranslate.Y = 0;
+
+            switch (_iconAnimRng.Next(3))
+            {
+                // 0: 纯淡出
+                default:
+                {
+                    var anim = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs))
+                        { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+                    anim.Completed += (_, _) => { Hide(); this.Opacity = 1.0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                    this.BeginAnimation(OpacityProperty, anim);
+                    break;
+                }
+                // 1: 上浮 + 淡出
+                case 1:
+                {
+                    var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+                    var fade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease };
+                    fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootTranslate.Y = 0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                    this.BeginAnimation(OpacityProperty, fade);
+                    RootTranslate.BeginAnimation(TranslateTransform.YProperty,
+                        new DoubleAnimation(0, -18, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease });
+                    break;
+                }
+                // 2: 缩小 + 淡出
+                case 2:
+                {
+                    var ease = new QuadraticEase { EasingMode = EasingMode.EaseIn };
+                    var fade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease };
+                    fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootScale.ScaleX = RootScale.ScaleY = 1.0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                    this.BeginAnimation(OpacityProperty, fade);
+                    RootScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                        new DoubleAnimation(1.0, 0.82, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease });
+                    RootScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                        new DoubleAnimation(1.0, 0.82, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease });
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // ── 显示动画（窗口已 Show()，Opacity=0）─────────────────────
+            switch (_iconAnimRng.Next(3))
+            {
+                // 0: 纯淡入
+                default:
+                {
+                    this.BeginAnimation(OpacityProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs))
+                            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+                    break;
+                }
+                // 1: 从上方落下 + 淡入
+                case 1:
+                {
+                    var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+                    RootTranslate.Y = -18;
+                    this.BeginAnimation(OpacityProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs)) { EasingFunction = ease });
+                    RootTranslate.BeginAnimation(TranslateTransform.YProperty,
+                        new DoubleAnimation(-18, 0, TimeSpan.FromMilliseconds(InMs)) { EasingFunction = ease });
+                    break;
+                }
+                // 2: 弹性放大 + 淡入
+                case 2:
+                {
+                    var bounce = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut };
+                    RootScale.ScaleX = RootScale.ScaleY = 0.82;
+                    this.BeginAnimation(OpacityProperty,
+                        new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(InMs)));
+                    RootScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                        new DoubleAnimation(0.82, 1.0, TimeSpan.FromMilliseconds(InMs + 60)) { EasingFunction = bounce });
+                    RootScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                        new DoubleAnimation(0.82, 1.0, TimeSpan.FromMilliseconds(InMs + 60)) { EasingFunction = bounce });
+                    break;
+                }
+            }
         }
     }
 
@@ -573,6 +769,42 @@ public partial class RecordingOverlayWindow : Window
         });
     }
 
+    private void OnDeviceChanged(object? sender, (string? MicName, string? SpeakerName) e)
+    {
+        Logger.Debug($"RecordingOverlayWindow: DeviceChanged mic={e.MicName}, spk={e.SpeakerName}");
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (e.MicName != null)
+            {
+                MicDeviceText.Text       = "Mic: " + TruncateDeviceName(e.MicName);
+                MicDeviceText.ToolTip    = e.MicName;   // 鼠标悬停显示完整设备名
+                MicDeviceText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                MicDeviceText.Visibility = Visibility.Collapsed;
+            }
+
+            if (e.SpeakerName != null)
+            {
+                SpeakerDeviceText.Text       = "Spk: " + TruncateDeviceName(e.SpeakerName);
+                SpeakerDeviceText.ToolTip    = e.SpeakerName; // 鼠标悬停显示完整设备名
+                SpeakerDeviceText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SpeakerDeviceText.Visibility = Visibility.Collapsed;
+            }
+
+            DeviceInfoBorder.Visibility = (e.MicName != null || e.SpeakerName != null)
+                ? Visibility.Visible : Visibility.Collapsed;
+        });
+    }
+
+    /// <summary>截断过长的设备名，最多保留 22 个字符。</summary>
+    private static string TruncateDeviceName(string name)
+        => name.Length <= 22 ? name : name.Substring(0, 21) + "…";
+
     protected override void OnClosed(EventArgs e)
     {
         Logger.Debug("RecordingOverlayWindow: OnClosed");
@@ -581,6 +813,7 @@ public partial class RecordingOverlayWindow : Window
         _recordingService.StateChanged    -= OnRecordingStateChanged;
         _recordingService.ErrorOccurred   -= OnRecordingError;
         _recordingService.RecordingSaved  -= OnRecordingSaved;
+        _recordingService.DeviceChanged   -= OnDeviceChanged;
 
         StopGifTimer();
         _gifFramePixels = null;

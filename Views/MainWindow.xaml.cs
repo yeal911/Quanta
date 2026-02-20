@@ -15,6 +15,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Data;
 using System.Windows.Media.Animation;
 using Quanta.Helpers;
 using Quanta.Models;
@@ -23,6 +24,8 @@ using Quanta.ViewModels;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using SolidColorBrush = System.Windows.Media.SolidColorBrush;
+using WpfTextBox = System.Windows.Controls.TextBox;
+using WpfBinding = System.Windows.Data.Binding;
 
 namespace Quanta.Views;
 
@@ -61,6 +64,9 @@ public partial class MainWindow : Window
 
     /// <summary>当前录音悬浮窗口</summary>
     private RecordingOverlayWindow? _recordingOverlay;
+
+    /// <summary>是否正处于 record 专用参数模式（SearchBox 绑定切换到 CommandParam）</summary>
+    private bool _isRecordParamMode = false;
 
     // ── Win32：模拟键盘输入 ────────────────────────────────────
     [DllImport("user32.dll")] private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr extra);
@@ -145,6 +151,13 @@ public partial class MainWindow : Window
         // Load language setting
         LocalizationService.LoadFromConfig();
 
+        // 当 IsParamMode 变为 false 时，还原 SearchBox 绑定（record 参数模式退出时使用）
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(_viewModel.IsParamMode) && !_viewModel.IsParamMode)
+                RestoreSearchBinding();
+        };
+
         // Update placeholder with current hotkey
         UpdatePlaceholderWithHotkey();
 
@@ -172,6 +185,16 @@ public partial class MainWindow : Window
         _trayService = new TrayService(this);
         _trayService.SettingsRequested += (s, args) => Dispatcher.Invoke(() => OpenCommandSettings());
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
+        _trayService.CanExit = () =>
+        {
+            if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording")));
+                return false;
+            }
+            return true;
+        };
         _trayService.Initialize();
 
         BuildSearchIconMenu();
@@ -353,7 +376,16 @@ public partial class MainWindow : Window
         
         // Exit
         var exitItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayExit") };
-        exitItem.Click += (s, args) => { _trayService?.Dispose(); System.Windows.Application.Current.Shutdown(); };
+        exitItem.Click += (s, args) =>
+        {
+            if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+            {
+                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
+                return;
+            }
+            _trayService?.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        };
         menu.Items.Add(exitItem);
         
         // Show menu
@@ -429,6 +461,7 @@ public partial class MainWindow : Window
             case Key.Escape:
                 if (_viewModel.IsParamMode)
                 {
+                    RestoreSearchBinding();
                     _viewModel.SwitchToNormalModeCommand.Execute(null);
                     SearchBox.Text = "";
                     ParamIndicator.Visibility = Visibility.Collapsed;
@@ -530,12 +563,17 @@ public partial class MainWindow : Window
 
         // Try to find the first matching CustomCommand in results
         string? matchedKeyword = null;
+        bool hasRecordCommand = false;
         foreach (var result in _viewModel.Results)
         {
             if (result.Type == SearchResultType.CustomCommand)
             {
                 matchedKeyword = result.Title;
                 break;
+            }
+            if (result.Type == SearchResultType.RecordCommand)
+            {
+                hasRecordCommand = true;
             }
         }
 
@@ -545,8 +583,70 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Record 命令：进入专用参数模式（绑定切换 + 显示 "record >" 指示符）
+        if (hasRecordCommand)
+        {
+            EnterRecordParamMode();
+            return;
+        }
+
         // Normal tab behavior - select next item
         _viewModel.SelectNextCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// 进入 record 专用参数模式。
+    /// 关键点：先把 SearchBox 的绑定从 SearchText 切换到 CommandParam，
+    /// 再调用 SwitchToParamMode，这样清空 SearchBox 不会把 SearchText 置空，
+    /// OnCommandParamChanged 负责更新 SearchText="record " 触发搜索，结果保持录音命令。
+    /// </summary>
+    private void EnterRecordParamMode()
+    {
+        _isRecordParamMode = true;
+
+        // 1. 先切换绑定：SearchBox ↔ CommandParam（而非 SearchText）
+        BindingOperations.ClearBinding(SearchBox, WpfTextBox.TextProperty);
+        SearchBox.SetBinding(WpfTextBox.TextProperty, new WpfBinding("CommandParam")
+        {
+            Source = _viewModel,
+            Mode = BindingMode.TwoWay,
+            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+        });
+
+        // 2. 切换到 param 模式（此时 OnCommandParamChanged→SearchText="record"→搜索→RecordCommand 结果）
+        _viewModel.SwitchToParamModeCommand.Execute("record");
+        ParamKeywordText.Text = "record";
+        ParamIndicator.Visibility = Visibility.Visible;
+        PlaceholderText.Visibility = Visibility.Collapsed;
+
+        // 3. 清空 SearchBox（只更新 CommandParam，不影响 SearchText）
+        SearchBox.Text = "";
+        SearchBox.Focus();
+
+        // 4. 调整左内边距
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            ParamIndicator.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            SearchBox.Padding = new Thickness(ParamIndicator.DesiredSize.Width + 6, 4, 0, 4);
+            SearchBox.CaretIndex = 0;
+        });
+    }
+
+    /// <summary>
+    /// 退出 record 参数模式，把 SearchBox 绑定还原回 SearchText。
+    /// 当 IsParamMode 变为 false 时（Escape/执行后）由 PropertyChanged 钩子自动调用。
+    /// </summary>
+    private void RestoreSearchBinding()
+    {
+        if (!_isRecordParamMode) return;
+        _isRecordParamMode = false;
+        BindingOperations.ClearBinding(SearchBox, WpfTextBox.TextProperty);
+        SearchBox.SetBinding(WpfTextBox.TextProperty, new WpfBinding("SearchText")
+        {
+            Source = _viewModel,
+            Mode = BindingMode.TwoWay,
+            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+        });
     }
 
     /// <summary>
@@ -650,7 +750,16 @@ public partial class MainWindow : Window
         SearchIconMenu.Items.Add(aboutItem);
 
         var exitItem = new MenuItem { Header = LocalizationService.Get("TrayExit") };
-        exitItem.Click += (s, e) => { _trayService?.Dispose(); System.Windows.Application.Current.Shutdown(); };
+        exitItem.Click += (s, e) =>
+        {
+            if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+            {
+                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
+                return;
+            }
+            _trayService?.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        };
         SearchIconMenu.Items.Add(exitItem);
     }
 
@@ -821,6 +930,9 @@ public partial class MainWindow : Window
                 _recordingService = null;
             };
 
+            // 先显示悬浮窗口，让用户立刻看到界面，录音在后台初始化
+            _recordingOverlay?.Show();
+
             // 开始录音
             bool started = await _recordingService.StartAsync(config.RecordingSettings, outputPath);
             if (!started)
@@ -831,9 +943,6 @@ public partial class MainWindow : Window
                 _recordingOverlay = null;
                 return;
             }
-
-            // 显示悬浮窗口
-            _recordingOverlay?.Show();
         }
         catch (Exception ex)
         {
@@ -945,6 +1054,18 @@ public partial class MainWindow : Window
             case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
         }
         Helpers.ConfigLoader.Save(config);
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        // 录音进行中时阻止退出，提示用户先停止录音
+        if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+        {
+            ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
+            e.Cancel = true;
+            return;
+        }
+        base.OnClosing(e);
     }
 
     protected override void OnClosed(EventArgs e)
