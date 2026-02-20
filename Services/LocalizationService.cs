@@ -139,7 +139,8 @@ public static class LocalizationService
             ["RecordRightClickSource"] = "右键点击切换录制源",
             ["RecordRightClickFormat"] = "右键点击切换格式",
             ["RecordRightClickBitrate"] = "右键点击切换码率",
-            ["RecordRightClickChannels"] = "右键点击切换声道"
+            ["RecordRightClickChannels"] = "右键点击切换声道",
+            ["RecordStarting"] = "启动录音中..."
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -256,7 +257,8 @@ public static class LocalizationService
             ["RecordRightClickSource"] = "Right-click to switch source",
             ["RecordRightClickFormat"] = "Right-click to switch format",
             ["RecordRightClickBitrate"] = "Right-click to switch bitrate",
-            ["RecordRightClickChannels"] = "Right-click to switch channels"
+            ["RecordRightClickChannels"] = "Right-click to switch channels",
+            ["RecordStarting"] = "Starting recording..."
         }
     };
 

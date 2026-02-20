@@ -15,15 +15,28 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         Loaded="Window_Loaded">
 
-    <!-- 根 StackPanel：含 RootScale/RootTranslate 供隐藏/恢复托盘动画使用 -->
-    <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                RenderTransformOrigin="0.5,0.5">
-        <StackPanel.RenderTransform>
-            <TransformGroup>
-                <ScaleTransform x:Name="RootScale"/>
-                <TranslateTransform x:Name="RootTranslate"/>
-            </TransformGroup>
-        </StackPanel.RenderTransform>
+    <!-- 根 Grid：包含加载层和主内容层 -->
+    <Grid>
+        <!-- 加载层：半透明背景 + 文字 -->
+        <Border x:Name="LoadingOverlay" Background="#CC666666" CornerRadius="6" Height="25">
+            <TextBlock x:Name="LoadingText"
+                       Text="启动录音中..."
+                       Foreground="White"
+                       FontSize="12"
+                       FontFamily="微软雅黑"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- 主内容层：录音控制界面 (初始透明度为0，等待淡入) -->
+        <StackPanel x:Name="MainContent" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                    RenderTransformOrigin="0.5,0.5" Opacity="0">
+            <StackPanel.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="RootScale"/>
+                    <TranslateTransform x:Name="RootTranslate"/>
+                </TransformGroup>
+            </StackPanel.RenderTransform>
 
         <!-- GIF 录制图标（居中，含 ScaleTransform 供图标过渡动画使用） -->
         <Image x:Name="RecordingIcon"
@@ -167,5 +180,6 @@
             </StackPanel>
         </Border>
     </StackPanel>
+    </Grid>
 </Window>
 

@@ -172,7 +172,7 @@ public static class ConfigLoader
         {
             Version = "1.2",
             Theme = "Light",
-            Hotkey = new HotkeyConfig { Modifier = "Alt", Key = "Space" },
+            Hotkey = new HotkeyConfig { Modifier = "Alt", Key = "R" },
             Commands = Services.CommandService.GenerateSampleCommands(),
             CommandGroups = Services.CommandService.GenerateDefaultGroups(),
             PluginSettings = new PluginSettings

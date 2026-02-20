@@ -116,6 +116,9 @@ public partial class RecordingOverlayWindow : Window
         // 预加载暂停图标像素（避免暂停切换时在 UI 线程做文件 I/O）
         _pauseIconPixels = PreloadImagePixels(ResourcePath("recording-pause.png"));
 
+        // 设置加载提示文本
+        LoadingText.Text = LocalizationService.Get("RecordStarting");
+
         // 启动 GIF 动画
         if (!_gifLoaded)
         {
@@ -143,6 +146,29 @@ public partial class RecordingOverlayWindow : Window
         InitNotifyIcon();
 
         Logger.Debug("RecordingOverlayWindow: Loaded");
+    }
+
+    /// <summary>
+    /// 录音启动成功后，切换到录音界面（淡入动画）
+    /// </summary>
+    public void ShowRecordingUI()
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            // 淡出加载层
+            var fadeOut = new System.Windows.Media.Animation.DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s, e) =>
+            {
+                LoadingOverlay.Visibility = System.Windows.Visibility.Collapsed;
+                
+                // 淡入主内容层
+                MainContent.Opacity = 0;
+                MainContent.Visibility = System.Windows.Visibility.Visible;
+                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+                MainContent.BeginAnimation(System.Windows.UIElement.OpacityProperty, fadeIn);
+            };
+            LoadingOverlay.BeginAnimation(System.Windows.UIElement.OpacityProperty, fadeOut);
+        });
     }
 
     private void PositionWindow()

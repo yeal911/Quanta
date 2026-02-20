@@ -175,6 +175,10 @@ public partial class MainWindow : Window
 
         var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
+        
+        // 日志输出当前快捷键配置
+        Logger.Log($"[Hotkey] Config loaded: Modifier={config.Hotkey?.Modifier}, Key={config.Hotkey?.Key}");
+        
         if (!registered)
         {
             Dispatcher.BeginInvoke(() =>
@@ -926,8 +930,8 @@ public partial class MainWindow : Window
                 _recordingService = null;
             };
 
-            // 先显示悬浮窗口，让用户立刻看到界面，录音在后台初始化
-            _recordingOverlay?.Show();
+            // 先不显示窗口，等录音启动成功后再显示
+            // _recordingOverlay.Show();  // 注释掉，立即显示
 
             // 开始录音
             bool started = await _recordingService.StartAsync(config.RecordingSettings, outputPath);
@@ -939,6 +943,11 @@ public partial class MainWindow : Window
                 _recordingOverlay = null;
                 return;
             }
+
+            // 录音启动成功后，等待窗口加载完成再显示，然后切换到录音界面
+            _recordingOverlay.Dispatcher.Invoke(() => { });
+            _recordingOverlay.Show();
+            _recordingOverlay.ShowRecordingUI();
         }
         catch (Exception ex)
         {
