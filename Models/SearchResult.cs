@@ -99,6 +99,12 @@ public class SearchResult
     /// <summary>二维码图片，当结果类型为 QRCode 时使用</summary>
     public System.Windows.Media.Imaging.BitmapImage? QRCodeImage { get; set; }
 
+    /// <summary>颜色预览图片，当结果为颜色转换时使用</summary>
+    public System.Windows.Media.Imaging.BitmapImage? ColorPreviewImage { get; set; }
+
+    /// <summary>颜色信息，当结果为颜色转换时使用（包含HEX、RGB、HSL）</summary>
+    public ColorInfo? ColorInfo { get; set; }
+
     /// <summary>二维码对应的原始文本内容</summary>
     public string QRCodeContent { get; set; } = "";
 
@@ -203,4 +209,19 @@ public class CommandResult
 
     /// <summary>命令执行的错误信息</summary>
     public string Error { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 颜色信息类，存储颜色的HEX、RGB、HSL格式
+/// </summary>
+public class ColorInfo
+{
+    /// <summary>HEX格式</summary>
+    public string Hex { get; set; } = "";
+    
+    /// <summary>RGB格式</summary>
+    public string Rgb { get; set; } = "";
+    
+    /// <summary>HSL格式</summary>
+    public string Hsl { get; set; } = "";
 }

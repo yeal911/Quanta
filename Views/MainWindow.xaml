@@ -354,6 +354,48 @@
                                            Stretch="Uniform" HorizontalAlignment="Center"/>
                                 </Grid>
 
+                                <!-- Color preview: show color swatch + all 3 formats -->
+                                <Grid x:Name="ColorContainer" Visibility="Collapsed">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <!-- Color swatch -->
+                                        <Image Source="{Binding ColorPreviewImage}" Width="30" Height="30"
+                                               Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <!-- HEX -->
+                                        <TextBlock Text="{Binding ColorInfo.Hex}" FontSize="11" FontFamily="Consolas" 
+                                                   Foreground="#0078D4" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                   Cursor="Hand">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip Content="右键复制"/>
+                                            </TextBlock.ToolTip>
+                                            <TextBlock.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="复制" Click="CopyColorHex_Click"/>
+                                                </ContextMenu>
+                                            </TextBlock.ContextMenu>
+                                        </TextBlock>
+                                        <!-- RGB -->
+                                        <TextBlock Text="{Binding ColorInfo.Rgb}" FontSize="11" FontFamily="Consolas" 
+                                                   Foreground="#E67E22" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                   Cursor="Hand">
+                                            <TextBlock.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="复制" Click="CopyColorRgb_Click"/>
+                                                </ContextMenu>
+                                            </TextBlock.ContextMenu>
+                                        </TextBlock>
+                                        <!-- HSL -->
+                                        <TextBlock Text="{Binding ColorInfo.Hsl}" FontSize="11" FontFamily="Consolas" 
+                                                   Foreground="#27AE60" VerticalAlignment="Center"
+                                                   Cursor="Hand">
+                                            <TextBlock.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="复制" Click="CopyColorHsl_Click"/>
+                                                </ContextMenu>
+                                            </TextBlock.ContextMenu>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+
                                 <!-- RecordCommand result: show recording config panel -->
                                 <Grid x:Name="RecordContainer" Visibility="Collapsed">
                                     <StackPanel Orientation="Vertical" Margin="0,2">
@@ -428,7 +470,7 @@
                                 </Grid>
                             </Grid>
 
-                            <!-- Trigger to switch between normal, QRCode and Record -->
+                            <!-- Trigger to switch between normal, QRCode, Color and Record -->
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding Type}" Value="QRCode">
                                     <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
@@ -437,6 +479,11 @@
                                 <DataTrigger Binding="{Binding Type}" Value="RecordCommand">
                                     <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
                                     <Setter TargetName="RecordContainer" Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <!-- Color preview trigger: check IconText for 🎨 -->
+                                <DataTrigger Binding="{Binding IconText}" Value="🎨">
+                                    <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="ColorContainer" Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>

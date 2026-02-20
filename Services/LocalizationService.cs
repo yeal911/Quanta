@@ -82,6 +82,10 @@ public static class LocalizationService
             ["QRCodeTooLong"] = "文本超过2000字符，无法生成二维码",
             ["SettingsTitle"] = "设置",
             ["GeneralSettings"] = "通用设置",
+            ["MenuGeneral"] = "通用配置",
+            ["MenuRecording"] = "录音配置",
+            ["MenuExchangeRate"] = "汇率接口",
+            ["MenuCommands"] = "命令管理",
             ["CommandManagement"] = "命令管理",
             ["Hotkey"] = "快捷键：",
             ["Import"] = "导入",
@@ -110,6 +114,10 @@ public static class LocalizationService
             ["RecordChannelStereo"] = "立体声",
             ["RecordChannelMono"] = "单声道",
             ["RecordBrowse"] = "浏览",
+            ["RecordEstimatedSize"] = "预估每分钟大小",
+            ["RecordEstimatedSizeUnit"] = "KB/分钟",
+            ["RecordEstimatedSizeUnitMb"] = "MB/分钟",
+            ["ExchangeRateApiHint"] = "免费 API: https://exchangerate-api.com",
             ["RecordCommandDesc"] = "启动录音",
             ["RecordOutputFile"] = "输出文件",
             ["RecordPreview"] = "录音预览",
@@ -149,7 +157,10 @@ public static class LocalizationService
             ["ExchangeRateInvalidAmount"] = "无效的金额",
             ["ExchangeRateFromCache"] = "缓存",
             ["ExchangeRateToday"] = "今天",
-            ["ExchangeRateYesterday"] = "昨天"
+            ["ExchangeRateYesterday"] = "昨天",
+            // 设置界面
+            ["ExchangeRateApiLabel"] = "汇率 API：",
+            ["ExchangeRateApiKeyPlaceholder"] = "输入 API Key"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -209,6 +220,10 @@ public static class LocalizationService
             ["QRCodeTooLong"] = "Text exceeds 2000 characters, cannot generate QR code",
             ["SettingsTitle"] = "Settings",
             ["GeneralSettings"] = "General",
+            ["MenuGeneral"] = "General",
+            ["MenuRecording"] = "Recording",
+            ["MenuExchangeRate"] = "Exchange Rate",
+            ["MenuCommands"] = "Commands",
             ["CommandManagement"] = "Commands",
             ["Hotkey"] = "Hotkey:",
             ["Import"] = "Import",
@@ -237,6 +252,10 @@ public static class LocalizationService
             ["RecordChannelStereo"] = "Stereo",
             ["RecordChannelMono"] = "Mono",
             ["RecordBrowse"] = "Browse",
+            ["RecordEstimatedSize"] = "Est. Size per Minute",
+            ["RecordEstimatedSizeUnit"] = "KB/min",
+            ["RecordEstimatedSizeUnitMb"] = "MB/min",
+            ["ExchangeRateApiHint"] = "Free API: https://exchangerate-api.com",
             ["RecordCommandDesc"] = "Start Recording",
             ["RecordOutputFile"] = "Output File",
             ["RecordPreview"] = "Recording Preview",
@@ -276,7 +295,10 @@ public static class LocalizationService
             ["ExchangeRateInvalidAmount"] = "Invalid amount",
             ["ExchangeRateFromCache"] = "Cache",
             ["ExchangeRateToday"] = "Today",
-            ["ExchangeRateYesterday"] = "Yesterday"
+            ["ExchangeRateYesterday"] = "Yesterday",
+            // Settings UI
+            ["ExchangeRateApiLabel"] = "Exchange Rate API:",
+            ["ExchangeRateApiKeyPlaceholder"] = "Enter API Key"
         }
     };
 

@@ -1085,4 +1085,44 @@ public partial class MainWindow : Window
         _recordingOverlay?.Close();
         base.OnClosed(e);
     }
+
+    // ── 颜色复制事件处理 ───────────────────────────────────────────
+    private void CopyColorHex_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
+        {
+            var textBlock = contextMenu.PlacementTarget as TextBlock;
+            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
+            {
+                System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
+                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hex);
+            }
+        }
+    }
+
+    private void CopyColorRgb_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
+        {
+            var textBlock = contextMenu.PlacementTarget as TextBlock;
+            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
+            {
+                System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
+                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Rgb);
+            }
+        }
+    }
+
+    private void CopyColorHsl_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
+        {
+            var textBlock = contextMenu.PlacementTarget as TextBlock;
+            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
+            {
+                System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
+                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hsl);
+            }
+        }
+    }
 }

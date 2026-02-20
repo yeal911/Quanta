@@ -79,6 +79,12 @@ public partial class CommandSettingsWindow : Window
     /// </summary>
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        // 加载汇率设置
+        LoadExchangeRateSettings();
+
+        // 默认选中"通用配置"菜单
+        SelectMenu("MenuGeneral");
+
         // Fancy show animation: scale + fade in on the root border
         RootBorder.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
         var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
@@ -91,6 +97,102 @@ public partial class CommandSettingsWindow : Window
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleIn);
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleIn);
         RootBorder.BeginAnimation(System.Windows.UIElement.OpacityProperty, fadeIn);
+    }
+
+    /// <summary>
+    /// 当前选中的菜单项
+    /// </summary>
+    private string _currentMenu = "General";
+
+    /// <summary>
+    /// 菜单项点击事件处理
+    /// </summary>
+    private void MenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn)
+        {
+            var tag = btn.Name;
+            System.Diagnostics.Debug.WriteLine($"Menu clicked: {tag}");
+            if (!string.IsNullOrEmpty(tag))
+            {
+                SelectMenu(tag);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 切换菜单选中状态并显示对应面板（带动画效果）
+    /// </summary>
+    private void SelectMenu(string menuName)
+    {
+        // 记录当前菜单
+        _currentMenu = menuName;
+
+        // 清除所有菜单的选中状态
+        MenuGeneral.Tag = null;
+        MenuRecording.Tag = null;
+        MenuExchangeRate.Tag = null;
+        MenuCommands.Tag = null;
+
+        // 找出当前可见的面板
+        FrameworkElement? currentPanel = null;
+        if (PanelGeneral.Visibility == Visibility.Visible) currentPanel = PanelGeneral;
+        else if (PanelRecording.Visibility == Visibility.Visible) currentPanel = PanelRecording;
+        else if (PanelExchangeRate.Visibility == Visibility.Visible) currentPanel = PanelExchangeRate;
+        else if (PanelCommands.Visibility == Visibility.Visible) currentPanel = PanelCommands;
+
+        // 隐藏所有面板
+        PanelGeneral.Visibility = Visibility.Collapsed;
+        PanelRecording.Visibility = Visibility.Collapsed;
+        PanelExchangeRate.Visibility = Visibility.Collapsed;
+        PanelCommands.Visibility = Visibility.Collapsed;
+
+        // 根据选择的菜单显示对应面板（带动画）
+        Grid? targetPanel = null;
+        switch (menuName)
+        {
+            case "MenuGeneral":
+                MenuGeneral.Tag = "Selected";
+                targetPanel = PanelGeneral;
+                break;
+            case "MenuRecording":
+                MenuRecording.Tag = "Selected";
+                targetPanel = PanelRecording;
+                UpdateEstimatedSize();
+                break;
+            case "MenuExchangeRate":
+                MenuExchangeRate.Tag = "Selected";
+                targetPanel = PanelExchangeRate;
+                break;
+            case "MenuCommands":
+                MenuCommands.Tag = "Selected";
+                targetPanel = PanelCommands;
+                break;
+        }
+
+        if (targetPanel != null)
+        {
+            // 先淡出当前面板
+            if (currentPanel != null)
+            {
+                var fadeOut = new System.Windows.Media.Animation.DoubleAnimation(1, 0, System.TimeSpan.FromMilliseconds(80));
+                fadeOut.Completed += (s, e) =>
+                {
+                    // 淡入新面板
+                    targetPanel.Opacity = 0;
+                    targetPanel.Visibility = Visibility.Visible;
+                    var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(0, 1, System.TimeSpan.FromMilliseconds(120));
+                    targetPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+                };
+                currentPanel.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            }
+            else
+            {
+                // 没有当前面板，直接显示新面板
+                targetPanel.Visibility = Visibility.Visible;
+                targetPanel.Opacity = 1;
+            }
+        }
     }
 
     /// <summary>
@@ -143,9 +245,9 @@ public partial class CommandSettingsWindow : Window
             QRCodeThresholdBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
             QRCodeThresholdSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
             GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
-            GeneralSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
+            RecordingSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
+            ExchangeRateSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
             CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(120, 120, 120));
-            CommandsSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
 
             // DataGrid 整体前景色（未选中行的文字颜色）
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
@@ -193,9 +295,9 @@ public partial class CommandSettingsWindow : Window
             MaxResultsBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
             MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
             GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
-            GeneralSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232));
+            RecordingSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
+            ExchangeRateSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
             CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
-            CommandsSectionLine.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232));
 
             CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
             CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
@@ -321,9 +423,20 @@ public partial class CommandSettingsWindow : Window
     private void ApplyLocalization()
     {
         TitleText.Text = LocalizationService.Get("SettingsTitle");
+        
+        // 菜单项
+        MenuGeneral.Content = LocalizationService.Get("MenuGeneral");
+        MenuRecording.Content = LocalizationService.Get("MenuRecording");
+        MenuExchangeRate.Content = LocalizationService.Get("MenuExchangeRate");
+        MenuCommands.Content = LocalizationService.Get("MenuCommands");
+        
+        // 各面板标题
         GeneralSectionLabel.Text = LocalizationService.Get("GeneralSettings");
         CommandsSectionLabel.Text = LocalizationService.Get("CommandManagement");
         RecordingSectionLabel.Text = LocalizationService.Get("RecordingSettings");
+        ExchangeRateSectionLabel.Text = LocalizationService.Get("MenuExchangeRate");
+        ExchangeRateApiHint.Text = LocalizationService.Get("ExchangeRateApiHint");
+        
         HotkeyLabel.Text = LocalizationService.Get("Hotkey");
         ImportButton.Content = LocalizationService.Get("ImportCommand");
         ExportButton.Content = LocalizationService.Get("ExportCommand");
@@ -339,6 +452,7 @@ public partial class CommandSettingsWindow : Window
         RecordChannelsLabel.Text = LocalizationService.Get("RecordChannels") + "：";
         RecordOutputPathLabel.Text = LocalizationService.Get("RecordOutputPath") + "：";
         RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
+        RecordEstimatedSizeLabel.Text = LocalizationService.Get("RecordEstimatedSize") + "：";
 
         // 更新声道 ComboBox 文本
         if (RecordChannelsCombo.Items.Count >= 2)
@@ -368,7 +482,8 @@ public partial class CommandSettingsWindow : Window
         TypeColumn.Header = LocalizationService.Get("Type");
         PathColumn.Header = LocalizationService.Get("Path");
         AdminColumn.Header = LocalizationService.Get("Admin");
-        FooterText.Text = LocalizationService.Get("Footer");
+        FooterText.Text = "";
+        CommandHintText.Text = LocalizationService.Get("Footer");
         CommandSearchPlaceholder.Text = LocalizationService.Get("SearchCommands");
     }
 
@@ -392,6 +507,9 @@ public partial class CommandSettingsWindow : Window
         RecordOutputPathBox.Text = string.IsNullOrEmpty(rec.OutputPath)
             ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
             : rec.OutputPath;
+
+        // 更新预估文件大小
+        UpdateEstimatedSize();
     }
 
     private static void SelectComboByTag(System.Windows.Controls.ComboBox combo, string tagValue)
@@ -408,7 +526,40 @@ public partial class CommandSettingsWindow : Window
             combo.SelectedIndex = 0;
     }
 
-    private void SaveRecordingSettings()
+    /// <summary>
+    /// 更新录音预估文件大小显示
+    /// 计算公式：bitrate(kbps) / 8 * 60 = KB/分钟
+    /// </summary>
+    private void UpdateEstimatedSize()
+    {
+        var bitrateStr = GetComboTag(RecordBitrateCombo) ?? "32";
+        if (int.TryParse(bitrateStr, out int bitrate))
+        {
+            // 计算每分钟 KB 数
+            int kbPerMin = (bitrate / 8) * 60;
+            
+            // 根据语言环境选择单位
+            var unit = LocalizationService.Get("RecordEstimatedSizeUnit");
+            
+            // 如果超过 1024 KB，显示 MB/分钟
+            if (kbPerMin >= 1024)
+            {
+                double mbPerMin = kbPerMin / 1024.0;
+                var mbUnit = LocalizationService.Get("RecordEstimatedSizeUnitMb");
+                RecordEstimatedSizeValue.Text = $"{mbPerMin:F1} {mbUnit}";
+            }
+            else
+            {
+                RecordEstimatedSizeValue.Text = $"{kbPerMin} {unit}";
+            }
+        }
+        else
+        {
+            RecordEstimatedSizeValue.Text = "-- " + LocalizationService.Get("RecordEstimatedSizeUnit");
+        }
+    }
+
+    private void SaveRecordingSettings(bool showToast = false)
     {
         var config = ConfigLoader.Load();
 
@@ -419,6 +570,11 @@ public partial class CommandSettingsWindow : Window
         config.RecordingSettings.OutputPath = RecordOutputPathBox.Text.Trim();
 
         ConfigLoader.Save(config);
+
+        if (showToast)
+        {
+            ShowAutoSaveToast();
+        }
     }
 
     private void LoadExchangeRateSettings()
@@ -428,45 +584,81 @@ public partial class CommandSettingsWindow : Window
         ExchangeRateApiKeyBox.Text = exchangeSettings.ApiKey;
     }
 
-    private void SaveExchangeRateSettings()
+    private void SaveExchangeRateSettings(bool showToast = false)
     {
         var config = ConfigLoader.Load();
         if (config.ExchangeRateSettings == null)
             config.ExchangeRateSettings = new Quanta.Models.ExchangeRateSettings();
         config.ExchangeRateSettings.ApiKey = ExchangeRateApiKeyBox.Text.Trim();
         ConfigLoader.Save(config);
+
+        if (showToast)
+        {
+            ShowAutoSaveToast();
+        }
     }
 
     private void ExchangeRateApiKeyBox_LostFocus(object sender, RoutedEventArgs e)
     {
-        SaveExchangeRateSettings();
+        SaveExchangeRateSettings(showToast: true);
     }
 
     private static string? GetComboTag(System.Windows.Controls.ComboBox combo)
         => (combo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+
+    /// <summary>
+    /// 显示自动保存成功提示（2秒后自动消失）
+    /// </summary>
+    private System.Windows.Threading.DispatcherTimer? _autoSaveTimer;
+    private void ShowAutoSaveToast()
+    {
+        // 先停止之前的计时器
+        _autoSaveTimer?.Stop();
+        
+        // 显示保存成功提示（使用国际化）
+        var savedText = LocalizationService.Get("Saved");
+        AutoSaveIndicator.Text = " · " + savedText;
+        AutoSaveIndicator.Visibility = Visibility.Visible;
+        
+        // 2秒后隐藏
+        _autoSaveTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+        _autoSaveTimer.Tick += (s, e) =>
+        {
+            AutoSaveIndicator.Visibility = Visibility.Collapsed;
+            _autoSaveTimer.Stop();
+        };
+        _autoSaveTimer.Start();
+    }
 
     // ── 录音设置事件处理 ───────────────────────────────────────────
     private bool _suppressRecordingEvents = false;
 
     private void RecordSourceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_suppressRecordingEvents) SaveRecordingSettings();
+        if (!_suppressRecordingEvents) SaveRecordingSettings(showToast: true);
     }
     private void RecordFormatCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_suppressRecordingEvents) SaveRecordingSettings();
+        if (!_suppressRecordingEvents) SaveRecordingSettings(showToast: true);
     }
     private void RecordBitrateCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_suppressRecordingEvents) SaveRecordingSettings();
+        if (!_suppressRecordingEvents)
+        {
+            SaveRecordingSettings(showToast: true);
+            UpdateEstimatedSize();
+        }
     }
     private void RecordChannelsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_suppressRecordingEvents) SaveRecordingSettings();
+        if (!_suppressRecordingEvents) SaveRecordingSettings(showToast: true);
     }
     private void RecordOutputPathBox_LostFocus(object sender, RoutedEventArgs e)
     {
-        SaveRecordingSettings();
+        SaveRecordingSettings(showToast: true);
     }
 
     private void RecordBrowseButton_Click(object sender, RoutedEventArgs e)
@@ -574,6 +766,9 @@ public partial class CommandSettingsWindow : Window
             var config = ConfigLoader.Load();
             config.AppSettings.StartWithWindows = enable;
             ConfigLoader.Save(config);
+            
+            // 显示保存成功提示
+            ShowAutoSaveToast();
         }
         catch (Exception ex)
         {
@@ -615,6 +810,7 @@ public partial class CommandSettingsWindow : Window
             var config = ConfigLoader.Load();
             config.AppSettings.MaxResults = val;
             ConfigLoader.Save(config);
+            ShowAutoSaveToast();
         }
         else
         {
@@ -637,6 +833,7 @@ public partial class CommandSettingsWindow : Window
             var config = ConfigLoader.Load();
             config.AppSettings.QRCodeThreshold = val;
             ConfigLoader.Save(config);
+            ShowAutoSaveToast();
         }
         else
         {
@@ -685,6 +882,20 @@ public partial class CommandSettingsWindow : Window
     {
         HotkeyTextBox.Text = LocalizationService.Get("HotkeyPress");
         HotkeyTextBox.SelectAll();
+    }
+
+    /// <summary>
+    /// 快捷键输入框双击事件处理，清除快捷键。
+    /// </summary>
+    private void HotkeyTextBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _currentHotkey = "";
+        HotkeyTextBox.Text = "";
+        // 清除快捷键配置
+        var config = ConfigLoader.Load();
+        config.Hotkey = new HotkeyConfig { Modifier = "", Key = "" };
+        ConfigLoader.Save(config);
+        ShowAutoSaveToast();
     }
 
     /// <summary>
@@ -822,7 +1033,7 @@ public partial class CommandSettingsWindow : Window
 
     /// <summary>
     /// 保存命令按钮点击事件处理。
-    /// 将当前命令列表写入配置文件并关闭设置窗口。
+    /// 将当前命令列表写入配置文件，不关闭设置窗口。
     /// </summary>
     private void SaveCommand_Click(object sender, RoutedEventArgs e)
     {
@@ -831,8 +1042,7 @@ public partial class CommandSettingsWindow : Window
         var config = ConfigLoader.Load();
         config.Commands = Commands.Where(c => !c.IsBuiltIn).ToList();
         ConfigLoader.Save(config);
-        ToastService.Instance.ShowSuccess(LocalizationService.Get("Saved"));
-        Close();
+        ShowAutoSaveToast();
     }
 
     /// <summary>

@@ -93,7 +93,7 @@ public class TrayService : IDisposable
         {
             Icon = icon,
             Visible = true,
-            Text = "Quanta - Launcher",
+            Text = "Quanta",
         };
 
         // 构建右键上下文菜单

@@ -1,6 +1,6 @@
 // ============================================================================
 // 文件名: Logger.cs
-// 文件用途: 提供应用程序全局日志记录服务，支持按日期生成日志文件，
+// 文件用途: 提供应用程序全局日志记录服务，支持按月份生成日志文件，
 //          包含不同日志级别（INFO、ERROR、WARN、DEBUG）的记录功能。
 //          日志文件存储在运行目录下的 logs 文件夹中。
 // ============================================================================
@@ -13,7 +13,7 @@ namespace Quanta.Services;
 
 /// <summary>
 /// 全局静态日志服务类，负责将应用程序运行时的日志信息写入本地日志文件。
-/// 日志文件按日期命名，存储在运行目录下的 logs 目录下。
+/// 日志文件按月份命名，存储在运行目录下的 logs 目录下。
 /// 所有写入操作通过锁机制保证线程安全。
 /// </summary>
 public static class Logger
@@ -24,17 +24,42 @@ public static class Logger
     private static readonly string LogDirectory;
 
     /// <summary>
-    /// 当前日志文件的完整路径（按当天日期命名）
-    /// </summary>
-    private static readonly string LogFilePath;
-
-    /// <summary>
     /// 用于保证多线程写入日志时线程安全的锁对象
     /// </summary>
     private static readonly object LockObj = new();
 
     /// <summary>
-    /// 静态构造函数，初始化日志目录和日志文件路径。
+    /// 上一次写入日志的月份，用于检测月份变化
+    /// </summary>
+    private static int _lastLogMonth = 0;
+
+    /// <summary>
+    /// 当前日志文件路径（按月份）
+    /// </summary>
+    private static string _currentLogFilePath;
+
+    /// <summary>
+    /// 获取当前日志文件路径（按月份）
+    /// </summary>
+    private static string LogFilePath
+    {
+        get
+        {
+            int currentMonth = DateTime.Now.Year * 12 + DateTime.Now.Month;
+            
+            // 如果月份变了，重新计算路径
+            if (_currentLogFilePath == null || _lastLogMonth != currentMonth)
+            {
+                _lastLogMonth = currentMonth;
+                _currentLogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMM}.log");
+            }
+            
+            return _currentLogFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 静态构造函数，初始化日志目录。
     /// 如果日志目录不存在则自动创建。
     /// 日志文件存储在 exe 运行的目录下。
     /// </summary>
@@ -64,12 +89,14 @@ public static class Logger
             Directory.CreateDirectory(LogDirectory);
         }
         
-        LogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMMdd}.log");
+        // 初始化当前月份
+        _lastLogMonth = DateTime.Now.Year * 12 + DateTime.Now.Month;
+        _currentLogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMM}.log");
         
         // 调试：输出实际路径
         try
         {
-            File.AppendAllText(LogFilePath, $"[INFO] Logger initialized. BaseDir={exeDir}, LogDir={LogDirectory}, ProcessPath={Environment.ProcessPath}{Environment.NewLine}");
+            File.AppendAllText(_currentLogFilePath, $"[INFO] Logger initialized. BaseDir={exeDir}, LogDir={LogDirectory}, ProcessPath={Environment.ProcessPath}{Environment.NewLine}");
         }
         catch { }
     }

@@ -199,6 +199,27 @@ public class CommandRouter
         @"^(-?\d+\.?\d*)\s*([A-Za-z]{3})\s+(?:to|in|转|换)\s+([A-Za-z]{3})$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>
+    /// 匹配颜色输入（HEX格式）
+    /// </summary>
+    private static readonly Regex ColorHexRegex = new(
+        @"^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>
+    /// 匹配RGB格式
+    /// </summary>
+    private static readonly Regex ColorRgbRegex = new(
+        @"^(?:rgb\s*\(\s*)?(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>
+    /// 匹配HSL格式
+    /// </summary>
+    private static readonly Regex ColorHslRegex = new(
+        @"^(?:hsl\s*\(\s*)?(\d{1,3})\s*,\s*(\d{1,3})%?\s*,\s*(\d{1,3})%?\s*\)?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     // ── 文本工具 ──────────────────────────────────────────────
     private static readonly Regex Base64Regex      = new(@"^base64\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     private static readonly Regex Base64DecodeRegex = new(@"^base64d\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -250,6 +271,31 @@ public class CommandRouter
         if (currencyMatch.Success)
         {
             return await ConvertCurrencyAsync(currencyMatch.Groups[1].Value, currencyMatch.Groups[2].Value, currencyMatch.Groups[3].Value);
+        }
+
+        // 颜色转换（例如 #E67E22, rgb(255,0,0), hsl(0,100%,50%)）
+        // 尝试HEX格式
+        var hexMatch = ColorHexRegex.Match(input);
+        if (hexMatch.Success)
+        {
+            var colorResult = ConvertColor(hexMatch.Value);
+            if (colorResult != null) return colorResult;
+        }
+        
+        // 尝试RGB格式
+        var rgbMatch = ColorRgbRegex.Match(input);
+        if (rgbMatch.Success)
+        {
+            var colorResult = ConvertColor(rgbMatch.Value);
+            if (colorResult != null) return colorResult;
+        }
+        
+        // 尝试HSL格式
+        var hslMatch = ColorHslRegex.Match(input);
+        if (hslMatch.Success)
+        {
+            var colorResult = ConvertColor(hslMatch.Value);
+            if (colorResult != null) return colorResult;
         }
 
         // 单位换算（优先于 Google 搜索，避免被 "g" 误匹配）
@@ -444,6 +490,218 @@ public class CommandRouter
                 QueryMatch = ""
             };
         }
+    }
+
+    /// <summary>
+    /// 颜色转换：HEX ↔ RGB ↔ HSL
+    /// 支持输入格式: #RRGGBB, rgb(r,g,b), hsl(h,s%,l%)
+    /// </summary>
+    private SearchResult? ConvertColor(string colorInput)
+    {
+        try
+        {
+            int r, g, b;
+            string input = colorInput.Trim();
+            string inputLower = input.ToLower();
+            
+            // 解析输入颜色
+            if (inputLower.StartsWith("rgb"))
+            {
+                // RGB格式: rgb(255, 0, 0) 或 255,0,0
+                var match = System.Text.RegularExpressions.Regex.Match(input, @"rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    r = int.Parse(match.Groups[1].Value);
+                    g = int.Parse(match.Groups[2].Value);
+                    b = int.Parse(match.Groups[3].Value);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else if (inputLower.StartsWith("hsl"))
+            {
+                // HSL格式: hsl(0, 100%, 50%) 或 0,100%,50%
+                var match = System.Text.RegularExpressions.Regex.Match(input, @"hsl\s*\(\s*(\d+)\s*,\s*(\d+)%?\s*,\s*(\d+)%?\s*\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    double hVal = double.Parse(match.Groups[1].Value);
+                    double sVal = double.Parse(match.Groups[2].Value) / 100.0;
+                    double lVal = double.Parse(match.Groups[3].Value) / 100.0;
+                    HslToRgb(hVal, sVal, lVal, out r, out g, out b);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                // HEX格式: #RRGGBB, RRGGBB, #RGB, RGB
+                string hex = input;
+                if (!hex.StartsWith("#")) hex = "#" + hex;
+                
+                // 处理3位Hex
+                if (hex.Length == 4)
+                {
+                    hex = $"#{hex[1]}{hex[1]}{hex[2]}{hex[2]}{hex[3]}{hex[3]}";
+                }
+                
+                if (hex.Length != 7) return null;
+                
+                r = Convert.ToInt32(hex.Substring(1, 2), 16);
+                g = Convert.ToInt32(hex.Substring(3, 2), 16);
+                b = Convert.ToInt32(hex.Substring(5, 2), 16);
+            }
+            
+            // 验证RGB值
+            if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+            {
+                return null;
+            }
+            
+            // RGB转HSL
+            double h, s, l;
+            RgbToHsl(r, g, b, out h, out s, out l);
+            
+            // 构建三种格式的输出
+            string hexStr = $"#{r:X2}{g:X2}{b:X2}";
+            string rgbStr = $"rgb({r}, {g}, {b})";
+            string hslStr = $"hsl({h:F0}, {s:F0}%, {l:F0}%)";
+            
+            // 创建颜色预览
+            var colorBitmap = CreateColorPreview((byte)r, (byte)g, (byte)b);
+            
+            // 主标题显示HEX，副标题显示完整转换结果
+            return new SearchResult
+            {
+                Title = hexStr,
+                Subtitle = $"{rgbStr} · {hslStr}",
+                Type = SearchResultType.Calculator,
+                GroupLabel = "",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "🎨",
+                QueryMatch = hexStr,
+                ColorPreviewImage = colorBitmap,
+                ColorInfo = new ColorInfo
+                {
+                    Hex = hexStr,
+                    Rgb = rgbStr,
+                    Hsl = hslStr
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"[ColorConvert] Error: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// RGB转HSL
+    /// </summary>
+    private void RgbToHsl(int r, int g, int b, out double h, out double s, out double l)
+    {
+        double rNorm = r / 255.0;
+        double gNorm = g / 255.0;
+        double bNorm = b / 255.0;
+        
+        double max = Math.Max(rNorm, Math.Max(gNorm, bNorm));
+        double min = Math.Min(rNorm, Math.Min(gNorm, bNorm));
+        double delta = max - min;
+        
+        l = (max + min) / 2;
+        
+        if (delta == 0)
+        {
+            h = 0;
+            s = 0;
+        }
+        else
+        {
+            s = l < 0.5 ? delta / (max + min) : delta / (2 - max - min);
+            
+            if (max == rNorm)
+                h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) * 60;
+            else if (max == gNorm)
+                h = ((bNorm - rNorm) / delta + 2) * 60;
+            else
+                h = ((rNorm - gNorm) / delta + 4) * 60;
+        }
+    }
+
+    /// <summary>
+    /// HSL转RGB
+    /// </summary>
+    private void HslToRgb(double h, double s, double l, out int r, out int g, out int b)
+    {
+        if (s == 0)
+        {
+            r = g = b = (int)(l * 255);
+            return;
+        }
+        
+        double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        double p = 2 * l - q;
+        double hNorm = h / 360.0;
+        
+        r = (int)(HueToRgb(p, q, hNorm + 1.0 / 3) * 255);
+        g = (int)(HueToRgb(p, q, hNorm) * 255);
+        b = (int)(HueToRgb(p, q, hNorm - 1.0 / 3) * 255);
+    }
+
+    private double HueToRgb(double p, double q, double t)
+    {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1.0 / 6) return p + (q - p) * 6 * t;
+        if (t < 1.0 / 2) return q;
+        if (t < 2.0 / 3) return p + (q - p) * (2.0 / 3 - t) * 6;
+        return p;
+    }
+
+    /// <summary>
+    /// 创建颜色预览位图
+    /// </summary>
+    private System.Windows.Media.Imaging.BitmapImage CreateColorPreview(byte r, byte g, byte b)
+    {
+        int width = 40;
+        int height = 40;
+        
+        var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+        using (var stream = new System.IO.MemoryStream())
+        {
+            // 创建BMP图像
+            var bmpData = new System.Windows.Media.Imaging.WriteableBitmap(width, height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+            byte[] pixels = new byte[width * height * 4];
+            
+            for (int i = 0; i < width * height; i++)
+            {
+                int offset = i * 4;
+                pixels[offset] = b;     // Blue
+                pixels[offset + 1] = g; // Green
+                pixels[offset + 2] = r; // Red
+                pixels[offset + 3] = 255; // Alpha
+            }
+            
+            bmpData.WritePixels(new System.Windows.Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+            
+            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmpData));
+            encoder.Save(stream);
+            stream.Position = 0;
+            
+            bitmap.BeginInit();
+            bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            bitmap.Freeze();
+        }
+        
+        return bitmap;
     }
 
     /// <summary>
