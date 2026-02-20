@@ -207,7 +207,7 @@ public partial class MainWindow : Window
         Hide();
         _isVisible = false;
 
-        DebugLog.Log("MainWindow loaded");
+        Logger.Debug("MainWindow loaded");
     }
 
     /// <summary>
@@ -830,15 +830,11 @@ public partial class MainWindow : Window
         // Execute immediately without waiting
         if (_viewModel.SelectedResult == null) 
         {
-            DebugLog.Log("ExecuteSelected: SelectedResult is null!");
+            Logger.Debug("ExecuteSelected: SelectedResult is null!");
             return;
         }
 
-        DebugLog.Log("ExecuteSelected: IsParamMode={0}, Type={1}, CommandConfig={2}, CommandParam='{3}'",
-            _viewModel.IsParamMode, 
-            _viewModel.SelectedResult.Type,
-            _viewModel.SelectedResult.CommandConfig?.Keyword,
-            _viewModel.CommandParam);
+        Logger.Debug($"ExecuteSelected: IsParamMode={_viewModel.IsParamMode}, Type={_viewModel.SelectedResult.Type}, CommandConfig={_viewModel.SelectedResult.CommandConfig?.Keyword}, CommandParam='{_viewModel.CommandParam}'");
 
         // Fire and forget - execute in background
         Task.Run(async () =>

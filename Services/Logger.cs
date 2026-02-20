@@ -5,6 +5,8 @@
 //          日志文件存储在运行目录下的 logs 文件夹中。
 // ============================================================================
 
+using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Quanta.Services;
@@ -46,11 +48,9 @@ public static class Logger
     }
 
     /// <summary>
-    /// 记录一条日志信息到日志文件中。
+    /// 内部写入方法，始终执行
     /// </summary>
-    /// <param name="message">日志消息内容</param>
-    /// <param name="level">日志级别，默认为 "INFO"，可选值包括 "INFO"、"ERROR"、"WARN"、"DEBUG"</param>
-    public static void Log(string message, string level = "INFO")
+    private static void WriteLog(string message, string level)
     {
         try
         {
@@ -67,26 +67,43 @@ public static class Logger
     }
 
     /// <summary>
-    /// 记录一条错误级别的日志，可附带异常信息。
-    /// 如果提供了异常对象，会自动将异常消息和堆栈信息一并记录。
+    /// 记录一条日志信息到日志文件中（仅 Debug 模式）。
+    /// </summary>
+    /// <param name="message">日志消息内容</param>
+    /// <param name="level">日志级别，默认为 "INFO"</param>
+    [Conditional("DEBUG")]
+    public static void Log(string message, string level = "INFO")
+    {
+        WriteLog(message, level);
+    }
+
+    /// <summary>
+    /// 记录一条错误级别的日志，可附带异常信息（始终记录）。
     /// </summary>
     /// <param name="message">错误描述信息</param>
     /// <param name="ex">可选的异常对象，用于记录详细的异常信息</param>
     public static void Error(string message, Exception? ex = null)
     {
         var msg = ex != null ? $"{message}: {ex.Message}\n{ex.StackTrace}" : message;
-        Log(msg, "ERROR");
+        WriteLog(msg, "ERROR");
     }
 
     /// <summary>
-    /// 记录一条警告级别的日志。
+    /// 记录一条警告级别的日志（始终记录）。
     /// </summary>
     /// <param name="message">警告消息内容</param>
-    public static void Warn(string message) => Log(message, "WARN");
+    public static void Warn(string message)
+    {
+        WriteLog(message, "WARN");
+    }
 
     /// <summary>
-    /// 记录一条调试级别的日志。
+    /// 记录一条调试级别的日志（仅 Debug 模式）。
     /// </summary>
     /// <param name="message">调试消息内容</param>
-    public static void Debug(string message) => Log(message, "DEBUG");
+    [Conditional("DEBUG")]
+    public static void Debug(string message)
+    {
+        WriteLog(message, "DEBUG");
+    }
 }

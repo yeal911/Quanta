@@ -102,7 +102,7 @@ public class TrayService : IDisposable
         // 双击托盘图标时显示主窗口
         _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
 
-        DebugLog.Log("TrayService initialized");
+        Logger.Debug("TrayService initialized");
     }
 
     /// <summary>
@@ -323,6 +323,6 @@ public class TrayService : IDisposable
             _notifyIcon = null;
         }
 
-        DebugLog.Log("TrayService disposed");
+        Logger.Debug("TrayService disposed");
     }
 }

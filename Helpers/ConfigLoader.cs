@@ -39,7 +39,7 @@ public static class ConfigLoader
     {
         if (_cachedConfig != null)
         {
-            DebugLog.Log("Using cached config");
+            Logger.Debug("Using cached config");
             return _cachedConfig;
         }
 
@@ -47,13 +47,13 @@ public static class ConfigLoader
         {
             // 获取绝对路径并打印
             var fullPath = Path.GetFullPath(ConfigPath);
-            DebugLog.Log("Config file path: {0}", fullPath);
-            DebugLog.Log("File exists: {0}", File.Exists(ConfigPath));
+            Logger.Debug($"Config file path: {fullPath}");
+            Logger.Debug($"File exists: {File.Exists(ConfigPath)}");
 
             if (File.Exists(ConfigPath))
             {
                 var json = File.ReadAllText(ConfigPath);
-                DebugLog.Log("Config file content length: {0} characters", json.Length);
+                Logger.Debug($"Config file content length: {json.Length} characters");
                 
                 _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
                 

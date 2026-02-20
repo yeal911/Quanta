@@ -60,7 +60,7 @@ public partial class CommandSettingsWindow : Window
     public CommandSettingsWindow(SearchEngine? searchEngine = null)
     {
         _searchEngine = searchEngine;
-        DebugLog.Log("Constructor started");
+        Logger.Debug("Constructor started");
         InitializeComponent();
         LoadConfig();
         ApplyLocalization();
@@ -70,8 +70,8 @@ public partial class CommandSettingsWindow : Window
         _commandsView.Filter = CommandFilter;
         CommandsGrid.ItemsSource = _commandsView;
         
-        DebugLog.Log("CommandsGrid ItemsSource set with {0} commands", Commands.Count);
-        DebugLog.Log("CommandsGrid actual items count: {0}", CommandsGrid.Items.Count);
+        Logger.Debug($"CommandsGrid ItemsSource set with {Commands.Count} commands");
+        Logger.Debug($"CommandsGrid actual items count: {CommandsGrid.Items.Count}");
     }
 
     /// <summary>
@@ -469,7 +469,7 @@ public partial class CommandSettingsWindow : Window
     /// </summary>
     private void LoadConfig()
     {
-        DebugLog.Log("Loading config...");
+        Logger.Debug("Loading config...");
         _config = ConfigLoader.Load();
         
         if (_config?.Commands != null)
@@ -481,7 +481,7 @@ public partial class CommandSettingsWindow : Window
             if (Commands.Count > 0)
             {
                 var commandList = string.Join(", ", Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                DebugLog.Log("Commands in UI: {0}", commandList);
+                Logger.Debug($"Commands in UI: {commandList}");
             }
         }
         else

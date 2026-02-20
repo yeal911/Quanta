@@ -67,7 +67,7 @@ public class UsageTracker : IDisposable
         _saveTimer.AutoReset = true;
         _saveTimer.Start();
 
-        DebugLog.Log("UsageTracker initialized");
+        Logger.Debug("UsageTracker initialized");
     }
 
     /// <summary>
@@ -119,7 +119,7 @@ public class UsageTracker : IDisposable
             {
                 File.WriteAllText(_dataFilePath, JsonSerializer.Serialize(_usageData, new JsonSerializerOptions { WriteIndented = true }));
                 _hasChanges = false;
-                DebugLog.Log("Usage data saved");
+                Logger.Debug("Usage data saved");
             }
             catch (Exception ex)
             {

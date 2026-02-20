@@ -169,22 +169,21 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedResult == null) 
         {
-            DebugLog.Log("ExecuteSelectedAsync: SelectedResult is null!");
+            Logger.Debug("ExecuteSelectedAsync: SelectedResult is null!");
             return;
         }
 
-        DebugLog.Log("ExecuteSelectedAsync: IsParamMode={0}, Type={1}, CommandParam='{2}'",
-            IsParamMode, SelectedResult.Type, CommandParam);
+        Logger.Debug($"ExecuteSelectedAsync: IsParamMode={IsParamMode}, Type={SelectedResult.Type}, CommandParam='{CommandParam}'");
 
         bool success;
         if (IsParamMode && SelectedResult.Type == SearchResultType.CustomCommand)
         {
-            DebugLog.Log("ExecuteSelectedAsync: Using ExecuteCustomCommandAsync");
+            Logger.Debug("ExecuteSelectedAsync: Using ExecuteCustomCommandAsync");
             success = await _searchEngine.ExecuteCustomCommandAsync(SelectedResult, CommandParam);
         }
         else
         {
-            DebugLog.Log("ExecuteSelectedAsync: Using ExecuteResultAsync");
+            Logger.Debug("ExecuteSelectedAsync: Using ExecuteResultAsync");
             success = await _searchEngine.ExecuteResultAsync(SelectedResult, "");
         }
 
@@ -313,7 +312,7 @@ public partial class MainViewModel : ObservableObject
         catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            DebugLog.Log("Search error: {0}", ex.Message);
+            Logger.Debug($"Search error: {ex.Message}");
         }
         finally
         {

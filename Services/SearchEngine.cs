@@ -331,7 +331,7 @@ public class SearchEngine
                     }
                 }
                 catch (OperationCanceledException) { throw; }
-                catch (Exception ex) { DebugLog.Log("Window search failed: {0}", ex.Message); }
+                catch (Exception ex) { Logger.Debug($"Window search failed: {ex.Message}"); }
             }, cancellationToken));
 
             await Task.WhenAll(providerTasks);
@@ -835,12 +835,11 @@ public class SearchEngine
     /// <returns>命令执行是否成功</returns>
     public async Task<bool> ExecuteCustomCommandAsync(SearchResult result, string param)
     {
-        DebugLog.Log("ExecuteCustomCommandAsync called: Keyword={0}, Type={1}, Param='{2}'", 
-            result.CommandConfig?.Keyword, result.CommandConfig?.Type, param);
+        Logger.Debug($"ExecuteCustomCommandAsync called: Keyword={result.CommandConfig?.Keyword}, Type={result.CommandConfig?.Type}, Param='{param}'");
         
         if (result.CommandConfig == null) 
         {
-            DebugLog.Log("ExecuteCustomCommandAsync: CommandConfig is null!");
+            Logger.Debug("ExecuteCustomCommandAsync: CommandConfig is null!");
             return false;
         }
 
@@ -853,8 +852,7 @@ public class SearchEngine
             return false;
         }
 
-        DebugLog.Log("ExecuteCustomCommandAsync: Executing {0} with Path='{1}', Arguments='{2}'", 
-            cmd.Type, cmd.Path, cmd.Arguments);
+        Logger.Debug($"ExecuteCustomCommandAsync: Executing {cmd.Type} with Path='{cmd.Path}', Arguments='{cmd.Arguments}'");
 
         try
         {
@@ -872,8 +870,7 @@ public class SearchEngine
                 .Replace("{query}", param)
                 .Replace("{%p}", param);
 
-            DebugLog.Log("ExecuteCustomCommandAsync: After replace - processedPath='{0}', processedArgs='{1}'",
-                processedPath, processedArgs);
+            Logger.Debug($"ExecuteCustomCommandAsync: After replace - processedPath='{processedPath}', processedArgs='{processedArgs}'");
 
             switch (cmd.Type.ToLower())
             {
@@ -940,7 +937,7 @@ public class SearchEngine
                         if (!string.IsNullOrEmpty(processedArgs))
                             shellCmd += " " + processedArgs;
 
-                        DebugLog.Log("ExecuteCustomCommandAsync Shell: shellCmd='{0}', RunHidden={1}", shellCmd, cmd.RunHidden);
+                        Logger.Debug($"ExecuteCustomCommandAsync Shell: shellCmd='{shellCmd}', RunHidden={cmd.RunHidden}");
 
                         ProcessStartInfo shellPsi;
                         if (cmd.RunHidden)
@@ -972,12 +969,11 @@ public class SearchEngine
                             };
                         }
 
-                        DebugLog.Log("ExecuteCustomCommandAsync Shell: Starting process with FileName='{0}', Arguments='{1}'", 
-                            shellPsi.FileName, shellPsi.Arguments);
+                        Logger.Debug($"ExecuteCustomCommandAsync Shell: Starting process with FileName='{shellPsi.FileName}', Arguments='{shellPsi.Arguments}'");
 
                         // 启动进程后不等待完成（即发即忘，提升响应速度）
                         var process = Process.Start(shellPsi);
-                        DebugLog.Log("ExecuteCustomCommandAsync Shell: Process started, Id={0}", process?.Id);
+                        Logger.Debug($"ExecuteCustomCommandAsync Shell: Process started, Id={process?.Id}");
                         _usageTracker.RecordUsage(result.Id);
                         return true;
                     }
@@ -985,7 +981,7 @@ public class SearchEngine
                 // 计算器类型：对表达式求值
                 case "calculator":
                     var calcResult = CalculateInternal(processedPath);
-                    DebugLog.Log("Calculator result: {0}", calcResult);
+                    Logger.Debug($"Calculator result: {calcResult}");
                     return true;
 
                 // 系统操作类型：设置、关于、切换语言等
@@ -1189,7 +1185,7 @@ public class ApplicationSearchProvider : ISearchProvider
                         }
                         catch (Exception ex)
                         {
-                            DebugLog.Log("Failed to load app: {0} - {1}", file, ex.Message);
+                            Logger.Debug($"Failed to load app: {file} - {ex.Message}");
                         }
                     }
                 }
@@ -1280,7 +1276,7 @@ public class FileSearchProvider : ISearchProvider
             }
             catch (Exception ex)
             {
-                DebugLog.Log("Failed to search directory: {0} - {1}", dir, ex.Message);
+                Logger.Debug($"Failed to search directory: {dir} - {ex.Message}");
             }
         });
 

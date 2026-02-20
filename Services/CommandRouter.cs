@@ -215,21 +215,21 @@ public class CommandRouter
     {
         if (string.IsNullOrWhiteSpace(input)) return null;
 
-        DebugLog.Log("Input: '{0}'", input);
+        Logger.Debug($"Input: '{input}'");
 
         // PowerShell 命令（> command）
         var psMatch = PowerShellRegex.Match(input);
-        DebugLog.Log("PowerShellRegex: {0}", psMatch.Success);
+        Logger.Debug($"PowerShellRegex: {psMatch.Success}");
         if (psMatch.Success) return await ExecutePowerShellAsync(psMatch.Groups[1].Value);
 
         // 数学计算（calc expression）
         var calcMatch = CalcRegex.Match(input);
-        DebugLog.Log("CalcRegex: {0}, Groups[1]: '{1}'", calcMatch.Success, calcMatch.Groups[1].Value);
+        Logger.Debug($"CalcRegex: {calcMatch.Success}, Groups[1]: '{calcMatch.Groups[1].Value}'");
         if (calcMatch.Success) return Calculate(calcMatch.Groups[1].Value);
 
         // 纯数学表达式（无 calc 前缀，例如 2+2）
         var pureMathMatch = PureMathRegex.Match(input);
-        DebugLog.Log("PureMathRegex: {0}", pureMathMatch.Success);
+        Logger.Debug($"PureMathRegex: {pureMathMatch.Success}");
         if (pureMathMatch.Success)
         {
             var trimmed = input.Trim();
@@ -238,7 +238,7 @@ public class CommandRouter
 
         // 单位换算（优先于 Google 搜索，避免被 "g" 误匹配）
         var unitMatch = UnitConvertRegex.Match(input);
-        DebugLog.Log("UnitConvertRegex: {0}", unitMatch.Success);
+        Logger.Debug($"UnitConvertRegex: {unitMatch.Success}");
         if (unitMatch.Success)
         {
             var converted = ConvertUnit(unitMatch.Groups[1].Value, unitMatch.Groups[2].Value, unitMatch.Groups[3].Value);
