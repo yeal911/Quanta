@@ -63,7 +63,23 @@ public partial class RecordingOverlayWindow : Window
 
     // ── 资源路径 ─────────────────────────────────────────────────────
     private static string ResourcePath(string fileName)
-        => Path.Combine(AppContext.BaseDirectory, "Resources", "imgs", fileName);
+    {
+        // 单文件发布时，Resources/imgs 会被解压到临时目录
+        var baseDir = AppContext.BaseDirectory;
+        
+        // 方案1: 直接在程序目录 (非单文件时有效)
+        var directPath = Path.Combine(baseDir, "Resources", "imgs", fileName);
+        if (File.Exists(directPath))
+            return directPath;
+        
+        // 方案2: 单文件发布时，资源在程序所在目录
+        var singleFilePath = Path.Combine(baseDir, fileName);
+        if (File.Exists(singleFilePath))
+            return singleFilePath;
+        
+        // 方案3: 回退到原路径（让加载失败时显示日志）
+        return directPath;
+    }
 
     public RecordingOverlayWindow(RecordingService recordingService, string outputDirectory)
     {

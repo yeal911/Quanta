@@ -8,6 +8,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using Quanta.Helpers;
@@ -180,21 +181,37 @@ public class TrayService : IDisposable
     /// <returns>加载成功的 <see cref="Icon"/> 实例。</returns>
     private Icon LoadAppIcon()
     {
-        try
+        var baseDir = AppContext.BaseDirectory;
+        
+        // 尝试多个可能的路径
+        string[] tryPaths = new[]
         {
-            // 优先从程序运行目录的 Resources/img 子目录加载 quanta.ico
-            var icoPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Resources", "imgs", "quanta.ico");
-            if (System.IO.File.Exists(icoPath))
+            // 方案1: Resources/imgs 目录 (非单文件)
+            Path.Combine(baseDir, "Resources", "imgs", "quanta.ico"),
+            // 方案2: 程序目录 (单文件发布时资源解压到这里)
+            Path.Combine(baseDir, "quanta.ico"),
+            // 方案3: Resources 目录
+            Path.Combine(baseDir, "Resources", "quanta.ico"),
+        };
+
+        foreach (var icoPath in tryPaths)
+        {
+            try
             {
-                return new Icon(icoPath);
+                if (File.Exists(icoPath))
+                {
+                    Logger.Log($"[TrayService] Loading icon from: {icoPath}");
+                    return new Icon(icoPath);
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn($"Failed to load quanta.ico: {ex.Message}");
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to load icon from {icoPath}: {ex.Message}");
+            }
         }
 
         // 备用方案：动态绘制简易图标
+        Logger.Warn("[TrayService] Icon not found, using fallback");
         return CreateFallbackIcon();
     }
 
