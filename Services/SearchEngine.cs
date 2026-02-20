@@ -111,6 +111,7 @@ public class SearchEngine
         new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
         new() { Keyword = "english",   Name = "切换到英文",  Type = "SystemAction", Path = "english", Description = "切换界面语言为英文", IsBuiltIn = true, IconPath = "EN" },
         new() { Keyword = "chinese",   Name = "切换到中文",  Type = "SystemAction", Path = "chinese", Description = "切换界面语言为中文", IsBuiltIn = true, IconPath = "中" },
+        new() { Keyword = "record",    Name = "录音",        Type = "SystemAction", Path = "record", Description = "启动录音", IsBuiltIn = true, IconPath = "🎙" },
     };
 
     /// <summary>
@@ -195,6 +196,15 @@ public class SearchEngine
             return ClipboardHistoryService.Instance.Search(keyword);
         }
 
+        // ── 0.5. 录音命令（record 前缀短路）────────────────────────
+        var recordMatch = System.Text.RegularExpressions.Regex.Match(
+            query, @"^record(?:\s+(.*))?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (recordMatch.Success)
+        {
+            string filePrefix = recordMatch.Groups[1].Value.Trim();
+            return new List<SearchResult> { BuildRecordCommandResult(filePrefix) };
+        }
+
         var results = new ConcurrentBag<SearchResult>();
 
         // ── 1. 搜索自定义命令和内置命令（同步，始终执行）──────────
@@ -217,7 +227,7 @@ public class SearchEngine
                 else if (commandResult.Type == SearchResultType.QRCode)
                     commandResult.GroupLabel = "QRCode";
                 else if (commandResult.Type == SearchResultType.SystemAction)
-                    commandResult.GroupLabel = "快捷命令";
+                    commandResult.GroupLabel = LocalizationService.Get("GroupQuickCommands");
                 else if (commandResult.Type == SearchResultType.WebSearch)
                     commandResult.GroupLabel = "Web";
                 // Calculator 和 Web 结果应该排在最前面（GroupOrder=0），优先级高于 App/File/Window
@@ -364,7 +374,7 @@ public class SearchEngine
         {
             // 系统操作命令使用独立的分组标签
             bool isSystemAction = cmd.Type.Equals("SystemAction", StringComparison.OrdinalIgnoreCase);
-            string groupLabel = isSystemAction ? "快捷命令" : "Command";
+            string groupLabel = isSystemAction ? LocalizationService.Get("GroupQuickCommands") : "Command";
 
             if (string.IsNullOrEmpty(query))
             {
@@ -598,9 +608,58 @@ public class SearchEngine
             case SearchResultType.SystemAction:
                 return ExecuteSystemAction(result.Path);
 
+            case SearchResultType.RecordCommand:
+                // RecordCommand 的执行由 MainWindow 直接处理（需要 UI 层配合）
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (System.Windows.Application.Current.MainWindow is Views.MainWindow mw)
+                        mw.StartRecordingFromResult(result);
+                });
+                return true;
+
             default:
                 return false;
         }
+    }
+
+    /// <summary>
+    /// 构建录音命令的搜索结果，加载当前录音配置
+    /// </summary>
+    private static SearchResult BuildRecordCommandResult(string filePrefix)
+    {
+        var config = ConfigLoader.Load();
+        var recSettings = config.RecordingSettings ?? new Models.RecordingSettings();
+
+        var outputDir = string.IsNullOrEmpty(recSettings.OutputPath)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            : recSettings.OutputPath;
+
+        var recordData = new Models.RecordCommandData
+        {
+            FilePrefix = filePrefix,
+            Source = recSettings.Source,
+            Format = recSettings.Format,
+            SampleRate = recSettings.SampleRate,
+            Bitrate = recSettings.Bitrate,
+            Channels = recSettings.Channels,
+            OutputPath = recSettings.OutputPath
+        };
+
+        return new SearchResult
+        {
+            Index = 1,
+            Id = "cmd:record",
+            Title = string.IsNullOrEmpty(filePrefix) ? "record" : $"record {filePrefix}",
+            Subtitle = LocalizationService.Get("RecordCommandDesc"),
+            Path = "record",
+            IconText = "🎙",
+            Type = SearchResultType.RecordCommand,
+            MatchScore = 1.0,
+            GroupLabel = LocalizationService.Get("GroupQuickCommands"),
+            GroupOrder = 0,
+            QueryMatch = "record",
+            RecordData = recordData
+        };
     }
 
     /// <summary>
@@ -660,6 +719,10 @@ public class SearchEngine
                     }
                 });
                 ToastService.Instance.ShowSuccess("已切换到中文");
+                return true;
+
+            case "record":
+                // record 命令通过 RecordCommand 类型处理，这里不应直接触达
                 return true;
 
             default:

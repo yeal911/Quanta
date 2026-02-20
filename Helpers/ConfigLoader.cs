@@ -154,7 +154,7 @@ public static class ConfigLoader
     {
         var config = new AppConfig
         {
-            Version = "1.0",
+            Version = "1.2",
             Theme = "Light",
             Hotkey = new HotkeyConfig { Modifier = "Alt", Key = "Space" },
             Commands = Services.CommandService.GenerateSampleCommands(),
@@ -249,6 +249,51 @@ public static class ConfigLoader
             config.Version = "1.0";
 
             // Save migrated config
+            Save(config);
+        }
+
+        // v1.0 → v1.1：录音参数优化为会议录音默认值（≤0.24MB/min）
+        if (config.Version == "1.0")
+        {
+            Logger.Log("Migrating config to v1.1: updating recording defaults...");
+
+            if (config.RecordingSettings == null)
+            {
+                config.RecordingSettings = new RecordingSettings();
+            }
+            else
+            {
+                // 只重置仍为旧默认值的参数，避免覆盖用户有意修改的设置
+                // 旧默认：44100Hz / 128kbps / 2声道（立体声）
+                if (config.RecordingSettings.SampleRate == 44100)
+                    config.RecordingSettings.SampleRate = 16000;
+                if (config.RecordingSettings.Bitrate == 128)
+                    config.RecordingSettings.Bitrate = 32;
+                if (config.RecordingSettings.Channels == 2)
+                    config.RecordingSettings.Channels = 1;
+            }
+
+            config.Version = "1.1";
+            Save(config);
+        }
+
+        // v1.1 → v1.2：SampleRate 字段已加入 UI，强制将未经用户修改的旧值 44100 迁移到 16000。
+        // 旧版本 UI 不显示采样率，用户无法主动设置，故 44100 均为遗留默认值可安全覆盖。
+        if (config.Version == "1.1")
+        {
+            Logger.Log("Migrating config to v1.2: normalizing SampleRate...");
+
+            if (config.RecordingSettings == null)
+            {
+                config.RecordingSettings = new RecordingSettings();
+            }
+            else if (config.RecordingSettings.SampleRate == 44100)
+            {
+                config.RecordingSettings.SampleRate = 16000;
+                Logger.Log("RecordingSettings.SampleRate: 44100 → 16000");
+            }
+
+            config.Version = "1.2";
             Save(config);
         }
 

@@ -42,9 +42,12 @@
                     <RowDefinition Height="Auto"/>  <!-- 0: 通用设置 header -->
                     <RowDefinition Height="Auto"/>  <!-- 1: 快捷键 + 导入导出 -->
                     <RowDefinition Height="Auto"/>  <!-- 2: 通用选项 -->
-                    <RowDefinition Height="Auto"/>  <!-- 3: 命令管理 header -->
-                    <RowDefinition Height="Auto"/>  <!-- 4: 搜索 + 操作按钮 -->
-                    <RowDefinition Height="*"/>     <!-- 5: 命令列表 -->
+                    <RowDefinition Height="Auto"/>  <!-- 3: 录音设置 header -->
+                    <RowDefinition Height="Auto"/>  <!-- 4: 录音配置控件行 -->
+                    <RowDefinition Height="Auto"/>  <!-- 5: 录音输出路径行 -->
+                    <RowDefinition Height="Auto"/>  <!-- 6: 命令管理 header -->
+                    <RowDefinition Height="Auto"/>  <!-- 7: 搜索 + 操作按钮 -->
+                    <RowDefinition Height="*"/>     <!-- 8: 命令列表 -->
                 </Grid.RowDefinitions>
 
                 <!-- ── 通用设置 分区 ── -->
@@ -142,8 +145,114 @@
                                Foreground="#666" VerticalAlignment="Center"/>
                 </StackPanel>
 
+                <!-- ── 录音设置 分区 ── -->
+                <Grid Grid.Row="3" Margin="0,6,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="RecordingSectionLabel" Text="录音设置" FontSize="11"
+                               Foreground="#999" FontFamily="微软雅黑"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Border x:Name="RecordingSectionLine" Grid.Column="1" Height="1"
+                            Background="#E8E8E8" VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- 录音配置控件 -->
+                <Grid Grid.Row="4" Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 录制源 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="RecordSourceLabel" Text="录制源：" FontSize="12" FontFamily="微软雅黑"
+                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox x:Name="RecordSourceCombo" Width="106" FontSize="11" VerticalAlignment="Center"
+                                  SelectionChanged="RecordSourceCombo_SelectionChanged">
+                            <ComboBoxItem Content="Mic" Tag="Mic"/>
+                            <ComboBoxItem Content="Speaker" Tag="Speaker"/>
+                            <ComboBoxItem Content="Mic&amp;Speaker" Tag="Mic&amp;Speaker"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 输出格式 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="RecordFormatLabel" Text="格式：" FontSize="12" FontFamily="微软雅黑"
+                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox x:Name="RecordFormatCombo" Width="60" FontSize="11" VerticalAlignment="Center"
+                                  SelectionChanged="RecordFormatCombo_SelectionChanged">
+                            <ComboBoxItem Content="m4a" Tag="m4a"/>
+                            <ComboBoxItem Content="mp3" Tag="mp3"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 码率 -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="RecordBitrateLabel" Text="码率：" FontSize="12" FontFamily="微软雅黑"
+                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox x:Name="RecordBitrateCombo" Width="80" FontSize="11" VerticalAlignment="Center"
+                                  SelectionChanged="RecordBitrateCombo_SelectionChanged">
+                            <ComboBoxItem Content="32 kbps"  Tag="32"/>
+                            <ComboBoxItem Content="64 kbps"  Tag="64"/>
+                            <ComboBoxItem Content="96 kbps"  Tag="96"/>
+                            <ComboBoxItem Content="128 kbps" Tag="128"/>
+                            <ComboBoxItem Content="160 kbps" Tag="160"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 声道 -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="RecordChannelsLabel" Text="声道：" FontSize="12" FontFamily="微软雅黑"
+                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox x:Name="RecordChannelsCombo" Width="70" FontSize="11" VerticalAlignment="Center"
+                                  SelectionChanged="RecordChannelsCombo_SelectionChanged">
+                            <ComboBoxItem Content="立体声" Tag="2"/>
+                            <ComboBoxItem Content="单声道" Tag="1"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- 采样率 -->
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="RecordSampleRateLabel" Text="采样率：" FontSize="12" FontFamily="微软雅黑"
+                                   Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox x:Name="RecordSampleRateCombo" Width="90" FontSize="11" VerticalAlignment="Center"
+                                  SelectionChanged="RecordSampleRateCombo_SelectionChanged">
+                            <ComboBoxItem Content="8000 Hz"  Tag="8000"/>
+                            <ComboBoxItem Content="16000 Hz" Tag="16000"/>
+                            <ComboBoxItem Content="22050 Hz" Tag="22050"/>
+                            <ComboBoxItem Content="44100 Hz" Tag="44100"/>
+                            <ComboBoxItem Content="48000 Hz" Tag="48000"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 录音输出路径行 -->
+                <Grid Grid.Row="5" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="RecordOutputPathLabel" Text="输出路径：" FontSize="12" FontFamily="微软雅黑"
+                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox x:Name="RecordOutputPathBox" Grid.Column="1" FontSize="11" FontFamily="Consolas"
+                             Padding="4,2" BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                             VerticalAlignment="Center"
+                             LostFocus="RecordOutputPathBox_LostFocus"/>
+                    <Button x:Name="RecordBrowseButton" Grid.Column="2" Content="浏览" Margin="4,0,0,0"
+                            Background="#0078D4" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                            BorderThickness="0" Padding="8,3" Height="24" Cursor="Hand"
+                            Click="RecordBrowseButton_Click"/>
+                </Grid>
+
                 <!-- ── 命令管理 分区 ── -->
-                <Grid Grid.Row="3" Margin="0,6,0,6">
+                <Grid x:Name="CommandsSectionGrid" Grid.Row="6" Margin="0,6,0,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -156,7 +265,7 @@
                 </Grid>
 
                 <!-- 搜索 + 操作按钮 -->
-                <Grid Grid.Row="4" Margin="0,0,0,6">
+                <Grid Grid.Row="7" Margin="0,0,0,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -194,7 +303,7 @@
 
                 <!-- DataGrid -->
                 <!-- 命令列表表格：紧凑行高，1px分割线，全行可点击选中 -->
-                <DataGrid Grid.Row="5" x:Name="CommandsGrid"
+                <DataGrid Grid.Row="8" x:Name="CommandsGrid"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           HeadersVisibility="Column" GridLinesVisibility="None"
                           RowHeight="28" FontSize="12" FontFamily="微软雅黑"

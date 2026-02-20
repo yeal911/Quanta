@@ -323,6 +323,7 @@ public partial class CommandSettingsWindow : Window
         TitleText.Text = LocalizationService.Get("SettingsTitle");
         GeneralSectionLabel.Text = LocalizationService.Get("GeneralSettings");
         CommandsSectionLabel.Text = LocalizationService.Get("CommandManagement");
+        RecordingSectionLabel.Text = LocalizationService.Get("RecordingSettings");
         HotkeyLabel.Text = LocalizationService.Get("Hotkey");
         ImportButton.Content = LocalizationService.Get("ImportCommand");
         ExportButton.Content = LocalizationService.Get("ExportCommand");
@@ -332,6 +333,21 @@ public partial class CommandSettingsWindow : Window
         QRCodeThresholdLabel.Text = LocalizationService.Get("QRCodeThreshold");
         QRCodeThresholdSuffix.Text = LocalizationService.Get("QRCodeThresholdSuffix");
         LanguageLabel.Text = LocalizationService.Get("LanguageLabel");
+        RecordSourceLabel.Text = LocalizationService.Get("RecordSource") + "：";
+        RecordFormatLabel.Text = LocalizationService.Get("RecordFormat") + "：";
+        RecordBitrateLabel.Text = LocalizationService.Get("RecordBitrate") + "：";
+        RecordChannelsLabel.Text = LocalizationService.Get("RecordChannels") + "：";
+        RecordSampleRateLabel.Text = LocalizationService.Get("RecordSampleRate") + "：";
+        RecordOutputPathLabel.Text = LocalizationService.Get("RecordOutputPath") + "：";
+        RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
+
+        // 更新声道 ComboBox 文本
+        if (RecordChannelsCombo.Items.Count >= 2)
+        {
+            (RecordChannelsCombo.Items[0] as System.Windows.Controls.ComboBoxItem)!.Content = LocalizationService.Get("RecordChannelStereo");
+            (RecordChannelsCombo.Items[1] as System.Windows.Controls.ComboBoxItem)!.Content = LocalizationService.Get("RecordChannelMono");
+        }
+
 
         // 设置语言 ComboBox 的当前选中项
         var currentLang = LocalizationService.CurrentLanguage;
@@ -355,6 +371,105 @@ public partial class CommandSettingsWindow : Window
         AdminColumn.Header = LocalizationService.Get("Admin");
         FooterText.Text = LocalizationService.Get("Footer");
         CommandSearchPlaceholder.Text = LocalizationService.Get("SearchCommands");
+    }
+
+    /// <summary>
+    /// 加载录音设置到界面控件
+    /// </summary>
+    private void LoadRecordingSettings()
+    {
+        var config = ConfigLoader.Load();
+        var rec = config.RecordingSettings;
+
+        // 录制源
+        SelectComboByTag(RecordSourceCombo, rec.Source);
+        // 格式
+        SelectComboByTag(RecordFormatCombo, rec.Format);
+        // 码率
+        SelectComboByTag(RecordBitrateCombo, rec.Bitrate.ToString());
+        // 声道
+        SelectComboByTag(RecordChannelsCombo, rec.Channels.ToString());
+        // 采样率
+        SelectComboByTag(RecordSampleRateCombo, rec.SampleRate.ToString());
+        // 输出路径
+        RecordOutputPathBox.Text = string.IsNullOrEmpty(rec.OutputPath)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            : rec.OutputPath;
+    }
+
+    private static void SelectComboByTag(System.Windows.Controls.ComboBox combo, string tagValue)
+    {
+        foreach (System.Windows.Controls.ComboBoxItem item in combo.Items)
+        {
+            if (item.Tag?.ToString()?.Equals(tagValue, StringComparison.OrdinalIgnoreCase) == true)
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
+        if (combo.Items.Count > 0)
+            combo.SelectedIndex = 0;
+    }
+
+    private void SaveRecordingSettings()
+    {
+        var config = ConfigLoader.Load();
+
+        config.RecordingSettings.Source     = GetComboTag(RecordSourceCombo) ?? "Mic";
+        config.RecordingSettings.Format     = GetComboTag(RecordFormatCombo) ?? "m4a";
+        config.RecordingSettings.Bitrate    = int.TryParse(GetComboTag(RecordBitrateCombo),    out int br) ? br : 32;
+        config.RecordingSettings.Channels   = int.TryParse(GetComboTag(RecordChannelsCombo),   out int ch) ? ch : 1;
+        config.RecordingSettings.SampleRate = int.TryParse(GetComboTag(RecordSampleRateCombo), out int sr) ? sr : 16000;
+        config.RecordingSettings.OutputPath = RecordOutputPathBox.Text.Trim();
+
+        ConfigLoader.Save(config);
+    }
+
+    private static string? GetComboTag(System.Windows.Controls.ComboBox combo)
+        => (combo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+
+    // ── 录音设置事件处理 ───────────────────────────────────────────
+    private bool _suppressRecordingEvents = false;
+
+    private void RecordSourceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_suppressRecordingEvents) SaveRecordingSettings();
+    }
+    private void RecordFormatCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_suppressRecordingEvents) SaveRecordingSettings();
+    }
+    private void RecordBitrateCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_suppressRecordingEvents) SaveRecordingSettings();
+    }
+    private void RecordChannelsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_suppressRecordingEvents) SaveRecordingSettings();
+    }
+    private void RecordSampleRateCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_suppressRecordingEvents) SaveRecordingSettings();
+    }
+
+    private void RecordOutputPathBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        SaveRecordingSettings();
+    }
+
+    private void RecordBrowseButton_Click(object sender, RoutedEventArgs e)
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = LocalizationService.Get("RecordOutputPath"),
+            SelectedPath = RecordOutputPathBox.Text,
+            ShowNewFolderButton = true
+        };
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            RecordOutputPathBox.Text = dialog.SelectedPath;
+            SaveRecordingSettings();
+        }
     }
 
     /// <summary>
@@ -396,6 +511,10 @@ public partial class CommandSettingsWindow : Window
         }
 
         LoadAppSettings();
+
+        _suppressRecordingEvents = true;
+        LoadRecordingSettings();
+        _suppressRecordingEvents = false;
     }
 
     /// <summary>

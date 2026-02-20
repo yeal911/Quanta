@@ -34,6 +34,9 @@ public class AppConfig
 
     /// <summary>应用程序通用设置</summary>
     [JsonPropertyName("AppSettings")] public AppSettings AppSettings { get; set; } = new();
+
+    /// <summary>录音设置</summary>
+    [JsonPropertyName("RecordingSettings")] public RecordingSettings RecordingSettings { get; set; } = new();
 }
 
 /// <summary>
@@ -145,6 +148,31 @@ public class PluginSettings
 
     /// <summary>已加载的插件名称列表</summary>
     [JsonPropertyName("LoadedPlugins")] public List<string> LoadedPlugins { get; set; } = new();
+}
+
+/// <summary>
+/// 录音设置类，存储录音功能的所有配置选项。
+/// 默认参数针对会议录音优化：AAC 16kHz 单声道 32kbps ≈ 0.24MB/min。
+/// </summary>
+public class RecordingSettings
+{
+    /// <summary>录制源：Mic（麦克风）、Speaker（扬声器回环）、Mic&amp;Speaker（混合）</summary>
+    [JsonPropertyName("Source")] public string Source { get; set; } = "Mic";
+
+    /// <summary>输出格式：m4a 或 mp3</summary>
+    [JsonPropertyName("Format")] public string Format { get; set; } = "m4a";
+
+    /// <summary>采样率（Hz）：8000、16000、22050、44100、48000</summary>
+    [JsonPropertyName("SampleRate")] public int SampleRate { get; set; } = 16000;
+
+    /// <summary>码率（kbps）：32、64、96、128、160</summary>
+    [JsonPropertyName("Bitrate")] public int Bitrate { get; set; } = 32;
+
+    /// <summary>声道数：1（单声道）或 2（立体声）</summary>
+    [JsonPropertyName("Channels")] public int Channels { get; set; } = 1;
+
+    /// <summary>默认输出路径，空字符串表示使用桌面</summary>
+    [JsonPropertyName("OutputPath")] public string OutputPath { get; set; } = "";
 }
 
 /// <summary>

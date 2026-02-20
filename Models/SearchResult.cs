@@ -4,7 +4,10 @@
 //          以及命令执行结果模型。这些模型用于在搜索引擎与界面层之间传递数据。
 // ============================================================================
 
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Media.Imaging;
+using Quanta.Services;
 
 namespace Quanta.Models;
 
@@ -32,7 +35,9 @@ public enum SearchResultType
     /// <summary>二维码生成</summary>
     QRCode,
     /// <summary>系统操作（设置、关于、切换语言）</summary>
-    SystemAction
+    SystemAction,
+    /// <summary>录音命令</summary>
+    RecordCommand
 }
 
 /// <summary>
@@ -93,6 +98,73 @@ public class SearchResult
 
     /// <summary>二维码对应的原始文本内容</summary>
     public string QRCodeContent { get; set; } = "";
+
+    /// <summary>录音命令数据，当结果类型为 RecordCommand 时使用</summary>
+    public RecordCommandData? RecordData { get; set; }
+}
+
+/// <summary>
+/// 录音命令数据类，持有当前录音配置（支持属性变更通知，供 UI 绑定）。
+/// </summary>
+public class RecordCommandData : INotifyPropertyChanged
+{
+    private string _source = "Mic";
+    private string _format = "m4a";
+    private int _sampleRate = 16000;
+    private int _bitrate = 32;
+    private int _channels = 1;
+    private string _outputPath = "";
+    private string _filePrefix = "";
+
+    /// <summary>录制文件名前缀（用户输入参数）</summary>
+    public string FilePrefix { get => _filePrefix; set { _filePrefix = value; OnPropertyChanged(); OnPropertyChanged(nameof(OutputFileName)); } }
+
+    /// <summary>录制源</summary>
+    public string Source { get => _source; set { _source = value; OnPropertyChanged(); } }
+
+    /// <summary>输出格式</summary>
+    public string Format { get => _format; set { _format = value; OnPropertyChanged(); OnPropertyChanged(nameof(OutputFileName)); } }
+
+    /// <summary>采样率（Hz）</summary>
+    public int SampleRate { get => _sampleRate; set { _sampleRate = value; OnPropertyChanged(); OnPropertyChanged(nameof(SampleRateDisplay)); } }
+
+    /// <summary>码率（kbps）</summary>
+    public int Bitrate { get => _bitrate; set { _bitrate = value; OnPropertyChanged(); OnPropertyChanged(nameof(BitrateDisplay)); } }
+
+    /// <summary>声道数</summary>
+    public int Channels { get => _channels; set { _channels = value; OnPropertyChanged(); OnPropertyChanged(nameof(ChannelsDisplay)); } }
+
+    /// <summary>默认输出路径</summary>
+    public string OutputPath { get => _outputPath; set { _outputPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(OutputFileName)); } }
+
+    /// <summary>采样率显示文本</summary>
+    public string SampleRateDisplay => $"{_sampleRate}Hz";
+
+    /// <summary>码率显示文本</summary>
+    public string BitrateDisplay => $"{_bitrate}kbps";
+
+    /// <summary>声道显示文本</summary>
+    public string ChannelsDisplay => _channels == 1 
+        ? LocalizationService.Get("RecordChannelMono") 
+        : LocalizationService.Get("RecordChannelStereo");
+
+    /// <summary>预览输出文件名</summary>
+    public string OutputFileName
+    {
+        get
+        {
+            var prefix = string.IsNullOrWhiteSpace(_filePrefix) ? "" : _filePrefix + "_";
+            var ts = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var dir = string.IsNullOrEmpty(_outputPath)
+                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                : _outputPath;
+            return System.IO.Path.Combine(dir, $"{prefix}record_{ts}.{_format}");
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 /// <summary>

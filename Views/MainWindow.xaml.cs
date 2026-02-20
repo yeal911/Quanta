@@ -56,6 +56,12 @@ public partial class MainWindow : Window
     /// <summary>执行完毕后是否需要向前台窗口发送 Ctrl+V 粘贴</summary>
     private bool _pendingPaste;
 
+    /// <summary>当前录音服务实例（录音进行中时不为 null）</summary>
+    private Services.RecordingService? _recordingService;
+
+    /// <summary>当前录音悬浮窗口</summary>
+    private RecordingOverlayWindow? _recordingOverlay;
+
     // ── Win32：模拟键盘输入 ────────────────────────────────────
     [DllImport("user32.dll")] private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr extra);
     private const byte VK_CONTROL = 0x11;
@@ -768,9 +774,189 @@ public partial class MainWindow : Window
         }
     }
 
+    // ── 录音命令处理 ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// 从搜索结果启动录音（由 SearchEngine 通过 Dispatcher 调用）。
+    /// </summary>
+    public async void StartRecordingFromResult(Models.SearchResult result)
+    {
+        try
+        {
+            if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+            {
+                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
+                return;
+            }
+
+            var recordData = result.RecordData;
+            if (recordData == null) return;
+
+            // 构建最终输出文件路径
+            var outputPath = recordData.OutputFileName;
+            var outputDir = System.IO.Path.GetDirectoryName(outputPath) ?? "";
+
+            // 保存当前配置到 AppConfig
+            var config = Helpers.ConfigLoader.Load();
+            config.RecordingSettings.Source = recordData.Source;
+            config.RecordingSettings.Format = recordData.Format;
+            config.RecordingSettings.Bitrate = recordData.Bitrate;
+            config.RecordingSettings.Channels = recordData.Channels;
+            config.RecordingSettings.OutputPath = recordData.OutputPath;
+            Helpers.ConfigLoader.Save(config);
+
+            // 创建录音服务
+            _recordingService = new Services.RecordingService();
+
+            // 创建悬浮窗口（先创建窗口再开始录音，以便订阅事件）
+            _recordingOverlay = new RecordingOverlayWindow(_recordingService, outputDir);
+            _recordingOverlay.Closed += (s, e) =>
+            {
+                _recordingOverlay = null;
+                if (_recordingService?.State != Services.RecordingState.Idle)
+                {
+                    _ = _recordingService?.StopAsync();
+                }
+                _recordingService?.Dispose();
+                _recordingService = null;
+            };
+
+            // 开始录音
+            bool started = await _recordingService.StartAsync(config.RecordingSettings, outputPath);
+            if (!started)
+            {
+                _recordingOverlay?.Close();
+                _recordingService?.Dispose();
+                _recordingService = null;
+                _recordingOverlay = null;
+                return;
+            }
+
+            // 显示悬浮窗口
+            _recordingOverlay?.Show();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"StartRecordingFromResult failed: {ex}");
+            ToastService.Instance.ShowError(LocalizationService.Get("RecordError") + ": " + ex.Message);
+            
+            // 清理资源
+            try { _recordingOverlay?.Close(); } catch { }
+            try { _recordingService?.Dispose(); } catch { }
+            _recordingService = null;
+            _recordingOverlay = null;
+        }
+    }
+
+    /// <summary>
+    /// 处理录音配置芯片的右键点击，显示上下文菜单以切换配置值。
+    /// </summary>
+    private void RecordChip_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var element = sender as System.Windows.FrameworkElement;
+        if (element == null) return;
+
+        // 找到 DataContext 中的 SearchResult
+        var result = element.DataContext as Models.SearchResult;
+        var recordData = result?.RecordData;
+        if (recordData == null) return;
+
+        var tag = element.Tag?.ToString() ?? "";
+
+        switch (tag)
+        {
+            case "Source":
+                CycleOption(new[] { "Mic", "Speaker", "Mic&Speaker" }, recordData.Source, val =>
+                {
+                    recordData.Source = val;
+                    SaveRecordingSettingField("Source", val);
+                });
+                break;
+
+            case "Format":
+                CycleOption(new[] { "m4a", "mp3" }, recordData.Format, val =>
+                {
+                    recordData.Format = val;
+                    SaveRecordingSettingField("Format", val);
+                });
+                break;
+
+            case "Bitrate":
+                CycleOption(new[] { "64", "96", "128", "160" }, recordData.Bitrate.ToString(), val =>
+                {
+                    recordData.Bitrate = int.Parse(val);
+                    SaveRecordingSettingField("Bitrate", val);
+                }, v => v + " kbps");
+                break;
+
+            case "Channels":
+                CycleOption(new[] { "1", "2" }, recordData.Channels.ToString(), val =>
+                {
+                    recordData.Channels = int.Parse(val);
+                    SaveRecordingSettingField("Channels", val);
+                }, v => v == "1" ? "单声道" : "立体声");
+                break;
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 通过右键点击循环切换选项
+    /// </summary>
+    private void CycleOption(string[] options, string currentValue, Action<string> onChange, Func<string, string>? displayFormatter = null)
+    {
+        int currentIndex = Array.IndexOf(options, currentValue);
+        int nextIndex = (currentIndex + 1) % options.Length;
+        string newValue = options[nextIndex];
+        onChange(newValue);
+    }
+
+    /// <summary>生成配置菜单项</summary>
+    private static void AddMenuItems(
+        System.Windows.Controls.ContextMenu menu,
+        string[] values,
+        string current,
+        Action<string> onSelect,
+        Func<string, string>? labelFormatter = null)
+    {
+        foreach (var val in values)
+        {
+            var label = labelFormatter != null ? labelFormatter(val) : val;
+            var item = new System.Windows.Controls.MenuItem
+            {
+                Header = label,
+                IsChecked = val.Equals(current, StringComparison.OrdinalIgnoreCase)
+            };
+            var capturedVal = val;
+            item.Click += (s, e) => onSelect(capturedVal);
+            menu.Items.Add(item);
+        }
+    }
+
+    /// <summary>将单个录音配置字段保存到 AppConfig</summary>
+    private static void SaveRecordingSettingField(string field, string value)
+    {
+        var config = Helpers.ConfigLoader.Load();
+        switch (field)
+        {
+            case "Source": config.RecordingSettings.Source = value; break;
+            case "Format": config.RecordingSettings.Format = value; break;
+            case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
+        }
+        Helpers.ConfigLoader.Save(config);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _clipboardMonitor.Stop();
+        // 若有正在进行的录音，停止并释放资源
+        if (_recordingService != null)
+        {
+            _ = _recordingService.StopAsync();
+            _recordingService.Dispose();
+        }
+        _recordingOverlay?.Close();
         base.OnClosed(e);
     }
 }

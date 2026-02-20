@@ -321,13 +321,89 @@
                                     <Image Source="{Binding QRCodeImage}" Width="200" Height="200"
                                            Stretch="Uniform" HorizontalAlignment="Center"/>
                                 </Grid>
+
+                                <!-- RecordCommand result: show recording config panel -->
+                                <Grid x:Name="RecordContainer" Visibility="Collapsed">
+                                    <StackPanel Orientation="Vertical" Margin="0,2">
+                                        <!-- 标题行 -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                            <TextBlock Text="🎙 " FontSize="14" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding RecordData.FilePrefix, FallbackValue='record'}"
+                                                       FontSize="13" Foreground="#0078D4" FontFamily="Consolas"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Text=" — " FontSize="12" Foreground="#888" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- 配置芯片行：右键点击可切换 -->
+                                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <!-- 录制源 -->
+                                            <Border x:Name="SourceChip" Tag="Source"
+                                                    Background="#E8F4FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
+                                                    Cursor="Hand"
+                                                    MouseRightButtonUp="RecordChip_RightClick">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🎙 " FontSize="11"/>
+                                                    <TextBlock Text="{Binding RecordData.Source}" FontSize="11" FontFamily="微软雅黑" Foreground="#0078D4"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- 输出格式 -->
+                                            <Border x:Name="FormatChip" Tag="Format"
+                                                    Background="#F0F8E8" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
+                                                    Cursor="Hand"
+                                                    ToolTip="右键点击切换格式"
+                                                    MouseRightButtonUp="RecordChip_RightClick">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📄 " FontSize="11"/>
+                                                    <TextBlock Text="{Binding RecordData.Format}" FontSize="11" FontFamily="Consolas" Foreground="#27AE60"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- 码率 -->
+                                            <Border x:Name="BitrateChip" Tag="Bitrate"
+                                                    Background="#F8E8FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
+                                                    Cursor="Hand"
+                                                    ToolTip="右键点击切换码率"
+                                                    MouseRightButtonUp="RecordChip_RightClick">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📶 " FontSize="11"/>
+                                                    <TextBlock Text="{Binding RecordData.BitrateDisplay}" FontSize="11" FontFamily="Consolas" Foreground="#8E44AD"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- 声道 -->
+                                            <Border x:Name="ChannelsChip" Tag="Channels"
+                                                    Background="#E8F4FF" CornerRadius="4" Padding="8,3" Margin="0,0,6,4"
+                                                    Cursor="Hand"
+                                                    ToolTip="右键点击切换声道"
+                                                    MouseRightButtonUp="RecordChip_RightClick">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🔊 " FontSize="11"/>
+                                                    <TextBlock Text="{Binding RecordData.ChannelsDisplay}" FontSize="11" FontFamily="Consolas" Foreground="#3498DB"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </WrapPanel>
+
+                                        <!-- 输出路径（只读显示） -->
+                                        <TextBlock Text="{Binding RecordData.OutputFileName}"
+                                                   FontSize="10" FontFamily="Consolas" Foreground="#999"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding RecordData.OutputFileName}"
+                                                   Margin="0,0,0,2"/>
+                                    </StackPanel>
+                                </Grid>
                             </Grid>
 
-                            <!-- Trigger to switch between normal and QRCode -->
+                            <!-- Trigger to switch between normal, QRCode and Record -->
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding Type}" Value="QRCode">
                                     <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
                                     <Setter TargetName="QRCodeContainer" Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Type}" Value="RecordCommand">
+                                    <Setter TargetName="NormalContainer" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="RecordContainer" Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
