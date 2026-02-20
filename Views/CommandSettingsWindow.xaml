@@ -45,9 +45,10 @@
                     <RowDefinition Height="Auto"/>  <!-- 3: 录音设置 header -->
                     <RowDefinition Height="Auto"/>  <!-- 4: 录音配置控件行 -->
                     <RowDefinition Height="Auto"/>  <!-- 5: 录音输出路径行 -->
-                    <RowDefinition Height="Auto"/>  <!-- 6: 命令管理 header -->
-                    <RowDefinition Height="Auto"/>  <!-- 7: 搜索 + 操作按钮 -->
-                    <RowDefinition Height="*"/>     <!-- 8: 命令列表 -->
+                    <RowDefinition Height="Auto"/>  <!-- 6: 汇率 API 设置 -->
+                    <RowDefinition Height="Auto"/>  <!-- 7: 命令管理 header -->
+                    <RowDefinition Height="Auto"/>  <!-- 8: 搜索 + 操作按钮 -->
+                    <RowDefinition Height="*"/>     <!-- 9: 命令列表 -->
                 </Grid.RowDefinitions>
 
                 <!-- ── 通用设置 分区 ── -->
@@ -228,8 +229,22 @@
                             Click="RecordBrowseButton_Click"/>
                 </Grid>
 
+                <!-- ── 汇率 API 设置 分区 ── -->
+                <Grid x:Name="ExchangeRateSectionGrid" Grid.Row="6" Margin="0,6,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="ExchangeRateLabel" Text="汇率 API：" FontSize="12" FontFamily="微软雅黑"
+                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="ExchangeRateApiKeyBox" Grid.Column="1" FontSize="11" FontFamily="Consolas"
+                             Padding="4,2" BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                             VerticalAlignment="Center"
+                             LostFocus="ExchangeRateApiKeyBox_LostFocus"/>
+                </Grid>
+
                 <!-- ── 命令管理 分区 ── -->
-                <Grid x:Name="CommandsSectionGrid" Grid.Row="6" Margin="0,6,0,6">
+                <Grid x:Name="CommandsSectionGrid" Grid.Row="7" Margin="0,6,0,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>

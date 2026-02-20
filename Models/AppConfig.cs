@@ -10,6 +10,18 @@ using System.Text.Json.Serialization;
 namespace Quanta.Models;
 
 /// <summary>
+/// 汇率转换设置类
+/// </summary>
+public class ExchangeRateSettings
+{
+    /// <summary>Exchangerate-API 的 API Key</summary>
+    [JsonPropertyName("ApiKey")] public string ApiKey { get; set; } = "f02c1174e7cdfb412a48337c";
+
+    /// <summary>缓存时间（分钟）</summary>
+    [JsonPropertyName("CacheMinutes")] public int CacheMinutes { get; set; } = 60;
+}
+
+/// <summary>
 /// 应用程序主配置类，作为整个配置文件的根节点，包含所有子配置项。
 /// </summary>
 public class AppConfig
@@ -37,6 +49,9 @@ public class AppConfig
 
     /// <summary>录音设置</summary>
     [JsonPropertyName("RecordingSettings")] public RecordingSettings RecordingSettings { get; set; } = new();
+
+    /// <summary>汇率API设置</summary>
+    [JsonPropertyName("ExchangeRateSettings")] public ExchangeRateSettings ExchangeRateSettings { get; set; } = new();
 }
 
 /// <summary>

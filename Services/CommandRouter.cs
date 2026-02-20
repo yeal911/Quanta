@@ -191,6 +191,14 @@ public class CommandRouter
         @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+|[\u4e00-\u9fff]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>
+    /// 匹配货币换算的正则表达式，格式为: {数字} {货币代码} to/in {货币代码}
+    /// 例如: 100 USD to CNY, 100 usd to cny
+    /// </summary>
+    private static readonly Regex CurrencyConvertRegex = new(
+        @"^(-?\d+\.?\d*)\s*([A-Za-z]{3})\s+(?:to|in|转|换)\s+([A-Za-z]{3})$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     // ── 文本工具 ──────────────────────────────────────────────
     private static readonly Regex Base64Regex      = new(@"^base64\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     private static readonly Regex Base64DecodeRegex = new(@"^base64d\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -234,6 +242,14 @@ public class CommandRouter
         {
             var trimmed = input.Trim();
             if (trimmed.Length > 0) return Calculate(trimmed);
+        }
+
+        // 货币换算（优先于单位换算，例如 100 USD to CNY）
+        var currencyMatch = CurrencyConvertRegex.Match(input);
+        Logger.Debug($"CurrencyConvertRegex: {currencyMatch.Success}");
+        if (currencyMatch.Success)
+        {
+            return await ConvertCurrencyAsync(currencyMatch.Groups[1].Value, currencyMatch.Groups[2].Value, currencyMatch.Groups[3].Value);
         }
 
         // 单位换算（优先于 Google 搜索，避免被 "g" 误匹配）
@@ -345,6 +361,89 @@ public class CommandRouter
         }
         catch (Exception ex) { result.Data = new CommandResult { Success = false, Error = ex.Message }; }
         return result;
+    }
+
+    /// <summary>
+    /// 异步执行货币换算
+    /// </summary>
+    private async Task<SearchResult> ConvertCurrencyAsync(string amountStr, string fromCurrency, string toCurrency)
+    {
+        if (!double.TryParse(amountStr, out double amount))
+        {
+            return new SearchResult
+            {
+                Title = LocalizationService.Get("CalcError"),
+                Subtitle = LocalizationService.Get("ExchangeRateInvalidAmount"),
+                Type = SearchResultType.Calculator,
+                GroupLabel = "",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "💱"
+            };
+        }
+
+        // 显示"正在获取汇率"提示（绿色字体）
+        var fetchingResult = new SearchResult
+        {
+            Title = LocalizationService.Get("ExchangeRateFetching"),
+            Subtitle = $"{amount} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}...",
+            Type = SearchResultType.Calculator,
+            GroupLabel = "",
+            GroupOrder = 0,
+            MatchScore = 1.0,
+            IconText = "💱",
+            QueryMatch = LocalizationService.Get("ExchangeRateFetching")
+        };
+
+        // 异步获取汇率
+        var rateResult = await ExchangeRateService.Instance.ConvertAsync(amount, fromCurrency, toCurrency);
+
+        if (rateResult.Success)
+        {
+            // 成功，显示转换结果
+            // SubtitleSmall: 双向汇率（小字体）
+            // Subtitle: 时间 + 缓存标记（正常字体）
+            var subtitleSmall = rateResult.UnitRate;  // 1 CNY = 0.1371 USD · 1 USD = 7.2950 CNY
+            
+            var subtitle = "";
+            if (!string.IsNullOrEmpty(rateResult.FetchTime))
+            {
+                subtitle = rateResult.FetchTime;
+            }
+            if (rateResult.IsFromCache)
+            {
+                var cacheLabel = LocalizationService.Get("ExchangeRateFromCache");
+                subtitle += string.IsNullOrEmpty(subtitle) ? cacheLabel : $" · {cacheLabel}";
+            }
+            
+            return new SearchResult
+            {
+                Title = rateResult.Result,
+                Subtitle = subtitle,
+                SubtitleSmall = subtitleSmall,
+                Type = SearchResultType.Calculator,
+                GroupLabel = "",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "💱",
+                QueryMatch = rateResult.Result
+            };
+        }
+        else
+        {
+            // 错误信息（红色显示）
+            return new SearchResult
+            {
+                Title = rateResult.Result,
+                Subtitle = "",
+                Type = SearchResultType.Calculator,
+                GroupLabel = "",
+                GroupOrder = 0,
+                MatchScore = 1.0,
+                IconText = "💱",
+                QueryMatch = ""
+            };
+        }
     }
 
     /// <summary>

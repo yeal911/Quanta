@@ -59,7 +59,7 @@
 
                 <!-- 按钮容器：内层高透明背景 -->
                 <Border Background="#55252525" CornerRadius="3" Padding="1,1" Margin="0,0,0,3"
-                        HorizontalAlignment="Center">
+                        HorizontalAlignment="Center" Width="125">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="PauseButton" Width="24" Height="24" Padding="0" Margin="0.2,0,0.2,0"
                                 FocusVisualStyle="{x:Null}" Click="PauseButton_Click" IsEnabled="False">
@@ -155,23 +155,25 @@
 
                 <!-- 信息行：内层高透明背景，点击打开录音目录 -->
                 <Border Background="#55252525" CornerRadius="3" Height="22" Padding="6,3"
-                        Margin="0,0,0,3" Cursor="Hand" MouseLeftButtonDown="InfoBox_Click">
+                        Margin="0,0,0,3" Cursor="Hand" MouseLeftButtonDown="InfoBox_Click"
+                        HorizontalAlignment="Center" Width="125">
                     <Border.ToolTip><ToolTip x:Name="InfoTooltip" Content="点击打开录音目录"/></Border.ToolTip>
                     <TextBlock x:Name="InfoTextBlock" Text="00:00 | 0 KB"
-                               Foreground="#CCCCCC" FontSize="9" FontFamily="Consolas"
+                               Foreground="#F5F5F5" FontSize="9" FontFamily="Consolas"
                                TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Border>
 
                 <!-- 设备信息行：内层高透明背景，文字居左，鼠标悬停 tooltip 显示全名 -->
                 <Border x:Name="DeviceInfoBorder" Background="#55252525" CornerRadius="3"
-                        Padding="6,3" Margin="0,0,0,0" Visibility="Collapsed">
+                        Padding="6,3" Margin="0,0,0,0" Visibility="Collapsed"
+                        HorizontalAlignment="Center" Width="125">
                     <StackPanel>
                         <TextBlock x:Name="MicDeviceText"
-                                   Foreground="#AAAAAA" FontSize="8" FontFamily="Consolas"
+                                   Foreground="#F5F5F5" FontSize="8" FontFamily="Consolas"
                                    TextTrimming="CharacterEllipsis" TextAlignment="Left"
                                    HorizontalAlignment="Stretch" Visibility="Collapsed"/>
                         <TextBlock x:Name="SpeakerDeviceText"
-                                   Foreground="#AAAAAA" FontSize="8" FontFamily="Consolas"
+                                   Foreground="#F5F5F5" FontSize="8" FontFamily="Consolas"
                                    TextTrimming="CharacterEllipsis" TextAlignment="Left"
                                    HorizontalAlignment="Stretch" Visibility="Collapsed"/>
                     </StackPanel>

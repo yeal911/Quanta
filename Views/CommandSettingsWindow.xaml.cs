@@ -421,6 +421,27 @@ public partial class CommandSettingsWindow : Window
         ConfigLoader.Save(config);
     }
 
+    private void LoadExchangeRateSettings()
+    {
+        var config = ConfigLoader.Load();
+        var exchangeSettings = config.ExchangeRateSettings ?? new Models.ExchangeRateSettings();
+        ExchangeRateApiKeyBox.Text = exchangeSettings.ApiKey;
+    }
+
+    private void SaveExchangeRateSettings()
+    {
+        var config = ConfigLoader.Load();
+        if (config.ExchangeRateSettings == null)
+            config.ExchangeRateSettings = new Quanta.Models.ExchangeRateSettings();
+        config.ExchangeRateSettings.ApiKey = ExchangeRateApiKeyBox.Text.Trim();
+        ConfigLoader.Save(config);
+    }
+
+    private void ExchangeRateApiKeyBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        SaveExchangeRateSettings();
+    }
+
     private static string? GetComboTag(System.Windows.Controls.ComboBox combo)
         => (combo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
 
@@ -506,6 +527,8 @@ public partial class CommandSettingsWindow : Window
         _suppressRecordingEvents = true;
         LoadRecordingSettings();
         _suppressRecordingEvents = false;
+
+        LoadExchangeRateSettings();
     }
 
     /// <summary>

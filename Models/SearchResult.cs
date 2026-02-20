@@ -54,6 +54,9 @@ public class SearchResult
     /// <summary>搜索结果副标题，显示补充说明信息</summary>
     public string Subtitle { get; set; } = string.Empty;
 
+    /// <summary>副标题（较小字体），用于显示次要信息如汇率双向换算</summary>
+    public string SubtitleSmall { get; set; } = string.Empty;
+
     /// <summary>执行路径或 URL 地址</summary>
     public string Path { get; set; } = string.Empty;
 

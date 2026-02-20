@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="quanta.ico" width="64" alt="Quanta"/>
+  <img src="Resources\imgs\quanta.ico" width="64" alt="Quanta"/>
 </p>
 
 <p align="center">

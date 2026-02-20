@@ -140,7 +140,16 @@ public static class LocalizationService
             ["RecordRightClickFormat"] = "右键点击切换格式",
             ["RecordRightClickBitrate"] = "右键点击切换码率",
             ["RecordRightClickChannels"] = "右键点击切换声道",
-            ["RecordStarting"] = "启动录音中..."
+            ["RecordStarting"] = "启动录音中...",
+            // 汇率换算
+            ["ExchangeRateFetching"] = "正在获取汇率...",
+            ["ExchangeRateNoApiKey"] = "请在设置中配置 Exchangerate-API Key",
+            ["ExchangeRateApiError"] = "汇率获取失败，请检查网络或API Key",
+            ["ExchangeRateNotSupported"] = "不支持兑换 {0}",
+            ["ExchangeRateInvalidAmount"] = "无效的金额",
+            ["ExchangeRateFromCache"] = "缓存",
+            ["ExchangeRateToday"] = "今天",
+            ["ExchangeRateYesterday"] = "昨天"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -258,7 +267,16 @@ public static class LocalizationService
             ["RecordRightClickFormat"] = "Right-click to switch format",
             ["RecordRightClickBitrate"] = "Right-click to switch bitrate",
             ["RecordRightClickChannels"] = "Right-click to switch channels",
-            ["RecordStarting"] = "Starting recording..."
+            ["RecordStarting"] = "Starting recording...",
+            // 汇率换算
+            ["ExchangeRateFetching"] = "Fetching exchange rate...",
+            ["ExchangeRateNoApiKey"] = "Please configure Exchangerate-API Key in settings",
+            ["ExchangeRateApiError"] = "Failed to fetch rate, check network or API Key",
+            ["ExchangeRateNotSupported"] = "Currency {0} not supported",
+            ["ExchangeRateInvalidAmount"] = "Invalid amount",
+            ["ExchangeRateFromCache"] = "Cache",
+            ["ExchangeRateToday"] = "Today",
+            ["ExchangeRateYesterday"] = "Yesterday"
         }
     };
 

@@ -312,8 +312,40 @@
                                                MaxWidth="150" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
 
                                     <!-- Description -->
-                                    <TextBlock Grid.Column="5" Text="{Binding Subtitle}" FontSize="12" Foreground="#666"
-                                               VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Grid.Column="5" Margin="8,0,0,0" VerticalAlignment="Center">
+                                        <!-- SubtitleSmall (larger font for exchange rate) -->
+                                        <TextBlock Text="{Binding SubtitleSmall}" FontSize="12" Foreground="#666"
+                                                   TextTrimming="CharacterEllipsis" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SubtitleSmall}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SubtitleSmall}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <!-- Subtitle (smaller font for time/cache) -->
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="#888"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Subtitle}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Subtitle}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- QRCode results: show only the QR image, large size -->

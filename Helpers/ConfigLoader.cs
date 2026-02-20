@@ -313,6 +313,24 @@ public static class ConfigLoader
             Save(config);
         }
 
+        // v1.2 → v1.3：添加汇率 API 设置
+        if (config.Version == "1.2")
+        {
+            Logger.Log("Migrating config to v1.3: adding exchange rate settings...");
+
+            if (config.ExchangeRateSettings == null)
+            {
+                config.ExchangeRateSettings = new Models.ExchangeRateSettings
+                {
+                    ApiKey = "f02c1174e7cdfb412a48337c",
+                    CacheMinutes = 60
+                };
+            }
+
+            config.Version = "1.3";
+            Save(config);
+        }
+
         return config;
     }
 
