@@ -1125,4 +1125,32 @@ public partial class MainWindow : Window
             }
         }
     }
+
+    // ── 右键直接复制颜色 ───────────────────────────────────────────
+    private void CopyColorHex_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
+        {
+            System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
+            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hex);
+        }
+    }
+
+    private void CopyColorRgb_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
+        {
+            System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
+            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Rgb);
+        }
+    }
+
+    private void CopyColorHsl_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
+        {
+            System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
+            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hsl);
+        }
+    }
 }

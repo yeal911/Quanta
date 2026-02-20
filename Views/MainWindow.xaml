@@ -363,35 +363,26 @@
                                         <!-- HEX -->
                                         <TextBlock Text="{Binding ColorInfo.Hex}" FontSize="11" FontFamily="Consolas" 
                                                    Foreground="#0078D4" VerticalAlignment="Center" Margin="0,0,8,0"
-                                                   Cursor="Hand">
+                                                    Cursor="Hand" MouseRightButtonUp="CopyColorHex_RightClick">
                                             <TextBlock.ToolTip>
                                                 <ToolTip Content="右键复制"/>
                                             </TextBlock.ToolTip>
-                                            <TextBlock.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="复制" Click="CopyColorHex_Click"/>
-                                                </ContextMenu>
-                                            </TextBlock.ContextMenu>
                                         </TextBlock>
                                         <!-- RGB -->
                                         <TextBlock Text="{Binding ColorInfo.Rgb}" FontSize="11" FontFamily="Consolas" 
                                                    Foreground="#E67E22" VerticalAlignment="Center" Margin="0,0,8,0"
-                                                   Cursor="Hand">
-                                            <TextBlock.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="复制" Click="CopyColorRgb_Click"/>
-                                                </ContextMenu>
-                                            </TextBlock.ContextMenu>
+                                                   Cursor="Hand" MouseRightButtonUp="CopyColorRgb_RightClick">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip Content="右键复制"/>
+                                            </TextBlock.ToolTip>
                                         </TextBlock>
                                         <!-- HSL -->
                                         <TextBlock Text="{Binding ColorInfo.Hsl}" FontSize="11" FontFamily="Consolas" 
                                                    Foreground="#27AE60" VerticalAlignment="Center"
-                                                   Cursor="Hand">
-                                            <TextBlock.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="复制" Click="CopyColorHsl_Click"/>
-                                                </ContextMenu>
-                                            </TextBlock.ContextMenu>
+                                                   Cursor="Hand" MouseRightButtonUp="CopyColorHsl_RightClick">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip Content="右键复制"/>
+                                            </TextBlock.ToolTip>
                                         </TextBlock>
                                     </StackPanel>
                                 </Grid>

@@ -108,6 +108,7 @@ public class SearchEngine
         new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑", RunHidden = true },
         // ── 应用快捷命令 ──────────────────────────────────────────
         new() { Keyword = "setting",   Name = "打开设置",    Type = "SystemAction", Path = "setting", Description = "打开设置界面", IsBuiltIn = true, IconPath = "⚙" },
+        new() { Keyword = "exit",      Name = "退出程序",    Type = "SystemAction", Path = "exit", Description = "退出 Quanta", IsBuiltIn = true, IconPath = "✕" },
         new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
         new() { Keyword = "english",   Name = "切换到英文",  Type = "SystemAction", Path = "english", Description = "切换界面语言为英文", IsBuiltIn = true, IconPath = "EN" },
         new() { Keyword = "chinese",   Name = "切换到中文",  Type = "SystemAction", Path = "chinese", Description = "切换界面语言为中文", IsBuiltIn = true, IconPath = "中" },
@@ -677,6 +678,10 @@ public class SearchEngine
                 app.Dispatcher.Invoke(() =>
                 {
                     var settingsWin = new Views.CommandSettingsWindow(this) { Owner = mainWindow };
+                    // 获取当前主题状态
+                    var config = ConfigLoader.Load();
+                    bool isDark = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
+                    settingsWin.SetDarkTheme(isDark);
                     settingsWin.ShowDialog();
                 });
                 return true;
@@ -686,6 +691,14 @@ public class SearchEngine
                 app.Dispatcher.Invoke(() =>
                 {
                     ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
+                });
+                return true;
+
+            case "exit":
+                // 退出程序
+                app.Dispatcher.Invoke(() =>
+                {
+                    app.Shutdown();
                 });
                 return true;
 
