@@ -722,34 +722,101 @@ public class SearchEngine
                 return true;
 
             case "winrecord":
-                // 打开 Windows 内置录音机（三级回退）
+                // 打开 Windows 内置录音机
+                Logger.Log("[winrecord] 开始尝试打开 Windows 录音机...");
+
+                bool started = false;
+
+                // 方法1: 使用 explorer.exe 打开 AppsFolder 中的录音机
+                // 这是最可靠的方法，兼容性最好
                 try
                 {
-                    // 方法一：ms-soundrecorder: URI（Windows 10 早期版本）
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    Logger.Log("[winrecord] 方法1: explorer.exe shell:AppsFolder...");
+                    var psi1 = new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = "ms-soundrecorder:",
-                        UseShellExecute = true
-                    });
+                        FileName = "explorer.exe",
+                        Arguments = "shell:AppsFolder\\Microsoft.WindowsSoundRecorder_8wekyb3d8bbwe!App",
+                        UseShellExecute = false
+                    };
+                    System.Diagnostics.Process.Start(psi1);
+                    Logger.Log("[winrecord] 方法1 启动成功!");
+                    started = true;
                 }
-                catch
+                catch (Exception ex)
+                {
+                    Logger.Log($"[winrecord] 方法1 失败: {ex.Message}");
+                }
+
+                // 方法2: 尝试 ms-voicesRecorder: URI
+                if (!started)
                 {
                     try
                     {
-                        // 方法二：通过 explorer.exe 打开应用包（Windows 10/11 兼容）
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        Logger.Log("[winrecord] 方法2: ms-voicesRecorder:");
+                        var psi2 = new System.Diagnostics.ProcessStartInfo
                         {
-                            FileName = "explorer.exe",
-                            Arguments = "shell:AppsFolder\\Microsoft.WindowsSoundRecorder_8wekyb3d8bbwe!App",
-                            UseShellExecute = false
-                        });
+                            FileName = "ms-voicesRecorder:",
+                            UseShellExecute = true
+                        };
+                        System.Diagnostics.Process.Start(psi2);
+                        Logger.Log("[winrecord] 方法2 启动成功!");
+                        started = true;
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // 方法三：提示用户
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                            ToastService.Instance.ShowWarning("Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载"));
+                        Logger.Log($"[winrecord] 方法2 失败: {ex.Message}");
                     }
+                }
+
+                // 方法3: 尝试 ms-soundrecorder: URI
+                if (!started)
+                {
+                    try
+                    {
+                        Logger.Log("[winrecord] 方法3: ms-soundrecorder:");
+                        var psi3 = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "ms-soundrecorder:",
+                            UseShellExecute = true
+                        };
+                        System.Diagnostics.Process.Start(psi3);
+                        Logger.Log("[winrecord] 方法3 启动成功!");
+                        started = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"[winrecord] 方法3 失败: {ex.Message}");
+                    }
+                }
+
+                // 方法4: 通过 cmd start 命令
+                if (!started)
+                {
+                    try
+                    {
+                        Logger.Log("[winrecord] 方法4: cmd /c start shell:AppsFolder\\...");
+                        var psi4 = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "cmd.exe",
+                            Arguments = "/c start shell:AppsFolder\\Microsoft.WindowsSoundRecorder_8wekyb3d8bbwe!App",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        System.Diagnostics.Process.Start(psi4);
+                        Logger.Log("[winrecord] 方法4 启动成功!");
+                        started = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"[winrecord] 方法4 失败: {ex.Message}");
+                    }
+                }
+
+                if (!started)
+                {
+                    Logger.Log("[winrecord] 所有方法都失败，显示提示");
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        ToastService.Instance.ShowWarning("Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载"));
                 }
                 return true;
 
