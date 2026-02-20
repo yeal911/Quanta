@@ -20,8 +20,24 @@ public static class ConfigLoader
     /// <summary>配置缓存，避免重复读取文件</summary>
     private static AppConfig? _cachedConfig;
 
-    /// <summary>配置文件路径（程序运行目录下的 config.json）</summary>
-    private static readonly string ConfigPath = Path.Combine(AppContext.BaseDirectory, "config.json");
+    /// <summary>
+    /// 配置文件路径（程序运行目录下的 config.json）
+    /// 单文件发布时使用实际 exe 所在目录
+    /// </summary>
+    private static string ConfigPath
+    {
+        get
+        {
+            var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+            // 尝试获取实际 exe 路径（单文件发布时更准确）
+            var processPath = Environment.ProcessPath;
+            if (!string.IsNullOrEmpty(processPath))
+            {
+                exeDir = Path.GetDirectoryName(processPath) ?? exeDir;
+            }
+            return Path.Combine(exeDir, "config.json");
+        }
+    }
 
     /// <summary>JSON 序列化选项：缩进格式、属性名大小写不敏感</summary>
     private static readonly JsonSerializerOptions JsonOptions = new()

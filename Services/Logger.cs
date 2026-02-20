@@ -40,11 +40,38 @@ public static class Logger
     /// </summary>
     static Logger()
     {
-        // 获取 exe 运行的目录
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        LogDirectory = Path.Combine(baseDir, "logs");
-        Directory.CreateDirectory(LogDirectory);
+        // 获取 exe 所在的目录
+        // 单文件发布时，需要获取实际 exe 所在目录，而不是临时解压目录
+        var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+        
+        // 尝试获取实际 exe 路径（单文件发布时更准确）
+        var processPath = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(processPath))
+        {
+            exeDir = Path.GetDirectoryName(processPath) ?? exeDir;
+        }
+        
+        LogDirectory = Path.Combine(exeDir, "logs");
+        
+        try
+        {
+            Directory.CreateDirectory(LogDirectory);
+        }
+        catch
+        {
+            // 如果创建失败，回退到临时目录
+            LogDirectory = Path.Combine(Path.GetTempPath(), "QuantaLogs");
+            Directory.CreateDirectory(LogDirectory);
+        }
+        
         LogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMMdd}.log");
+        
+        // 调试：输出实际路径
+        try
+        {
+            File.AppendAllText(LogFilePath, $"[INFO] Logger initialized. BaseDir={exeDir}, LogDir={LogDirectory}, ProcessPath={Environment.ProcessPath}{Environment.NewLine}");
+        }
+        catch { }
     }
 
     /// <summary>
