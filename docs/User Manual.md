@@ -26,7 +26,7 @@ Quanta is a lightweight Windows quick launcher designed to help users quickly ac
 
 ### 1.2 Core Features
 
-- **Global Hotkey Activation**: Default Alt+Space to summon search box, customizable
+- **Global Hotkey Activation**: Default Alt+R to summon search box, customizable
 - **Smart Fuzzy Search**: Supports keyword, name, and description matching, sorted by match score and usage frequency
 - **Multiple Command Types**: Supports URL, Program, Shell Command, Directory Browser, and Calculator
 - **Parameter Mode**: Supports dynamic parameter passing, such as entering parameters after a search command
@@ -82,7 +82,7 @@ You can obtain Quanta through the following methods:
 2. Run Quanta.exe
 3. The program will automatically:
    - Create system tray icon
-   - Register global hotkey (default Alt+Space)
+   - Register global hotkey (default Alt+R)
    - Load configuration file (config.json)
    - Initialize built-in command library
 
@@ -101,7 +101,7 @@ There are two ways to exit the program:
 
 The basic usage workflow of Quanta is simple:
 
-1. **Summon Search Box**: Press `Alt+Space` hotkey
+1. **Summon Search Box**: Press `Alt+R` hotkey
 2. **Enter Keywords**: Enter the command, program, or function to search
 3. **Select Result**: Use arrow keys or mouse to select
 4. **Execute Command**: Press Enter or click to execute
@@ -110,7 +110,7 @@ The basic usage workflow of Quanta is simple:
 
 | Action | Method |
 |--------|--------|
-| Summon search box | Press `Alt+Space` (default) |
+| Summon search box | Press `Alt+R` (default) |
 | Hide search box | Press `Esc` or click outside window |
 
 ### 3.3 Search Examples
@@ -273,7 +273,7 @@ The following placeholders can be used in command paths:
 
 | Hotkey | Function | Description |
 |--------|----------|-------------|
-| Alt+Space | Summon/Hide search box | Default hotkey, customizable |
+| Alt+R | Summon/Hide search box | Default hotkey, customizable |
 
 ### 6.2 In-Search Box Hotkeys
 
@@ -322,28 +322,26 @@ Quanta comes with the following commonly used system commands:
 | nslookup | DNS Lookup | Execute DNS query |
 | netstat | Network Status | Display network status |
 | mspaint | Paint | Open Paint program |
+| lock | Lock Screen | Lock computer |
+| shutdown | Shutdown | Shutdown computer |
+| restart | Restart | Restart computer |
+| sleep | Sleep | Put computer to sleep |
+| winrecord | Voice Recorder | Open Windows Voice Recorder |
 
-### 7.2 Calculator Function
+### 7.2 Special Features
 
-Enter mathematical expressions in the search box to calculate:
+#### Clipboard History
+- Type `clip` to view clipboard history
+- Supports search filtering
 
-| Input | Result |
-|-------|--------|
-| `calc 2+2` | 4 |
-| `calc 100*5` | 500 |
-| `calc sqrt(16)` | 4 |
-| `calc 2^10` | 1024 |
+#### Screen Recording
+- Type `record` to start recording
+- Supports microphone/speaker recording
+- Optional m4a/mp3 format
 
-### 7.3 Unit Conversion Function
-
-Supports various unit conversions:
-
-| Input | Description |
-|-------|-------------|
-| `100 km to mile` | Kilometers to Miles |
-| `100 cm to inch` | Centimeters to Inches |
-| `100 kg to pound` | Kilograms to Pounds |
-| `100 celsius to fahrenheit` | Celsius to Fahrenheit |
+#### QR Code
+- Text over 20 characters automatically generates QR code
+- QR code automatically copied to clipboard
 
 ---
 
@@ -488,7 +486,7 @@ When enabled, the program will automatically run when Windows starts.
 
 ### 12.2 Hotkey Conflict
 
-**Problem**: Alt+Space is occupied by another program
+**Problem**: Alt+R is occupied by another program
 
 **Solution**:
 1. Close the program occupying the hotkey
@@ -583,7 +581,7 @@ Program logs are located in the `logs` folder in the running directory.
 
 | Shortcut | Function |
 |----------|----------|
-| Alt+Space | Summon/Hide search box |
+| Alt+R | Summon/Hide search box |
 | Enter | Execute selected command |
 | Esc | Hide window |
 | Tab | Enter parameter mode |

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="quanta.ico" width="64" alt="Quanta"/>
+  <img src="Resources\imgs\quanta.ico" width="64" alt="Quanta"/>
 </p>
 
 <p align="center">
@@ -14,73 +14,56 @@
 
 ---
 
-## 目录
-
-- [功能特性](#功能特性)
-- [快速开始](#快速开始)
-- [使用说明](#使用说明)
-- [配置文件](#配置文件)
-- [项目设计](#项目设计)
-- [开发指南](#开发指南)
-
----
-
 ## 功能特性
 
 ### 核心功能
-- **全局快捷键唤出** - 默认 `Alt+Space`，可自定义修改
-- **模糊搜索** - 支持关键字、名称、描述的智能模糊匹配，按匹配分+使用频率排序
+- **全局快捷键** - 默认 `Alt+R`，可自定义
+- **模糊搜索** - 关键字、名称、描述智能匹配，按匹配度+使用频率排序
 - **自定义命令** - 支持 Url、Program、Shell、Directory、Calculator 五种类型
-- **参数模式** - 按 `Tab` 进入参数输入模式，动态传参（如 `g > hello world`）
+- **参数模式** - 按 `Tab` 进入参数输入（如 `g > rust`）
 - **Ctrl+数字** - `Ctrl+1~9` 直接执行对应序号命令
 - **鼠标单击执行** - 搜索结果支持单击直接执行
 - **失焦自动隐藏** - 点击其他窗口即自动收起
 
-### 内置系统命令
-
-无需配置，直接输入关键字即可使用：
+### 快捷命令
 
 | 关键字 | 说明 | 关键字 | 说明 |
 |--------|------|--------|------|
 | `cmd` | 命令提示符 | `powershell` | PowerShell |
 | `notepad` | 记事本 | `calc` | 计算器 |
 | `explorer` | 资源管理器 | `taskmgr` | 任务管理器 |
-| `control` | 控制面板 | `regedit` | 注册表编辑器 |
+| `control` | 控制面板 | `regedit` | 注册表 |
 | `services` | 服务管理 | `devmgmt` | 设备管理器 |
 | `ping` | Ping | `ipconfig` | IP 配置 |
 | `tracert` | 路由追踪 | `nslookup` | DNS 查询 |
 | `netstat` | 网络状态 | `mspaint` | 画图 |
+| `lock` | 锁屏 | `shutdown` | 关机 |
+| `restart` | 重启 | `sleep` | 睡眠 |
+| `emptybin` | 清空回收站 | `winrecord` | Windows 录音机 |
+
+### 特色功能
+- **剪贴板历史** - 输入 `clip` 查看剪贴板历史
+- **屏幕录音** - 输入 `record` 启动录音，支持麦克风/扬声器录制
+- **二维码生成** - 输入长文本自动生成二维码
 
 ### 界面与体验
-- **明暗主题** - 点击右上角图标切换，配置持久化
+- **明暗主题** - 点击右上角图标切换
 - **多语言** - 中文 / English，切换即时生效
 - **系统托盘** - 最小化驻留托盘，右键菜单管理
-- **开机自启** - 配置 `StartWithWindows` 写入注册表
-- **命令图标** - 根据类型自动显示 emoji，支持自定义
-- **Toast 通知** - 操作反馈（保存、导入、错误等）
-- **淡入淡出动画** - 显示/隐藏平滑过渡
-
-### 命令管理
-- **设置界面** - 增删改查，支持搜索过滤
-- **快捷键设置** - 界面内直接录制修改
-- **导入/导出** - JSON 格式，便于分享和备份
-- **MaxResults 配置** - 可调搜索结果最大显示条数
+- **开机自启** - 配置后开机自动运行
+- **Toast 通知** - 操作成功/失败反馈
 
 ---
 
 ## 快速开始
 
 ### 环境要求
-
 - Windows 10 / 11（x64）
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-### 编译运行
+### 运行程序
 
 ```bash
-git clone <repo-url>
-cd Quanta
-dotnet build
 dotnet run
 ```
 
@@ -90,8 +73,6 @@ dotnet run
 dotnet publish -c Release -r win-x64
 ```
 
-产物位于 `bin/Release/net8.0-windows/win-x64/publish/`。
-
 ---
 
 ## 使用说明
@@ -99,7 +80,7 @@ dotnet publish -c Release -r win-x64
 ### 基本操作
 
 1. 启动后程序驻留系统托盘
-2. 按 `Alt+Space` 唤出搜索框
+2. 按 `Alt+R` 唤出搜索框
 3. 输入命令关键字（如 `g`、`notepad`）
 4. 方向键选择或 `Ctrl+数字` 直接定位
 5. `Enter` 执行，`Esc` 隐藏
@@ -109,18 +90,16 @@ dotnet publish -c Release -r win-x64
 搜索到带参数的命令后按 `Tab` 进入参数模式：
 
 ```
-[搜索框]: g           → 匹配到 Google搜索
-按 Tab  → g >         → 进入参数输入
-输入    → g > rust    → 执行 Google 搜索 "rust"
+输入: g          → 匹配到 Google搜索
+按 Tab → g >     → 进入参数输入
+输入: g > rust   → 执行 Google 搜索 "rust"
 ```
 
-`Backspace` 退回普通搜索，`Esc` 隐藏窗口。
-
-### 快捷键一览
+### 快捷键
 
 | 快捷键 | 功能 |
 |--------|------|
-| `Alt+Space` | 唤出/隐藏主窗口（可自定义） |
+| `Alt+R` | 唤出/隐藏主窗口 |
 | `Enter` | 执行选中命令 |
 | `Tab` | 进入参数模式 |
 | `Esc` | 退出参数模式 / 隐藏窗口 |
@@ -130,330 +109,37 @@ dotnet publish -c Release -r win-x64
 
 ### 命令管理
 
-- **右键搜索图标** 或 **右键托盘图标** → 打开命令设置
+- **右键托盘图标** → 打开命令设置
 - 表格内直接编辑关键字、名称、类型、路径
-- 支持 JSON 导入/导出，便于备份和迁移
+- 支持 JSON 导入/导出，便于备份
 
 ---
 
 ## 配置文件
 
-配置文件为程序目录下的 `config.json`，启动时自动加载，修改后热重载。
-
-### 完整结构
-
-```json
-{
-  "Version": "1.0",
-  "Hotkey": {
-    "Modifier": "Alt",
-    "Key": "Space"
-  },
-  "Theme": "Light",
-  "Commands": [],
-  "CommandGroups": [],
-  "AppSettings": {
-    "StartWithWindows": false,
-    "MinimizeToTray": true,
-    "CloseToTray": true,
-    "ShowInTaskbar": false,
-    "MaxResults": 10,
-    "Language": "zh-CN",
-    "AutoUpdate": true
-  },
-  "PluginSettings": {
-    "Enabled": true,
-    "PluginDirectory": "Plugins"
-  }
-}
-```
+配置文件为程序目录下的 `config.json`。
 
 ### 命令字段说明
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|:----:|------|
-| `Keyword` | string | ✓ | 搜索触发关键字 |
-| `Name` | string | ✓ | 命令显示名称 |
-| `Type` | string | ✓ | `Url` / `Program` / `Shell` / `Directory` / `Calculator` |
-| `Path` | string | ✓ | 执行路径或 URL，支持 `{param}` 占位符 |
-| `Arguments` | string | | 启动参数，支持 `{param}` 占位符 |
-| `WorkingDirectory` | string | | 工作目录 |
-| `RunAsAdmin` | bool | | 管理员权限运行，默认 `false` |
-| `RunHidden` | bool | | 隐藏窗口运行，默认 `false` |
-| `IconPath` | string | | 自定义图标，支持 emoji（如 `"🚀"`） |
-| `ParamPlaceholder` | string | | 自定义参数占位符，默认 `{param}` |
-| `Enabled` | bool | | 是否启用，默认 `true` |
-| `Description` | string | | 命令描述，用于模糊搜索匹配 |
+| 字段 | 说明 |
+|------|------|
+| `Keyword` | 搜索触发关键字 |
+| `Name` | 命令显示名称 |
+| `Type` | Url / Program / Shell / Directory / Calculator |
+| `Path` | 执行路径或 URL，支持 `{param}` 占位符 |
+| `Arguments` | 启动参数 |
+| `RunAsAdmin` | 管理员权限运行 |
+| `RunHidden` | 隐藏窗口运行 |
 
-### 命令类型示例
+### 命令类型
 
-| 类型 | Path 示例 | 效果 |
-|------|-----------|------|
-| `Url` | `https://www.google.com/search?q={param}` | 浏览器打开 |
-| `Program` | `notepad.exe` / `C:\Tools\app.exe` | 启动程序 |
+| 类型 | 示例 | 效果 |
+|------|------|------|
+| `Url` | `https://google.com/search?q={param}` | 浏览器打开 |
+| `Program` | `notepad.exe` | 启动程序 |
 | `Shell` | `ping {param}` | cmd 执行 |
 | `Directory` | `C:\Users\Public` | 资源管理器打开 |
 | `Calculator` | `{param}` | 计算表达式 |
-
-### 占位符说明
-
-`{param}` / `{query}` / `{%p}` 三者等价，执行时替换为用户输入的参数。可通过 `ParamPlaceholder` 字段自定义占位符名称。
-
-### 应用设置
-
-| 字段 | 默认值 | 说明 |
-|------|--------|------|
-| `StartWithWindows` | `false` | 写入注册表实现开机自启 |
-| `MinimizeToTray` | `true` | 最小化到系统托盘 |
-| `CloseToTray` | `true` | 关闭时收入托盘而非退出 |
-| `MaxResults` | `10` | 搜索结果最大条数 |
-| `Language` | `"zh-CN"` | `zh-CN` 或 `en-US` |
-
----
-
-## 项目设计
-
-### 整体架构
-
-Quanta 采用 **MVVM** 模式，分为四层：
-
-```
-┌─────────────────────────────────────────────┐
-│                  View 层                     │
-│   MainWindow  ·  CommandSettingsWindow        │
-└────────────────────┬────────────────────────┘
-                     │ 数据绑定 / 命令
-┌────────────────────▼────────────────────────┐
-│               ViewModel 层                   │
-│             MainViewModel                    │
-│  SearchText · Results · SelectedResult        │
-│  IsParamMode · CommandKeyword · CommandParam  │
-└────────────────────┬────────────────────────┘
-                     │ 调用
-┌────────────────────▼────────────────────────┐
-│               Services 层                    │
-│  SearchEngine  CommandRouter  UsageTracker   │
-│  HotkeyManager  TrayService  ToastService    │
-│  LocalizationService  ThemeService  Logger   │
-└────────────────────┬────────────────────────┘
-                     │ 读写
-┌────────────────────▼────────────────────────┐
-│               Models / Data 层               │
-│  AppConfig  CommandConfig  SearchResult      │
-│  UsageData  ·  config.json  ·  usage.json   │
-└─────────────────────────────────────────────┘
-```
-
-### 核心模块详解
-
-#### SearchEngine（搜索引擎）
-
-搜索的核心调度器，负责：
-
-1. **内存命令库** - 启动时加载 `config.json` 中的用户命令和内置命令到内存，设置界面关闭后热重载
-2. **匹配评分** - 对每条命令按五级优先级评分：
-
-   ```
-   完全匹配关键字   → 1.00
-   关键字前缀匹配   → 0.95
-   关键字包含匹配   → 0.90
-   名称包含匹配     → 0.85
-   描述包含匹配     → 0.80
-   ```
-
-3. **结果排序** - 按 `(MatchScore ↓, UsageCount ↓)` 双键排序，返回 Top N（N 由 `MaxResults` 配置）
-4. **命令执行** - 按类型分派：
-   - `Url` → `Process.Start` 打开默认浏览器
-   - `Program` → `ProcessStartInfo` 启动进程，支持管理员/隐藏模式
-   - `Shell` → `cmd.exe /c` 执行
-   - `Directory` → `explorer.exe` 打开文件夹
-   - `Calculator` → `DataTable.Compute` 求值
-
-#### MainViewModel（视图模型）
-
-使用 `CommunityToolkit.Mvvm` 框架，核心职责：
-
-- **防抖搜索** - 输入后 30ms 延迟触发，取消上次未完成的搜索（`CancellationTokenSource`）
-- **参数模式** - 维护 `IsParamMode` / `CommandKeyword` / `CommandParam` 三状态
-- **结果选择** - 循环导航（`SelectNext` / `SelectPrevious`），支持索引同步
-- **清空状态** - 执行成功后 `ClearSearch()` 重置所有状态
-
-#### 搜索执行数据流
-
-```
-用户输入
-  │
-  ▼
-SearchBox (TwoWay Binding)
-  │
-  ▼
-MainViewModel.OnSearchTextChanged
-  │  30ms 防抖
-  ▼
-SearchEngine.SearchAsync(query)
-  ├── SearchCustomCommands(query)   // 自定义 + 内置命令
-  └── CommandRouter.TryHandleAsync  // 特殊命令（计算器/网页搜索）
-  │
-  ▼
-Results 排序 + 索引赋值
-  │
-  ▼
-ObservableCollection<SearchResult> → ListBox 渲染
-```
-
-#### HotkeyManager（全局快捷键）
-
-通过 Win32 API `RegisterHotKey` / `UnregisterHotKey` 实现系统级快捷键：
-
-```csharp
-// 注册热键到窗口消息循环
-RegisterHotKey(hwnd, HOTKEY_ID, modifiers, key);
-
-// 在 WndProc 中监听 WM_HOTKEY 消息
-HwndSource.AddHook(WndProc);
-```
-
-快捷键可在设置界面实时录制并修改，修改后立即重注册。
-
-#### UsageTracker（使用频率追踪）
-
-- 每次命令执行后记录 `commandId → timestamp`，存储到 `LocalApplicationData/Quanta/usage.json`
-- 每 30 秒自动落盘（防止频繁 IO）
-- 搜索时查询使用次数，作为结果排序的第二键
-- 频率加权公式：`log10(usageCount + 1) * 0.5`（时间衰减加权）
-
-#### 参数模式状态机
-
-```
-普通搜索模式
-    │ Tab（匹配到命令）
-    ▼
-参数输入模式  ──Backspace（输入为空）──▶  普通搜索模式（保留关键字）
-    │ Enter
-    ▼
-执行命令（替换 {param}）
-    │ 成功
-    ▼
-清空 → 隐藏窗口
-```
-
-#### 单实例保证
-
-```csharp
-// 命名 Mutex 确保全局只有一个实例
-var mutex = new Mutex(true, "Quanta_SingleInstance_Mutex", out bool createdNew);
-if (!createdNew)
-{
-    // 激活已有实例窗口
-    SetForegroundWindow(existingProcess.MainWindowHandle);
-    Current.Shutdown();
-}
-```
-
-#### 失焦自动隐藏
-
-```csharp
-private void Window_Deactivated(object sender, EventArgs e)
-{
-    // 如果有子窗口打开（如设置界面），不隐藏
-    if (OwnedWindows.Count > 0) return;
-    HideWindow();
-}
-```
-
-### 文件结构
-
-```
-Quanta/
-├── App.xaml / App.xaml.cs            # 入口、单实例检测、开机自启
-├── Quanta.csproj                      # 项目配置（.NET 8, WPF, x64）
-├── config.json                        # 用户配置（运行目录）
-├── quanta.ico                         # 应用图标（托盘 + 窗口）
-│
-├── Models/
-│   ├── AppConfig.cs                   # 根配置、快捷键、命令、应用设置
-│   ├── SearchResult.cs                # 搜索结果、结果类型枚举
-│   └── UsageData.cs                   # 使用频率数据结构
-│
-├── ViewModels/
-│   └── MainViewModel.cs               # 搜索状态、参数模式、主题
-│
-├── Views/
-│   ├── MainWindow.xaml / .cs          # 主搜索框，键盘事件，动画
-│   ├── CommandSettingsWindow.xaml/.cs # 命令管理，快捷键录制
-│   └── SettingsWindow.xaml / .cs      # 通用设置（预留扩展）
-│
-├── Services/
-│   ├── SearchEngine.cs                # 搜索、匹配评分、命令执行
-│   ├── CommandRouter.cs               # 特殊命令路由（计算器/网搜）
-│   ├── CommandService.cs              # 命令 JSON 导入/导出
-│   ├── HotkeyManager.cs               # Win32 全局快捷键
-│   ├── UsageTracker.cs                # 使用频率记录、排名加权
-│   ├── LocalizationService.cs         # 多语言（zh-CN / en-US）
-│   ├── TrayService.cs                 # 系统托盘图标与菜单
-│   ├── ToastService.cs                # Toast 通知（成功/警告/错误）
-│   ├── ThemeService.cs                # 明暗主题切换
-│   ├── WindowManager.cs               # 窗口状态管理
-│   ├── PluginManager.cs               # 插件扩展（预留）
-│   └── Logger.cs                      # 日志（调试控制台输出）
-│
-├── Helpers/
-│   └── ConfigLoader.cs                # 配置文件加载/保存/迁移/缓存
-│
-└── Resources/
-    └── Themes/
-        ├── DarkTheme.xaml             # 暗色主题资源字典
-        └── LightTheme.xaml            # 亮色主题资源字典
-```
-
-### 关键设计决策
-
-| 决策 | 方案 | 原因 |
-|------|------|------|
-| 命令执行方式 | Fire-and-forget（Task.Run） | 不阻塞 UI，执行成功后再隐藏窗口 |
-| 搜索触发 | 30ms 防抖 + CancellationToken | 避免频繁搜索，保证最终一致性 |
-| 内置命令存储 | 硬编码在 SearchEngine | 不污染用户配置文件，不可被删除 |
-| 配置读取 | 内存缓存 + Reload 机制 | 避免频繁 IO，设置关闭后强制刷新 |
-| 图标显示 | emoji 字符 | 无需图片资源，跨字体渲染一致 |
-| 失焦隐藏 | Deactivated + OwnedWindows 检查 | 打开子窗口时不误隐藏 |
-| 单实例 | 命名 Mutex | 系统级保证，跨进程可见 |
-
----
-
-## 开发指南
-
-### 依赖
-
-| 包 | 版本 | 用途 |
-|----|------|------|
-| `CommunityToolkit.Mvvm` | 8.2.2 | MVVM 基础框架（ObservableObject, RelayCommand） |
-| `System.Drawing.Common` | 8.0.0 | 系统托盘图标处理 |
-
-### 添加新命令类型
-
-1. 在 `AppConfig.cs` 的 `CommandConfig.Type` 注释中记录新类型名
-2. 在 `SearchEngine.ExecuteCustomCommandAsync` 的 `switch` 中添加新 `case`
-3. 在 `SearchEngine.GetIconText` 中添加对应图标
-4. 在 `CommandSettingsWindow.xaml` 的 `TypeColumn.ItemsSource` 数组中添加新类型名
-
-### 添加新翻译键
-
-在 `LocalizationService.cs` 的 `_translations` 字典中同时添加 `zh-CN` 和 `en-US` 条目：
-
-```csharp
-["zh-CN"] = new() { ["MyKey"] = "中文文本", ... },
-["en-US"] = new() { ["MyKey"] = "English text", ... },
-```
-
-然后在对应 UI 代码中使用 `LocalizationService.Get("MyKey")`。
-
-### 调试
-
-```bash
-dotnet run
-```
-
-日志通过 `Logger.Log/Warn/Error` 输出到 VS 调试控制台，方便追踪搜索和执行流程。
 
 ---
 
