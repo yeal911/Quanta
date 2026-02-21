@@ -203,7 +203,7 @@
                             Style="{StaticResource ThemeToggleStyle}"
                             Click="ThemeToggleButton_Click"
                             MouseRightButtonUp="ThemeToggleButton_RightClick"
-                            ToolTip="切换主题">
+                            ToolTipService.InitialShowDelay="0">
                         <TextBlock x:Name="ThemeIcon" Text="🌙" FontSize="12" Foreground="{DynamicResource SecondaryText}"/>
                     </Button>
                 </Grid>
@@ -363,7 +363,7 @@
                                                    Foreground="#0078D4" VerticalAlignment="Center" Margin="0,0,8,0"
                                                     Cursor="Hand" MouseRightButtonUp="CopyColorHex_RightClick">
                                             <TextBlock.ToolTip>
-                                                <ToolTip Content="右键复制"/>
+                                                <ToolTip x:Name="CopyHexTooltip"/>
                                             </TextBlock.ToolTip>
                                         </TextBlock>
                                         <!-- RGB -->
@@ -371,7 +371,7 @@
                                                    Foreground="#E67E22" VerticalAlignment="Center" Margin="0,0,8,0"
                                                    Cursor="Hand" MouseRightButtonUp="CopyColorRgb_RightClick">
                                             <TextBlock.ToolTip>
-                                                <ToolTip Content="右键复制"/>
+                                                <ToolTip x:Name="CopyRgbTooltip"/>
                                             </TextBlock.ToolTip>
                                         </TextBlock>
                                         <!-- HSL -->
@@ -379,7 +379,7 @@
                                                    Foreground="#27AE60" VerticalAlignment="Center"
                                                    Cursor="Hand" MouseRightButtonUp="CopyColorHsl_RightClick">
                                             <TextBlock.ToolTip>
-                                                <ToolTip Content="右键复制"/>
+                                                <ToolTip x:Name="CopyHslTooltip"/>
                                             </TextBlock.ToolTip>
                                         </TextBlock>
                                     </StackPanel>

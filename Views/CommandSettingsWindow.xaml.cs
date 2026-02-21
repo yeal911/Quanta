@@ -279,6 +279,7 @@ public partial class CommandSettingsWindow : Window
         ImportButton.Content = LocalizationService.Get("ImportCommand");
         ExportButton.Content = LocalizationService.Get("ExportCommand");
         StartWithWindowsCheck.Content = LocalizationService.Get("StartWithWindows");
+        DarkThemeCheck.Content = LocalizationService.Get("DarkTheme");
         MaxResultsLabel.Text = LocalizationService.Get("MaxResults");
         MaxResultsSuffix.Text = LocalizationService.Get("MaxResultsSuffix");
         QRCodeThresholdLabel.Text = LocalizationService.Get("QRCodeThreshold");
@@ -292,24 +293,20 @@ public partial class CommandSettingsWindow : Window
         RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
         RecordEstimatedSizeLabel.Text = LocalizationService.Get("RecordEstimatedSize") + "：";
 
-        // 更新声道 ComboBox 文本
-        if (RecordChannelsCombo.Items.Count >= 2)
-        {
-            (RecordChannelsCombo.Items[0] as System.Windows.Controls.ComboBoxItem)!.Content = LocalizationService.Get("RecordChannelStereo");
-            (RecordChannelsCombo.Items[1] as System.Windows.Controls.ComboBoxItem)!.Content = LocalizationService.Get("RecordChannelMono");
-        }
+        // ── 动态填充语言 ComboBox ─────────────────────────────────────
+        PopulateLanguageComboBox();
 
+        // ── 动态填充录音源 ComboBox ───────────────────────────────────
+        PopulateRecordSourceCombo();
 
-        // 设置语言 ComboBox 的当前选中项
-        var currentLang = LocalizationService.CurrentLanguage;
-        foreach (ComboBoxItem item in LanguageComboBox.Items)
-        {
-            if (item.Tag?.ToString() == currentLang)
-            {
-                LanguageComboBox.SelectedItem = item;
-                break;
-            }
-        }
+        // ── 动态填充录音格式 ComboBox ─────────────────────────────────
+        PopulateRecordFormatCombo();
+
+        // ── 动态填充码率 ComboBox ─────────────────────────────────────
+        PopulateRecordBitrateCombo();
+
+        // ── 动态填充声道 ComboBox ─────────────────────────────────────
+        PopulateRecordChannelsCombo();
         
         AddButton.Content = LocalizationService.Get("Add");
         DeleteButton.Content = LocalizationService.Get("Delete");
@@ -323,6 +320,90 @@ public partial class CommandSettingsWindow : Window
         FooterText.Text = "";
         CommandHintText.Text = LocalizationService.Get("Footer");
         CommandSearchPlaceholder.Text = LocalizationService.Get("SearchCommands");
+    }
+
+    /// <summary>
+    /// 动态填充语言选择 ComboBox
+    /// </summary>
+    private void PopulateLanguageComboBox()
+    {
+        var currentLang = LocalizationService.CurrentLanguage;
+        LanguageComboBox.Items.Clear();
+        
+        foreach (var lang in LanguageManager.GetEnabledLanguages())
+        {
+            var item = new ComboBoxItem
+            {
+                Content = lang.NativeName,
+                Tag = lang.Code
+            };
+            LanguageComboBox.Items.Add(item);
+            
+            if (lang.Code.Equals(currentLang, StringComparison.OrdinalIgnoreCase))
+            {
+                LanguageComboBox.SelectedItem = item;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 动态填充录音源 ComboBox
+    /// </summary>
+    private void PopulateRecordSourceCombo()
+    {
+        var currentSource = GetComboTag(RecordSourceCombo) ?? "Mic";
+        RecordSourceCombo.Items.Clear();
+        
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMic"), Tag = "Mic" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceSpeaker"), Tag = "Speaker" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMicSpeaker"), Tag = "Mic&Speaker" });
+        
+        SelectComboByTag(RecordSourceCombo, currentSource);
+    }
+
+    /// <summary>
+    /// 动态填充录音格式 ComboBox
+    /// </summary>
+    private void PopulateRecordFormatCombo()
+    {
+        var currentFormat = GetComboTag(RecordFormatCombo) ?? "m4a";
+        RecordFormatCombo.Items.Clear();
+        
+        RecordFormatCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordFormatM4a"), Tag = "m4a" });
+        RecordFormatCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordFormatMp3"), Tag = "mp3" });
+        
+        SelectComboByTag(RecordFormatCombo, currentFormat);
+    }
+
+    /// <summary>
+    /// 动态填充码率 ComboBox
+    /// </summary>
+    private void PopulateRecordBitrateCombo()
+    {
+        var currentBitrate = GetComboTag(RecordBitrateCombo) ?? "128";
+        RecordBitrateCombo.Items.Clear();
+        
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate32"), Tag = "32" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate64"), Tag = "64" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate96"), Tag = "96" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate128"), Tag = "128" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate160"), Tag = "160" });
+        
+        SelectComboByTag(RecordBitrateCombo, currentBitrate);
+    }
+
+    /// <summary>
+    /// 动态填充声道 ComboBox
+    /// </summary>
+    private void PopulateRecordChannelsCombo()
+    {
+        var currentChannels = GetComboTag(RecordChannelsCombo) ?? "2";
+        RecordChannelsCombo.Items.Clear();
+        
+        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsStereo"), Tag = "2" });
+        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsMono"), Tag = "1" });
+        
+        SelectComboByTag(RecordChannelsCombo, currentChannels);
     }
 
     /// <summary>

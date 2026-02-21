@@ -99,6 +99,20 @@ public partial class RecordingOverlayWindow : Window
         Logger.Debug("RecordingOverlayWindow: Created, outputDirectory=" + outputDirectory);
     }
 
+    /// <summary>
+    /// 应用本地化文本到界面元素
+    /// </summary>
+    public void ApplyLocalization()
+    {
+        LoadingText.Text = LocalizationService.Get("RecordStarting");
+        PauseTooltip.Content  = LocalizationService.Get("RecordPauseTooltip");
+        ResumeTooltip.Content = LocalizationService.Get("RecordResumeTooltip");
+        StopTooltip.Content   = LocalizationService.Get("RecordStopTooltip");
+        DropTooltip.Content   = LocalizationService.Get("RecordDropTooltip");
+        HideTooltip.Content   = LocalizationService.Get("RecordHideTooltip");
+        InfoTooltip.Content   = LocalizationService.Get("RecordClickToOpenDir");
+    }
+
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         // 设置 WS_EX_NOACTIVATE 防止窗口抢焦点
@@ -128,12 +142,7 @@ public partial class RecordingOverlayWindow : Window
         StartGifTimer();
 
         // 更新 Tooltip 文本
-        PauseTooltip.Content  = LocalizationService.Get("RecordPause");
-        ResumeTooltip.Content = LocalizationService.Get("RecordResume");
-        StopTooltip.Content   = LocalizationService.Get("RecordStop");
-        DropTooltip.Content   = LocalizationService.Get("RecordDrop");
-        HideTooltip.Content   = LocalizationService.Get("RecordHide");
-        InfoTooltip.Content   = LocalizationService.Get("RecordClickToOpen");
+        ApplyLocalization();
 
         // 初始状态：录音中，Pause/Stop/Drop 可用，Resume/Hide 启用
         PauseButton.IsEnabled  = true;

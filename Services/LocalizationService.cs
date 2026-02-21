@@ -1,11 +1,12 @@
 // ============================================================================
 // 文件名: LocalizationService.cs
-// 文件描述: 本地化（国际化）服务，提供多语言文本翻译功能。
-//           目前支持简体中文（zh-CN）和英文（en-US）两种语言。
-//           语言设置会自动持久化到应用配置文件中。
+// 描述: 本地化（国际化）服务，提供多语言文本翻译功能。
+//       支持简体中文（zh-CN）、英文（en-US）、西班牙语（es-ES）等多种语言。
+//       语言设置会自动持久化到应用配置文件中。
 // ============================================================================
 
 using System.Collections.Generic;
+using System.Linq;
 using Quanta.Helpers;
 using Quanta.Models;
 
@@ -33,6 +34,8 @@ public static class LocalizationService
             ["TrayLanguage"] = "语言",
             ["TrayChinese"] = "中文",
             ["TrayEnglish"] = "English",
+            ["TraySpanish"] = "Español",
+            ["LanguageChanged"] = "语言已切换",
             ["GroupQuickCommands"] = "快捷命令",
             ["SearchPlaceholder"] = "请输入命令关键字 | Esc 隐藏",
             ["SettingsTitle"] = "设置",
@@ -102,6 +105,10 @@ public static class LocalizationService
             ["Save"] = "保存",
             ["Footer"] = "提示：命令参数占位符{%p}",
             ["LanguageLabel"] = "语言：",
+            // 语言选项（ComboBox 显示用）
+            ["LanguageChinese"] = "中文",
+            ["LanguageEnglish"] = "English",
+            ["LanguageSpanish"] = "Español",
             // ── 录音设置 ──────────────────────────────────────────────
             ["RecordingSettings"] = "录音设置",
             ["RecordSource"] = "录制源",
@@ -113,6 +120,15 @@ public static class LocalizationService
             ["RecordOutputPathDefault"] = "默认（桌面）",
             ["RecordChannelStereo"] = "立体声",
             ["RecordChannelMono"] = "单声道",
+            // 录音格式选项
+            ["RecordFormatM4a"] = "m4a",
+            ["RecordFormatMp3"] = "mp3",
+            // 码率选项
+            ["RecordBitrate32"] = "32 kbps",
+            ["RecordBitrate64"] = "64 kbps",
+            ["RecordBitrate96"] = "96 kbps",
+            ["RecordBitrate128"] = "128 kbps",
+            ["RecordBitrate160"] = "160 kbps",
             ["RecordBrowse"] = "浏览",
             ["RecordEstimatedSize"] = "预估每分钟大小",
             ["RecordEstimatedSizeUnit"] = "KB/分钟",
@@ -160,7 +176,88 @@ public static class LocalizationService
             ["ExchangeRateYesterday"] = "昨天",
             // 设置界面
             ["ExchangeRateApiLabel"] = "汇率 API：",
-            ["ExchangeRateApiKeyPlaceholder"] = "输入 API Key"
+            ["ExchangeRateApiKeyPlaceholder"] = "输入 API Key",
+            // 设置界面其他
+            ["DarkTheme"] = "暗色主题",
+            ["HotkeyClearHint"] = "双击清除快捷键",
+            // 主题切换
+            ["ThemeSwitch"] = "切换主题",
+            // 右键复制
+            ["RightClickCopy"] = "右键复制",
+            // 录音悬浮窗按钮提示
+            ["RecordPauseTooltip"] = "暂停录音",
+            ["RecordResumeTooltip"] = "继续录音",
+            ["RecordStopTooltip"] = "停止录音",
+            ["RecordDropTooltip"] = "放弃录音",
+            ["RecordHideTooltip"] = "隐藏到后台",
+            ["RecordClickToOpenDir"] = "点击打开录音目录",
+            // 录音设备选项
+            ["RecordSourceMic"] = "麦克风",
+            ["RecordSourceSpeaker"] = "扬声器",
+            ["RecordSourceMicSpeaker"] = "麦克风+扬声器",
+            // 声道选项
+            ["RecordChannelsStereo"] = "立体声",
+            ["RecordChannelsMono"] = "单声道",
+            // API Key 标签
+            ["ExchangeRateApiKeyLabel"] = "API Key (ExchangeRate-API)",
+            // ── 内置命令名称 ──────────────────────────────────────────
+            ["BuiltinCmd_cmd"] = "命令提示符",
+            ["BuiltinCmd_powershell"] = "PowerShell",
+            ["BuiltinCmd_notepad"] = "记事本",
+            ["BuiltinCmd_calc"] = "计算器",
+            ["BuiltinCmd_mspaint"] = "画图",
+            ["BuiltinCmd_explorer"] = "资源管理器",
+            ["BuiltinCmd_taskmgr"] = "任务管理器",
+            ["BuiltinCmd_devmgmt"] = "设备管理器",
+            ["BuiltinCmd_services"] = "服务",
+            ["BuiltinCmd_regedit"] = "注册表",
+            ["BuiltinCmd_control"] = "控制面板",
+            ["BuiltinCmd_ipconfig"] = "IP配置",
+            ["BuiltinCmd_ping"] = "Ping",
+            ["BuiltinCmd_tracert"] = "路由追踪",
+            ["BuiltinCmd_nslookup"] = "DNS查询",
+            ["BuiltinCmd_netstat"] = "网络状态",
+            ["BuiltinCmd_lock"] = "锁屏",
+            ["BuiltinCmd_shutdown"] = "关机",
+            ["BuiltinCmd_restart"] = "重启",
+            ["BuiltinCmd_sleep"] = "睡眠",
+            ["BuiltinCmd_emptybin"] = "清空回收站",
+            ["BuiltinCmd_setting"] = "打开设置",
+            ["BuiltinCmd_exit"] = "退出程序",
+            ["BuiltinCmd_about"] = "关于",
+            ["BuiltinCmd_english"] = "切换到英文",
+            ["BuiltinCmd_chinese"] = "切换到中文",
+            ["BuiltinCmd_spanish"] = "切换到西班牙语",
+            ["BuiltinCmd_winrecord"] = "Windows 录音机",
+            // 内置命令描述
+            ["BuiltinDesc_cmd"] = "打开CMD",
+            ["BuiltinDesc_powershell"] = "打开PowerShell",
+            ["BuiltinDesc_notepad"] = "打开记事本",
+            ["BuiltinDesc_calc"] = "打开计算器",
+            ["BuiltinDesc_mspaint"] = "打开画图",
+            ["BuiltinDesc_explorer"] = "打开资源管理器",
+            ["BuiltinDesc_taskmgr"] = "打开任务管理器",
+            ["BuiltinDesc_devmgmt"] = "打开设备管理器",
+            ["BuiltinDesc_services"] = "打开服务",
+            ["BuiltinDesc_regedit"] = "打开注册表",
+            ["BuiltinDesc_control"] = "打开控制面板",
+            ["BuiltinDesc_ipconfig"] = "查看IP配置",
+            ["BuiltinDesc_ping"] = "Ping命令",
+            ["BuiltinDesc_tracert"] = "追踪路由",
+            ["BuiltinDesc_nslookup"] = "DNS查询",
+            ["BuiltinDesc_netstat"] = "查看网络状态",
+            ["BuiltinDesc_lock"] = "锁定计算机",
+            ["BuiltinDesc_shutdown"] = "10秒后关机",
+            ["BuiltinDesc_restart"] = "10秒后重启",
+            ["BuiltinDesc_sleep"] = "进入睡眠状态",
+            ["BuiltinDesc_emptybin"] = "清空回收站",
+            ["BuiltinDesc_setting"] = "打开设置界面",
+            ["BuiltinDesc_exit"] = "退出 Quanta",
+            ["BuiltinDesc_about"] = "关于程序",
+            ["BuiltinDesc_english"] = "切换界面语言为英文",
+            ["BuiltinDesc_chinese"] = "切换界面语言为中文",
+            ["BuiltinDesc_spanish"] = "切换界面语言为西班牙语",
+            ["BuiltinDesc_winrecord"] = "打开 Windows 内置录音机"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -171,6 +268,8 @@ public static class LocalizationService
             ["TrayLanguage"] = "Language",
             ["TrayChinese"] = "中文",
             ["TrayEnglish"] = "English",
+            ["TraySpanish"] = "Español",
+            ["LanguageChanged"] = "Language changed",
             ["GroupQuickCommands"] = "Quick Commands",
             ["SearchPlaceholder"] = "Enter keyword | Esc to hide",
             ["SettingsTitle"] = "Settings",
@@ -240,6 +339,10 @@ public static class LocalizationService
             ["Save"] = "Save",
             ["Footer"] = "Hint: Use {%p} as parameter placeholder",
             ["LanguageLabel"] = "Language:",
+            // Language options (for ComboBox display)
+            ["LanguageChinese"] = "Chinese",
+            ["LanguageEnglish"] = "English",
+            ["LanguageSpanish"] = "Spanish",
             // ── Recording Settings ─────────────────────────────────────
             ["RecordingSettings"] = "Recording Settings",
             ["RecordSource"] = "Source",
@@ -251,6 +354,15 @@ public static class LocalizationService
             ["RecordOutputPathDefault"] = "Default (Desktop)",
             ["RecordChannelStereo"] = "Stereo",
             ["RecordChannelMono"] = "Mono",
+            // Recording format options
+            ["RecordFormatM4a"] = "m4a",
+            ["RecordFormatMp3"] = "mp3",
+            // Bitrate options
+            ["RecordBitrate32"] = "32 kbps",
+            ["RecordBitrate64"] = "64 kbps",
+            ["RecordBitrate96"] = "96 kbps",
+            ["RecordBitrate128"] = "128 kbps",
+            ["RecordBitrate160"] = "160 kbps",
             ["RecordBrowse"] = "Browse",
             ["RecordEstimatedSize"] = "Est. Size per Minute",
             ["RecordEstimatedSizeUnit"] = "KB/min",
@@ -298,7 +410,322 @@ public static class LocalizationService
             ["ExchangeRateYesterday"] = "Yesterday",
             // Settings UI
             ["ExchangeRateApiLabel"] = "Exchange Rate API:",
-            ["ExchangeRateApiKeyPlaceholder"] = "Enter API Key"
+            ["ExchangeRateApiKeyPlaceholder"] = "Enter API Key",
+            // Settings UI Other
+            ["DarkTheme"] = "Dark Theme",
+            ["HotkeyClearHint"] = "Double-click to clear hotkey",
+            // Theme switch
+            ["ThemeSwitch"] = "Toggle theme",
+            // Right-click copy
+            ["RightClickCopy"] = "Right-click to copy",
+            // Recording overlay button tooltips
+            ["RecordPauseTooltip"] = "Pause recording",
+            ["RecordResumeTooltip"] = "Resume recording",
+            ["RecordStopTooltip"] = "Stop recording",
+            ["RecordDropTooltip"] = "Discard recording",
+            ["RecordHideTooltip"] = "Hide to tray",
+            ["RecordClickToOpenDir"] = "Click to open recording folder",
+            // Recording device options
+            ["RecordSourceMic"] = "Microphone",
+            ["RecordSourceSpeaker"] = "Speaker",
+            ["RecordSourceMicSpeaker"] = "Microphone+Speaker",
+            // Channel options
+            ["RecordChannelsStereo"] = "Stereo",
+            ["RecordChannelsMono"] = "Mono",
+            // API Key label
+            ["ExchangeRateApiKeyLabel"] = "API Key (ExchangeRate-API)",
+            // ── Built-in Command Names ─────────────────────────────────────
+            ["BuiltinCmd_cmd"] = "Command Prompt",
+            ["BuiltinCmd_powershell"] = "PowerShell",
+            ["BuiltinCmd_notepad"] = "Notepad",
+            ["BuiltinCmd_calc"] = "Calculator",
+            ["BuiltinCmd_mspaint"] = "Paint",
+            ["BuiltinCmd_explorer"] = "File Explorer",
+            ["BuiltinCmd_taskmgr"] = "Task Manager",
+            ["BuiltinCmd_devmgmt"] = "Device Manager",
+            ["BuiltinCmd_services"] = "Services",
+            ["BuiltinCmd_regedit"] = "Registry Editor",
+            ["BuiltinCmd_control"] = "Control Panel",
+            ["BuiltinCmd_ipconfig"] = "IP Configuration",
+            ["BuiltinCmd_ping"] = "Ping",
+            ["BuiltinCmd_tracert"] = "Route Trace",
+            ["BuiltinCmd_nslookup"] = "DNS Lookup",
+            ["BuiltinCmd_netstat"] = "Network Status",
+            ["BuiltinCmd_lock"] = "Lock Screen",
+            ["BuiltinCmd_shutdown"] = "Shutdown",
+            ["BuiltinCmd_restart"] = "Restart",
+            ["BuiltinCmd_sleep"] = "Sleep",
+            ["BuiltinCmd_emptybin"] = "Empty Recycle Bin",
+            ["BuiltinCmd_setting"] = "Open Settings",
+            ["BuiltinCmd_exit"] = "Exit Program",
+            ["BuiltinCmd_about"] = "About",
+            ["BuiltinCmd_english"] = "Switch to English",
+            ["BuiltinCmd_chinese"] = "Switch to Chinese",
+            ["BuiltinCmd_spanish"] = "Switch to Spanish",
+            ["BuiltinCmd_winrecord"] = "Windows Recorder",
+            // Built-in Command Descriptions
+            ["BuiltinDesc_cmd"] = "Open CMD",
+            ["BuiltinDesc_powershell"] = "Open PowerShell",
+            ["BuiltinDesc_notepad"] = "Open Notepad",
+            ["BuiltinDesc_calc"] = "Open Calculator",
+            ["BuiltinDesc_mspaint"] = "Open Paint",
+            ["BuiltinDesc_explorer"] = "Open File Explorer",
+            ["BuiltinDesc_taskmgr"] = "Open Task Manager",
+            ["BuiltinDesc_devmgmt"] = "Open Device Manager",
+            ["BuiltinDesc_services"] = "Open Services",
+            ["BuiltinDesc_regedit"] = "Open Registry Editor",
+            ["BuiltinDesc_control"] = "Open Control Panel",
+            ["BuiltinDesc_ipconfig"] = "View IP Configuration",
+            ["BuiltinDesc_ping"] = "Ping Command",
+            ["BuiltinDesc_tracert"] = "Trace Route",
+            ["BuiltinDesc_nslookup"] = "DNS Lookup",
+            ["BuiltinDesc_netstat"] = "View Network Status",
+            ["BuiltinDesc_lock"] = "Lock Computer",
+            ["BuiltinDesc_shutdown"] = "Shutdown in 10 seconds",
+            ["BuiltinDesc_restart"] = "Restart in 10 seconds",
+            ["BuiltinDesc_sleep"] = "Enter Sleep Mode",
+            ["BuiltinDesc_emptybin"] = "Empty Recycle Bin",
+            ["BuiltinDesc_setting"] = "Open Settings Window",
+            ["BuiltinDesc_exit"] = "Exit Quanta",
+            ["BuiltinDesc_about"] = "About Program",
+            ["BuiltinDesc_english"] = "Switch language to English",
+            ["BuiltinDesc_chinese"] = "Switch language to Chinese",
+            ["BuiltinDesc_spanish"] = "Switch language to Spanish",
+            ["BuiltinDesc_winrecord"] = "Open Windows Recorder"
+        },
+        ["es-ES"] = new Dictionary<string, string>
+        {
+            // 托盘菜单
+            ["TrayShow"] = "Mostrar",
+            ["TraySettings"] = "Ajustes",
+            ["TrayAbout"] = "Acerca de",
+            ["TrayExit"] = "Salir",
+            ["TrayLanguage"] = "Idioma",
+            ["TrayChinese"] = "中文",
+            ["TrayEnglish"] = "English",
+            ["TraySpanish"] = "Español",
+            // 分组
+            ["GroupQuickCommands"] = "Comandos Rápidos",
+            ["GroupCommand"] = "Comandos",
+            ["GroupApp"] = "Aplicaciones",
+            ["GroupFile"] = "Archivos",
+            ["GroupWindow"] = "Ventanas",
+            ["GroupCalc"] = "Calculadora",
+            ["GroupWeb"] = "Web",
+            ["GroupText"] = "Herramientas de Texto",
+            ["GroupClip"] = "Historial del Portapapeles",
+            // 搜索
+            ["SearchPlaceholder"] = "Ingrese palabra clave | Esc para ocultar",
+            // 设置界面
+            ["SettingsTitle"] = "Ajustes",
+            ["HotkeyLabel"] = "Atajo de Teclado",
+            ["AddCommand"] = "Agregar",
+            ["DeleteCommand"] = "Eliminar",
+            ["SaveCommand"] = "Guardar",
+            ["CustomCommands"] = "Comandos Personalizados",
+            ["Index"] = "#",
+            ["Keyword"] = "Palabra Clave",
+            ["Name"] = "Nombre",
+            ["Type"] = "Tipo",
+            ["Path"] = "Ruta/URL",
+            ["Arguments"] = "Argumentos",
+            ["Enabled"] = "Habilitado",
+            ["About"] = "Acerca de",
+            ["Author"] = "Autor",
+            ["Email"] = "Correo",
+            ["Footer"] = "Consejo: Use {%p} como marcador de posición",
+            ["Added"] = "Agregado",
+            ["Deleted"] = "Eliminado",
+            ["Saved"] = "Guardado",
+            ["HotkeyPress"] = "Presione el atajo...",
+            ["CommandExists"] = "El comando ya existe",
+            ["AddedCount"] = "Se agregaron {0} comandos",
+            ["ImportCommand"] = "Importar Comandos",
+            ["ExportCommand"] = "Exportar Comandos",
+            ["ExportSuccess"] = "Exportación exitosa",
+            ["ExportFailed"] = "Error en la exportación",
+            ["ImportResult"] = "Importados {0}, omitidos {1} (palabras clave duplicadas)",
+            ["ImportFailed"] = "Error en la importación",
+            ["HotkeyRegisterFailed"] = "Error al registrar el atajo, puede estar ocupado por otro programa",
+            ["CommandSearchPlaceholder"] = "Buscar comandos...",
+            ["Admin"] = "Administrador",
+            ["CopiedToClipboard"] = "Resultado copiado al portapapeles",
+            ["TestCommand"] = "Probar",
+            ["TestExecuted"] = "Comando ejecutado",
+            ["TestFailed"] = "Error al ejecutar el comando",
+            ["QRCodeTooLong"] = "El texto supera los 2000 caracteres, no se puede generar código QR",
+            ["GeneralSettings"] = "General",
+            ["MenuGeneral"] = "General",
+            ["MenuRecording"] = "Grabación",
+            ["MenuExchangeRate"] = "Tipo de Cambio",
+            ["MenuCommands"] = "Comandos",
+            ["CommandManagement"] = "Gestión de Comandos",
+            ["Hotkey"] = "Atajo:",
+            ["Import"] = "Importar",
+            ["Export"] = "Exportar",
+            ["StartWithWindows"] = "Iniciar con Windows",
+            ["MaxResults"] = "Máx. resultados:",
+            ["MaxResultsSuffix"] = " resultados",
+            ["QRCodeThreshold"] = "Umbral de código QR:",
+            ["QRCodeThresholdSuffix"] = " caracteres",
+            ["SearchCommands"] = "Buscar comandos...",
+            ["Add"] = "Agregar",
+            ["Delete"] = "Eliminar",
+            ["Save"] = "Guardar",
+            ["LanguageLabel"] = "Idioma:",
+            // Language options (for ComboBox display)
+            ["LanguageChinese"] = "Chino",
+            ["LanguageEnglish"] = "Inglés",
+            ["LanguageSpanish"] = "Español",
+            // 录音设置
+            ["RecordingSettings"] = "Ajustes de Grabación",
+            ["RecordSource"] = "Fuente",
+            ["RecordFormat"] = "Formato",
+            ["RecordSampleRate"] = "Tasa de Muestreo",
+            ["RecordBitrate"] = "Tasa de Bits",
+            ["RecordChannels"] = "Canales",
+            ["RecordOutputPath"] = "Ruta de Salida",
+            ["RecordOutputPathDefault"] = "Predeterminado (Escritorio)",
+            ["RecordChannelStereo"] = "Estéreo",
+            ["RecordChannelMono"] = "Mono",
+            // Recording format options
+            ["RecordFormatM4a"] = "m4a",
+            ["RecordFormatMp3"] = "mp3",
+            // Bitrate options
+            ["RecordBitrate32"] = "32 kbps",
+            ["RecordBitrate64"] = "64 kbps",
+            ["RecordBitrate96"] = "96 kbps",
+            ["RecordBitrate128"] = "128 kbps",
+            ["RecordBitrate160"] = "160 kbps",
+            ["RecordBrowse"] = "Examinar",
+            ["RecordEstimatedSize"] = "Tamaño Est. por Minuto",
+            ["RecordEstimatedSizeUnit"] = "KB/min",
+            ["RecordEstimatedSizeUnitMb"] = "MB/min",
+            ["ExchangeRateApiHint"] = "API gratuita: https://exchangerate-api.com",
+            ["RecordCommandDesc"] = "Iniciar Grabación",
+            ["RecordOutputFile"] = "Archivo de Salida",
+            ["RecordPreview"] = "Vista Previa",
+            ["RecordStart"] = "Iniciar Grabación",
+            ["RecordPause"] = "Pausar",
+            ["RecordResume"] = "Reanudar",
+            ["RecordStop"] = "Detener",
+            ["RecordDrop"] = "Descartar",
+            ["RecordDropping"] = "Descartando...",
+            ["RecordHide"] = "Ocultar",
+            ["RecordDuration"] = "Duración",
+            ["RecordFileSize"] = "Tamaño",
+            ["RecordClickToOpen"] = "Clic para abrir carpeta",
+            ["RecordAlreadyRecording"] = "Grabación en progreso, deténgala primero",
+            ["RecordNoDevice"] = "No se detectó dispositivo de grabación",
+            ["RecordDeviceBusy"] = "Dispositivo en uso, cierre otros programas",
+            ["RecordNoPermission"] = "Sin permiso de escritura, verifique la ruta",
+            ["RecordDiskFull"] = "Disco lleno, libere espacio",
+            ["RecordError"] = "Error de grabación, se detuvo automáticamente",
+            ["RecordStarted"] = "Grabación iniciada",
+            ["RecordPaused"] = "Grabación pausada",
+            ["RecordResumed"] = "Grabación reanudada",
+            ["RecordStopped"] = "Grabación completada",
+            ["RecordSaving"] = "Guardando archivo...",
+            ["RecordSaved"] = "Archivo guardado",
+            ["RecordEncoding"] = "Codificando",
+            ["RecordRightClickSource"] = "Clic derecho para cambiar fuente",
+            ["RecordRightClickFormat"] = "Clic derecho para cambiar formato",
+            ["RecordRightClickBitrate"] = "Clic derecho para cambiar tasa de bits",
+            ["RecordRightClickChannels"] = "Clic derecho para cambiar canales",
+            ["RecordStarting"] = "Iniciando grabación...",
+            // 汇率换算
+            ["ExchangeRateFetching"] = "Obteniendo tipo de cambio...",
+            ["ExchangeRateNoApiKey"] = "Configure la clave API en ajustes",
+            ["ExchangeRateApiError"] = "Error al obtener rate, verifique red o clave API",
+            ["ExchangeRateNotSupported"] = "Moneda {0} no soportada",
+            ["ExchangeRateInvalidAmount"] = "Monto inválido",
+            ["ExchangeRateFromCache"] = "Caché",
+            ["ExchangeRateToday"] = "Hoy",
+            ["ExchangeRateYesterday"] = "Ayer",
+            // 设置界面
+            ["ExchangeRateApiLabel"] = "API de Tipo de Cambio:",
+            ["ExchangeRateApiKeyPlaceholder"] = "Ingrese Clave API",
+            // 设置界面其他
+            ["DarkTheme"] = "Tema Oscuro",
+            ["HotkeyClearHint"] = "Doble clic para borrar atajo",
+            // Theme switch
+            ["ThemeSwitch"] = "Cambiar tema",
+            // Right-click copy
+            ["RightClickCopy"] = "Clic derecho para copiar",
+            // Recording overlay button tooltips
+            ["RecordPauseTooltip"] = "Pausar grabación",
+            ["RecordResumeTooltip"] = "Reanudar grabación",
+            ["RecordStopTooltip"] = "Detener grabación",
+            ["RecordDropTooltip"] = "Descartar grabación",
+            ["RecordHideTooltip"] = "Ocultar",
+            ["RecordClickToOpenDir"] = "Clic para abrir carpeta de grabación",
+            // 录音设备选项
+            ["RecordSourceMic"] = "Micrófono",
+            ["RecordSourceSpeaker"] = "Altavoz",
+            ["RecordSourceMicSpeaker"] = "Micrófono+Altavoz",
+            // 声道选项
+            ["RecordChannelsStereo"] = "Estéreo",
+            ["RecordChannelsMono"] = "Mono",
+            // API Key 标签
+            ["ExchangeRateApiKeyLabel"] = "Clave API (ExchangeRate-API)",
+            // ── 内置命令名称 ──────────────────────────────────────────
+            ["BuiltinCmd_cmd"] = "Símbolo del Sistema",
+            ["BuiltinCmd_powershell"] = "PowerShell",
+            ["BuiltinCmd_notepad"] = "Bloc de Notas",
+            ["BuiltinCmd_calc"] = "Calculadora",
+            ["BuiltinCmd_mspaint"] = "Paint",
+            ["BuiltinCmd_explorer"] = "Explorador de Archivos",
+            ["BuiltinCmd_taskmgr"] = "Administrador de Tareas",
+            ["BuiltinCmd_devmgmt"] = "Administrador de Dispositivos",
+            ["BuiltinCmd_services"] = "Servicios",
+            ["BuiltinCmd_regedit"] = "Editor del Registro",
+            ["BuiltinCmd_control"] = "Panel de Control",
+            ["BuiltinCmd_ipconfig"] = "Configuración IP",
+            ["BuiltinCmd_ping"] = "Ping",
+            ["BuiltinCmd_tracert"] = "Trace Route",
+            ["BuiltinCmd_nslookup"] = "Búsqueda DNS",
+            ["BuiltinCmd_netstat"] = "Estado de Red",
+            ["BuiltinCmd_lock"] = "Bloquear Pantalla",
+            ["BuiltinCmd_shutdown"] = "Apagar",
+            ["BuiltinCmd_restart"] = "Reiniciar",
+            ["BuiltinCmd_sleep"] = "Suspender",
+            ["BuiltinCmd_emptybin"] = "Vaciar Papelera",
+            ["BuiltinCmd_setting"] = "Abrir Ajustes",
+            ["BuiltinCmd_exit"] = "Salir del Programa",
+            ["BuiltinCmd_about"] = "Acerca de",
+            ["BuiltinCmd_english"] = "Cambiar a Inglés",
+            ["BuiltinCmd_chinese"] = "Cambiar a Chino",
+            ["BuiltinCmd_spanish"] = "Cambiar a Español",
+            ["BuiltinCmd_winrecord"] = "Grabadora de Windows",
+            // 内置命令描述
+            ["BuiltinDesc_cmd"] = "Abrir Símbolo del Sistema",
+            ["BuiltinDesc_powershell"] = "Abrir PowerShell",
+            ["BuiltinDesc_notepad"] = "Abrir Bloc de Notas",
+            ["BuiltinDesc_calc"] = "Abrir Calculadora",
+            ["BuiltinDesc_mspaint"] = "Abrir Paint",
+            ["BuiltinDesc_explorer"] = "Abrir Explorador de Archivos",
+            ["BuiltinDesc_taskmgr"] = "Abrir Administrador de Tareas",
+            ["BuiltinDesc_devmgmt"] = "Abrir Administrador de Dispositivos",
+            ["BuiltinDesc_services"] = "Abrir Servicios",
+            ["BuiltinDesc_regedit"] = "Abrir Editor del Registro",
+            ["BuiltinDesc_control"] = "Abrir Panel de Control",
+            ["BuiltinDesc_ipconfig"] = "Ver Configuración IP",
+            ["BuiltinDesc_ping"] = "Comando Ping",
+            ["BuiltinDesc_tracert"] = "Rastrear Ruta",
+            ["BuiltinDesc_nslookup"] = "Búsqueda DNS",
+            ["BuiltinDesc_netstat"] = "Ver Estado de Red",
+            ["BuiltinDesc_lock"] = "Bloquear Computadora",
+            ["BuiltinDesc_shutdown"] = "Apagar en 10 segundos",
+            ["BuiltinDesc_restart"] = "Reiniciar en 10 segundos",
+            ["BuiltinDesc_sleep"] = "Entrar en Modo Suspendido",
+            ["BuiltinDesc_emptybin"] = "Vaciar Papelera de Reciclaje",
+            ["BuiltinDesc_setting"] = "Abrir Ventana de Ajustes",
+            ["BuiltinDesc_exit"] = "Salir de Quanta",
+            ["BuiltinDesc_about"] = "Acerca del Programa",
+            ["BuiltinDesc_english"] = "Cambiar idioma a Inglés",
+            ["BuiltinDesc_chinese"] = "Cambiar idioma a Chino",
+            ["BuiltinDesc_spanish"] = "Cambiar idioma a Español",
+            ["BuiltinDesc_winrecord"] = "Abrir Grabadora de Windows"
         }
     };
 
@@ -376,5 +803,43 @@ public static class LocalizationService
     {
         var template = Get(key);
         return string.Format(template, args);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════════
+    // 动态语言支持 - 统一语言管理
+    // ═════════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 获取所有支持的语言列表
+    /// </summary>
+    public static IReadOnlyList<LanguageInfo> GetSupportedLanguages()
+    {
+        return LanguageManager.SupportedLanguages;
+    }
+
+    /// <summary>
+    /// 获取语言显示名称的翻译键名
+    /// </summary>
+    public static string GetLanguageDisplayKey(string languageCode)
+    {
+        return languageCode switch
+        {
+            "zh-CN" => "TrayChinese",
+            "en-US" => "TrayEnglish",
+            "es-ES" => "TraySpanish",
+            _ => "TrayLanguage"
+        };
+    }
+
+    /// <summary>
+    /// 设置语言（带验证）
+    /// </summary>
+    public static bool TrySetLanguage(string languageCode)
+    {
+        if (!_translations.ContainsKey(languageCode))
+            return false;
+
+        CurrentLanguage = languageCode;
+        return true;
     }
 }

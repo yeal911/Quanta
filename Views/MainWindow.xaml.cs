@@ -21,6 +21,7 @@ using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 using Quanta.ViewModels;
+using Quanta.Interfaces;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using SolidColorBrush = System.Windows.Media.SolidColorBrush;
@@ -33,7 +34,7 @@ namespace Quanta.Views;
 /// 主窗口类，作为 Quanta 启动器的核心 UI 界面。
 /// 负责搜索框交互、快捷键响应、窗口动画、系统托盘管理等功能。
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow : Window, IMainWindowService
 {
     /// <summary>主窗口的视图模型，管理搜索逻辑和数据</summary>
     private readonly MainViewModel _viewModel;
@@ -92,6 +93,9 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
 
         MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
+
+        // 订阅主题变更事件，更新 UI 图标
+        _viewModel.ThemeChanged += (s, isDark) => UpdateThemeIcon(isDark);
     }
 
     /// <summary>
@@ -268,19 +272,24 @@ public partial class MainWindow : Window
         _isVisible = true;
     }
 
+    // ── IMainWindowService 接口实现 ───────────────────────────────────
+
+    /// <summary>是否处于暗色主题（实现 IMainWindowService）</summary>
+    public bool IsDarkTheme => _viewModel.IsDarkTheme;
+
+    /// <summary>切换主题（实现 IMainWindowService，委托给 ViewModel）</summary>
+    public void ToggleTheme()
+    {
+        _viewModel.ToggleThemeCommand.Execute(null);
+    }
+
     /// <summary>
     /// 主题切换按钮点击事件处理。
-    /// 切换 ViewModel 的主题状态，更新 UI 颜色，并将新主题持久化到配置文件。
+    /// 委托给 ViewModel 处理（主题逻辑已内聚到 ViewModel）。
     /// </summary>
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.ToggleThemeCommand.Execute(null);
-        ApplyTheme(_viewModel.IsDarkTheme);
-        ToastService.Instance.SetTheme(_viewModel.IsDarkTheme);
-
-        var config = ConfigLoader.Load();
-        config.Theme = _viewModel.IsDarkTheme ? "Dark" : "Light";
-        ConfigLoader.Save(config);
     }
 
     /// <summary>
@@ -339,14 +348,23 @@ public partial class MainWindow : Window
         settingsItem.Click += (s, args) => OpenCommandSettings();
         menu.Items.Add(settingsItem);
         
-        // Language submenu
+        // Language submenu - dynamic generation
         var langItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayLanguage") };
-        var zhItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayChinese"), IsChecked = LocalizationService.CurrentLanguage == "zh-CN" };
-        zhItem.Click += (s, args) => { LocalizationService.CurrentLanguage = "zh-CN"; RefreshLocalization(); _trayService?.Initialize(); };
-        var enItem = new System.Windows.Controls.MenuItem { Header = LocalizationService.Get("TrayEnglish"), IsChecked = LocalizationService.CurrentLanguage == "en-US" };
-        enItem.Click += (s, args) => { LocalizationService.CurrentLanguage = "en-US"; RefreshLocalization(); _trayService?.Initialize(); };
-        langItem.Items.Add(zhItem);
-        langItem.Items.Add(enItem);
+        foreach (var lang in LocalizationService.GetSupportedLanguages())
+        {
+            var langMenuItem = new System.Windows.Controls.MenuItem 
+            { 
+                Header = LocalizationService.Get(lang.Code), 
+                IsChecked = LocalizationService.CurrentLanguage == lang.Code 
+            };
+            langMenuItem.Click += (s, args) => 
+            { 
+                LocalizationService.CurrentLanguage = lang.Code; 
+                RefreshLocalization(); 
+                _trayService?.Initialize(); 
+            };
+            langItem.Items.Add(langMenuItem);
+        }
         menu.Items.Add(langItem);
         
         menu.Items.Add(new System.Windows.Controls.Separator());
@@ -689,6 +707,34 @@ public partial class MainWindow : Window
     {
         UpdatePlaceholderWithHotkey();
         BuildSearchIconMenu();
+        UpdateTooltips();
+    }
+
+    /// <summary>
+    /// 更新所有界面元素的 ToolTip 文本
+    /// </summary>
+    private void UpdateTooltips()
+    {
+        // 主题切换按钮 ToolTip
+        if (FindName("ThemeToggleButton") is System.Windows.Controls.Button themeBtn)
+        {
+            themeBtn.ToolTip = LocalizationService.Get("ThemeSwitch");
+        }
+
+        // 颜色复制 ToolTip
+        try
+        {
+            if (FindName("CopyHexTooltip") is System.Windows.Controls.ToolTip hexTip)
+                hexTip.Content = LocalizationService.Get("RightClickCopy");
+            if (FindName("CopyRgbTooltip") is System.Windows.Controls.ToolTip rgbTip)
+                rgbTip.Content = LocalizationService.Get("RightClickCopy");
+            if (FindName("CopyHslTooltip") is System.Windows.Controls.ToolTip hslTip)
+                hslTip.Content = LocalizationService.Get("RightClickCopy");
+        }
+        catch
+        {
+            // ToolTips 可能尚未初始化
+        }
     }
 
     /// <summary>
@@ -715,14 +761,23 @@ public partial class MainWindow : Window
         settingsItem.Click += (s, e) => OpenCommandSettings();
         SearchIconMenu.Items.Add(settingsItem);
 
-        // Language submenu
+        // Language submenu - dynamic generation
         var langItem = new MenuItem { Header = LocalizationService.Get("TrayLanguage") };
-        var zhItem = new MenuItem { Header = LocalizationService.Get("TrayChinese"), IsChecked = LocalizationService.CurrentLanguage == "zh-CN" };
-        zhItem.Click += (s, e) => { LocalizationService.CurrentLanguage = "zh-CN"; RefreshLocalization(); _trayService?.Initialize(); };
-        var enItem = new MenuItem { Header = LocalizationService.Get("TrayEnglish"), IsChecked = LocalizationService.CurrentLanguage == "en-US" };
-        enItem.Click += (s, e) => { LocalizationService.CurrentLanguage = "en-US"; RefreshLocalization(); _trayService?.Initialize(); };
-        langItem.Items.Add(zhItem);
-        langItem.Items.Add(enItem);
+        foreach (var lang in LocalizationService.GetSupportedLanguages())
+        {
+            var langMenuItem = new MenuItem 
+            { 
+                Header = LocalizationService.Get(lang.Code), 
+                IsChecked = LocalizationService.CurrentLanguage == lang.Code 
+            };
+            langMenuItem.Click += (s, e) => 
+            { 
+                LocalizationService.CurrentLanguage = lang.Code; 
+                RefreshLocalization(); 
+                _trayService?.Initialize(); 
+            };
+            langItem.Items.Add(langMenuItem);
+        }
         SearchIconMenu.Items.Add(langItem);
 
         SearchIconMenu.Items.Add(new Separator());

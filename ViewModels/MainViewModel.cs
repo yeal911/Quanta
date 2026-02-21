@@ -11,6 +11,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 
@@ -277,12 +278,29 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 切换明暗主题。
+    /// 主题变更事件，供视图层订阅以更新 UI（如图标）。
+    /// </summary>
+    public event EventHandler<bool>? ThemeChanged;
+
+    /// <summary>
+    /// 切换明暗主题，并应用主题到应用程序，持久化到配置文件。
     /// </summary>
     [RelayCommand]
     private void ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
+        
+        // 应用主题
+        ThemeService.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
+        ToastService.Instance.SetTheme(IsDarkTheme);
+        
+        // 持久化配置
+        var config = ConfigLoader.Load();
+        config.Theme = IsDarkTheme ? "Dark" : "Light";
+        ConfigLoader.Save(config);
+        
+        // 触发事件通知视图层更新（如图标）
+        ThemeChanged?.Invoke(this, IsDarkTheme);
     }
 
     /// <summary>

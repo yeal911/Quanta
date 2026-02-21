@@ -13,4 +13,10 @@ public interface IMainWindowService
 
     /// <summary>从托盘显示窗口的时间戳，用于防止 Deactivated 事件误触发隐藏</summary>
     DateTime LastShownFromTray { get; set; }
+
+    /// <summary>是否处于暗色主题</summary>
+    bool IsDarkTheme { get; }
+
+    /// <summary>切换主题</summary>
+    void ToggleTheme();
 }

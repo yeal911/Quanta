@@ -12,6 +12,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using Quanta.Helpers;
+using Quanta.Interfaces;
 
 namespace Quanta.Services;
 
@@ -29,9 +30,9 @@ namespace Quanta.Services;
 public class TrayService : IDisposable
 {
     /// <summary>
-    /// 主窗口引用，用于在托盘操作中显示、激活或刷新主窗口。
+    /// 主窗口服务接口，用于在托盘操作中显示、激活或刷新主窗口。
     /// </summary>
-    private readonly Window _mainWindow;
+    private readonly IMainWindowService _mainWindowService;
 
     /// <summary>
     /// 系统托盘通知图标实例，为 null 表示尚未初始化或已释放。
@@ -61,10 +62,10 @@ public class TrayService : IDisposable
     /// <summary>
     /// 初始化 <see cref="TrayService"/> 类的新实例。
     /// </summary>
-    /// <param name="mainWindow">应用程序主窗口的引用，用于托盘交互时操作主窗口。</param>
-    public TrayService(Window mainWindow)
+    /// <param name="mainWindowService">主窗口服务接口，用于托盘交互时操作主窗口。</param>
+    public TrayService(IMainWindowService mainWindowService)
     {
-        _mainWindow = mainWindow;
+        _mainWindowService = mainWindowService;
     }
 
     /// <summary>
@@ -107,7 +108,7 @@ public class TrayService : IDisposable
 
     /// <summary>
     /// 构建系统托盘图标的右键上下文菜单。
-    /// 菜单项包括：设置、语言切换（中文/英文）、关于、退出。
+    /// 菜单项包括：设置、语言切换（动态生成）、关于、退出。
     /// 所有菜单项文字均通过 <see cref="LocalizationService"/> 获取本地化字符串。
     /// </summary>
     private void BuildContextMenu()
@@ -121,20 +122,16 @@ public class TrayService : IDisposable
         settingsItem.Click += (s, e) => OnSettingsRequested();
         menu.Items.Add(settingsItem);
 
-        // "语言"子菜单 - 包含中文和英文两个选项
+        // "语言"子菜单 - 动态生成所有支持的语言
         var langMenu = new ToolStripMenuItem(LocalizationService.Get("TrayLanguage"));
 
-        // 中文选项，当前为中文时显示勾选状态
-        var zhItem = new ToolStripMenuItem(LocalizationService.Get("TrayChinese"));
-        zhItem.Click += (s, e) => SetLanguage("zh-CN");
-        zhItem.Checked = LocalizationService.CurrentLanguage == "zh-CN";
-        langMenu.DropDownItems.Add(zhItem);
-
-        // 英文选项，当前为英文时显示勾选状态
-        var enItem = new ToolStripMenuItem(LocalizationService.Get("TrayEnglish"));
-        enItem.Click += (s, e) => SetLanguage("en-US");
-        enItem.Checked = LocalizationService.CurrentLanguage == "en-US";
-        langMenu.DropDownItems.Add(enItem);
+        foreach (var lang in LocalizationService.GetSupportedLanguages())
+        {
+            var langItem = new ToolStripMenuItem(LocalizationService.Get(lang.Code));
+            langItem.Click += (s, e) => SetLanguage(lang.Code);
+            langItem.Checked = LocalizationService.CurrentLanguage == lang.Code;
+            langMenu.DropDownItems.Add(langItem);
+        }
 
         menu.Items.Add(langMenu);
 
@@ -164,14 +161,8 @@ public class TrayService : IDisposable
         // 重建右键菜单以更新语言文字
         BuildContextMenu();
 
-        // 在 UI 线程上刷新主窗口的本地化内容
-        _mainWindow.Dispatcher.Invoke(() =>
-        {
-            if (_mainWindow is Quanta.Views.MainWindow mainWin)
-            {
-                mainWin.RefreshLocalization();
-            }
-        });
+        // 通过接口刷新主窗口的本地化内容
+        _mainWindowService.RefreshLocalization();
     }
 
     /// <summary>
@@ -246,27 +237,10 @@ public class TrayService : IDisposable
     /// </summary>
     private void ShowMainWindow()
     {
-        if (_mainWindow == null) return;
-
-        _mainWindow.Dispatcher.Invoke(() =>
-        {
-            if (_mainWindow is Quanta.Views.MainWindow mainWin)
-            {
-                // 先设置时间戳，防止 Window_Deactivated 在动画期间误触发隐藏
-                mainWin.LastShownFromTray = DateTime.Now;
-                // 使用 MainWindow 自己的 ShowWindow()，确保 Opacity / _isVisible / 动画全部正确初始化
-                mainWin.ShowWindow();
-            }
-            else
-            {
-                if (_mainWindow.WindowState == WindowState.Minimized)
-                    _mainWindow.WindowState = WindowState.Normal;
-
-                _mainWindow.Show();
-                _mainWindow.Activate();
-                _mainWindow.Focus();
-            }
-        });
+        // 先设置时间戳，防止 Window_Deactivated 在动画期间误触发隐藏
+        _mainWindowService.LastShownFromTray = DateTime.Now;
+        // 使用接口显示主窗口，确保 Opacity / _isVisible / 动画全部正确初始化
+        _mainWindowService.ShowWindow();
     }
 
     /// <summary>

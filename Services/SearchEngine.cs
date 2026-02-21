@@ -33,6 +33,27 @@ public interface ISearchProvider
     string Name { get; }
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// 辅助方法
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// 根据关键字获取对应的语言代码
+/// </summary>
+internal static partial class SearchEngineHelper
+{
+    public static string? GetLanguageCodeFromKeyword(string keyword)
+    {
+        return keyword.ToLower() switch
+        {
+            "english" or "en" or "eng" => "en-US",
+            "chinese" or "zh" or "中文" => "zh-CN",
+            "spanish" or "espanol" or "español" or "西班牙语" => "es-ES",
+            _ => null
+        };
+    }
+}
+
 /// <summary>
 /// 搜索引擎核心类
 /// 负责统一调度各种搜索源（自定义命令、内置命令、命令路由等），
@@ -61,6 +82,11 @@ public class SearchEngine
     private readonly FileSearchProvider _fileSearchProvider;
 
     /// <summary>
+    /// 应用程序搜索提供程序，搜索 Windows 开始菜单中的已安装应用程序
+    /// </summary>
+    private readonly ApplicationSearchProvider _applicationSearchProvider;
+
+    /// <summary>
     /// 用户自定义命令列表，从配置文件 config.json 中加载
     /// </summary>
     private List<CommandConfig> _customCommands = new();
@@ -76,44 +102,67 @@ public class SearchEngine
     private int _qrCodeThreshold = 20;
 
     /// <summary>
-    /// Windows 系统内置命令列表
-    /// 包含常用的系统工具（如命令提示符、计算器、任务管理器等）、网络诊断命令和系统控制命令。
-    /// 这些命令无需用户配置即可直接使用，IsBuiltIn=true 标记，不会出现在用户设置界面中。
+    /// Windows 系统内置命令列表（静态模板，不含本地化文本）
+    /// Keyword 为唯一标识，Name/Description 通过 LocalizationService 动态获取
     /// </summary>
-    private static readonly List<CommandConfig> BuiltInCommands = new()
+    private static readonly List<CommandConfig> BuiltInCommandsTemplate = new()
     {
         // ── 常用系统工具 ──────────────────────────────────────────
-        new() { Keyword = "cmd",       Name = "命令提示符",  Type = "Program", Path = "cmd.exe",      Arguments = "/k {param}", Description = "打开CMD",          IsBuiltIn = true },
-        new() { Keyword = "powershell",Name = "PowerShell",  Type = "Program", Path = "powershell.exe",Arguments = "-NoExit -Command \"{param}\"", Description = "打开PowerShell", IsBuiltIn = true },
-        new() { Keyword = "notepad",   Name = "记事本",      Type = "Program", Path = "notepad.exe",  Arguments = "{param}",    Description = "打开记事本",       IsBuiltIn = true },
-        new() { Keyword = "calc",      Name = "计算器",      Type = "Program", Path = "calc.exe",                               Description = "打开计算器",       IsBuiltIn = true },
-        new() { Keyword = "mspaint",   Name = "画图",        Type = "Program", Path = "mspaint.exe",                            Description = "打开画图",         IsBuiltIn = true },
-        new() { Keyword = "explorer",  Name = "资源管理器",  Type = "Program", Path = "explorer.exe", Arguments = "{param}",    Description = "打开资源管理器",   IsBuiltIn = true },
-        new() { Keyword = "taskmgr",   Name = "任务管理器",  Type = "Program", Path = "taskmgr.exe",                            Description = "打开任务管理器",   IsBuiltIn = true },
-        new() { Keyword = "devmgmt",   Name = "设备管理器",  Type = "Program", Path = "devmgmt.msc",                            Description = "打开设备管理器",   IsBuiltIn = true },
-        new() { Keyword = "services",  Name = "服务",        Type = "Program", Path = "services.msc",                           Description = "打开服务",         IsBuiltIn = true },
-        new() { Keyword = "regedit",   Name = "注册表",      Type = "Program", Path = "regedit.exe",                            Description = "打开注册表",       IsBuiltIn = true },
-        new() { Keyword = "control",   Name = "控制面板",    Type = "Program", Path = "control.exe",                            Description = "打开控制面板",     IsBuiltIn = true },
+        new() { Keyword = "cmd",       Type = "Program", Path = "cmd.exe",      Arguments = "/k {param}", IsBuiltIn = true },
+        new() { Keyword = "powershell",Type = "Program", Path = "powershell.exe",Arguments = "-NoExit -Command \"{param}\"", IsBuiltIn = true },
+        new() { Keyword = "notepad",   Type = "Program", Path = "notepad.exe",  Arguments = "{param}",    IsBuiltIn = true },
+        new() { Keyword = "calc",      Type = "Program", Path = "calc.exe",                               IsBuiltIn = true },
+        new() { Keyword = "mspaint",   Type = "Program", Path = "mspaint.exe",                            IsBuiltIn = true },
+        new() { Keyword = "explorer",  Type = "Program", Path = "explorer.exe", Arguments = "{param}",    IsBuiltIn = true },
+        new() { Keyword = "taskmgr",   Type = "Program", Path = "taskmgr.exe",                            IsBuiltIn = true },
+        new() { Keyword = "devmgmt",   Type = "Program", Path = "devmgmt.msc",                            IsBuiltIn = true },
+        new() { Keyword = "services",  Type = "Program", Path = "services.msc",                           IsBuiltIn = true },
+        new() { Keyword = "regedit",   Type = "Program", Path = "regedit.exe",                            IsBuiltIn = true },
+        new() { Keyword = "control",   Type = "Program", Path = "control.exe",                            IsBuiltIn = true },
         // ── 网络诊断 ──────────────────────────────────────────────
-        new() { Keyword = "ipconfig",  Name = "IP配置",      Type = "Shell",   Path = "ipconfig {param}",                       Description = "查看IP配置",       IsBuiltIn = true },
-        new() { Keyword = "ping",      Name = "Ping",        Type = "Shell",   Path = "ping {param}",                           Description = "Ping命令",         IsBuiltIn = true },
-        new() { Keyword = "tracert",   Name = "路由追踪",    Type = "Shell",   Path = "tracert {param}",                        Description = "追踪路由",         IsBuiltIn = true },
-        new() { Keyword = "nslookup",  Name = "DNS查询",     Type = "Shell",   Path = "nslookup {param}",                       Description = "DNS查询",          IsBuiltIn = true },
-        new() { Keyword = "netstat",   Name = "网络状态",    Type = "Shell",   Path = "netstat -an",                            Description = "查看网络状态",     IsBuiltIn = true },
+        new() { Keyword = "ipconfig",  Type = "Shell",   Path = "ipconfig {param}",                       IsBuiltIn = true },
+        new() { Keyword = "ping",      Type = "Shell",   Path = "ping {param}",                           IsBuiltIn = true },
+        new() { Keyword = "tracert",   Type = "Shell",   Path = "tracert {param}",                        IsBuiltIn = true },
+        new() { Keyword = "nslookup",  Type = "Shell",   Path = "nslookup {param}",                       IsBuiltIn = true },
+        new() { Keyword = "netstat",   Type = "Shell",   Path = "netstat -an",                            IsBuiltIn = true },
         // ── 系统控制 ──────────────────────────────────────────────
-        new() { Keyword = "lock",      Name = "锁屏",        Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", Description = "锁定计算机", IsBuiltIn = true, IconPath = "🔒", RunHidden = true },
-        new() { Keyword = "shutdown",   Name = "关机",        Type = "Shell",   Path = "shutdown /s /t 10",                      Description = "10秒后关机",       IsBuiltIn = true, IconPath = "⏻", RunHidden = true },
-        new() { Keyword = "restart",   Name = "重启",        Type = "Shell",   Path = "shutdown /r /t 10",                      Description = "10秒后重启",       IsBuiltIn = true, IconPath = "🔄", RunHidden = true },
-        new() { Keyword = "sleep",     Name = "睡眠",        Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤", RunHidden = true },
-        new() { Keyword = "emptybin",  Name = "清空回收站",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", Description = "清空回收站", IsBuiltIn = true, IconPath = "🗑", RunHidden = true },
+        new() { Keyword = "lock",      Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", IsBuiltIn = true, IconPath = "🔒", RunHidden = true },
+        new() { Keyword = "shutdown",   Type = "Shell",   Path = "shutdown /s /t 10",                      IsBuiltIn = true, IconPath = "⏻", RunHidden = true },
+        new() { Keyword = "restart",   Type = "Shell",   Path = "shutdown /r /t 10",                      IsBuiltIn = true, IconPath = "🔄", RunHidden = true },
+        new() { Keyword = "sleep",     Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤", RunHidden = true },
+        new() { Keyword = "emptybin",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", IsBuiltIn = true, IconPath = "🗑", RunHidden = true },
         // ── 应用快捷命令 ──────────────────────────────────────────
-        new() { Keyword = "setting",   Name = "打开设置",    Type = "SystemAction", Path = "setting", Description = "打开设置界面", IsBuiltIn = true, IconPath = "⚙" },
-        new() { Keyword = "exit",      Name = "退出程序",    Type = "SystemAction", Path = "exit", Description = "退出 Quanta", IsBuiltIn = true, IconPath = "✕" },
-        new() { Keyword = "about",     Name = "关于",        Type = "SystemAction", Path = "about", Description = "关于程序", IsBuiltIn = true, IconPath = "ℹ" },
-        new() { Keyword = "english",   Name = "切换到英文",  Type = "SystemAction", Path = "english", Description = "切换界面语言为英文", IsBuiltIn = true, IconPath = "EN" },
-        new() { Keyword = "chinese",   Name = "切换到中文",  Type = "SystemAction", Path = "chinese", Description = "切换界面语言为中文", IsBuiltIn = true, IconPath = "中" },
-        new() { Keyword = "winrecord", Name = "Windows 录音机", Type = "SystemAction", Path = "winrecord", Description = "打开 Windows 内置录音机", IsBuiltIn = true, IconPath = "🎤" },
+        new() { Keyword = "setting",   Type = "SystemAction", Path = "setting", IsBuiltIn = true, IconPath = "⚙" },
+        new() { Keyword = "exit",      Type = "SystemAction", Path = "exit", IsBuiltIn = true, IconPath = "✕" },
+        new() { Keyword = "about",     Type = "SystemAction", Path = "about", IsBuiltIn = true, IconPath = "ℹ" },
+        new() { Keyword = "english",   Type = "SystemAction", Path = "english", IsBuiltIn = true, IconPath = "EN" },
+        new() { Keyword = "chinese",   Type = "SystemAction", Path = "chinese", IsBuiltIn = true, IconPath = "中" },
+        new() { Keyword = "spanish",   Type = "SystemAction", Path = "spanish", IsBuiltIn = true, IconPath = "ES" },
+        new() { Keyword = "winrecord", Type = "SystemAction", Path = "winrecord", IsBuiltIn = true, IconPath = "🎤" },
     };
+
+    /// <summary>
+    /// 获取本地化后的内置命令列表
+    /// </summary>
+    private List<CommandConfig> GetBuiltInCommands()
+    {
+        return BuiltInCommandsTemplate.Select(cmd => 
+        {
+            var localized = new CommandConfig
+            {
+                Keyword = cmd.Keyword,
+                Type = cmd.Type,
+                Path = cmd.Path,
+                Arguments = cmd.Arguments,
+                IconPath = cmd.IconPath,
+                RunHidden = cmd.RunHidden,
+                IsBuiltIn = true,
+                Name = LocalizationService.Get($"BuiltinCmd_{cmd.Keyword}"),
+                Description = LocalizationService.Get($"BuiltinDesc_{cmd.Keyword}")
+            };
+            return localized;
+        }).ToList();
+    }
 
     /// <summary>
     /// 搜索引擎构造函数，通过 DI 注入所有依赖
@@ -127,6 +176,7 @@ public class SearchEngine
         _commandRouter = commandRouter;
         _windowManager = new WindowManager();
         _fileSearchProvider = fileSearchProvider;
+        _applicationSearchProvider = new ApplicationSearchProvider();
 
         LoadCustomCommands();
     }
@@ -283,7 +333,24 @@ public class SearchEngine
         {
             var providerTasks = new List<Task>();
 
-            // 3a. 搜索文件（桌面+下载目录）
+            // 3a. 搜索应用程序（开始菜单中的已安装应用）
+            providerTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var appResults = await _applicationSearchProvider.SearchAsync(query, cancellationToken);
+                    foreach (var r in appResults)
+                    {
+                        r.GroupLabel = "Application";
+                        r.GroupOrder = 1;
+                        r.QueryMatch = query;
+                        results.Add(r);
+                    }
+                }
+                catch (Exception ex) { Logger.Warn($"Application search failed: {ex.Message}"); }
+            }, cancellationToken));
+
+            // 3b. 搜索文件（桌面+下载目录）
             providerTasks.Add(Task.Run(async () =>
             {
                 try
@@ -370,7 +437,7 @@ public class SearchEngine
         int index = 0;
 
         // 将用户命令（优先级更高）与内置命令合并搜索
-        var allCommands = _customCommands.Concat(BuiltInCommands);
+        var allCommands = _customCommands.Concat(GetBuiltInCommands());
 
         foreach (var cmd in allCommands)
         {
@@ -444,7 +511,7 @@ public class SearchEngine
     private async Task<List<SearchResult>> GetDefaultResultsAsync(CancellationToken cancellationToken)
     {
         var results = new List<SearchResult>();
-        var allCommands = _customCommands.Concat(BuiltInCommands).ToList();
+        var allCommands = _customCommands.Concat(GetBuiltInCommands()).ToList();
 
         // 将所有命令按关键字索引，方便按使用记录 ID 查找
         var commandByKey = allCommands.ToDictionary(c => $"cmd:{c.Keyword}", c => c);
@@ -672,6 +739,24 @@ public class SearchEngine
         var app = System.Windows.Application.Current;
         var mainWindow = app.MainWindow;
 
+        // 先检查是否是语言切换关键字
+        var langCode = SearchEngineHelper.GetLanguageCodeFromKeyword(action ?? "");
+        if (!string.IsNullOrEmpty(langCode))
+        {
+            LocalizationService.CurrentLanguage = langCode;
+            app.Dispatcher.Invoke(() =>
+            {
+                if (mainWindow is Views.MainWindow mw)
+                {
+                    var config = Helpers.ConfigLoader.Load();
+                    mw.RefreshLocalization();
+                    mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
+                }
+            });
+            ToastService.Instance.ShowSuccess(LocalizationService.Get("LanguageChanged"));
+            return true;
+        }
+
         switch (action?.ToLower())
         {
             case "setting":
@@ -701,38 +786,6 @@ public class SearchEngine
                 {
                     app.Shutdown();
                 });
-                return true;
-
-            case "english":
-                // 切换到英文
-                LocalizationService.CurrentLanguage = "en-US";
-                app.Dispatcher.Invoke(() =>
-                {
-                    // 通知主窗口刷新 UI
-                    if (mainWindow is Views.MainWindow mw)
-                    {
-                        var config = Helpers.ConfigLoader.Load();
-                        mw.RefreshLocalization();
-                        mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
-                    }
-                });
-                ToastService.Instance.ShowSuccess("Language switched to English");
-                return true;
-
-            case "chinese":
-                // 切换到中文
-                LocalizationService.CurrentLanguage = "zh-CN";
-                app.Dispatcher.Invoke(() =>
-                {
-                    // 通知主窗口刷新 UI
-                    if (mainWindow is Views.MainWindow mw)
-                    {
-                        var config = Helpers.ConfigLoader.Load();
-                        mw.RefreshLocalization();
-                        mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
-                    }
-                });
-                ToastService.Instance.ShowSuccess("已切换到中文");
                 return true;
 
             case "winrecord":

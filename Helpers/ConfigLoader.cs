@@ -2,6 +2,7 @@
 // 文件名：ConfigLoader.cs
 // 文件用途：应用配置的加载、保存和管理工具类。
 //          配置文件直接保存在程序运行目录下的 config.json 中。
+//          支持热重载：配置文件变更时自动重新加载。
 // ============================================================================
 
 using System.IO;
@@ -14,11 +15,18 @@ namespace Quanta.Helpers;
 /// <summary>
 /// 静态配置加载器，提供应用配置的加载、保存、导出功能。
 /// 配置文件保存在程序运行目录下的 config.json 中。
+/// 支持热重载：配置文件变更时自动重新加载。
 /// </summary>
 public static class ConfigLoader
 {
     /// <summary>配置缓存，避免重复读取文件</summary>
     private static AppConfig? _cachedConfig;
+
+    /// <summary>文件系统监视器，用于监听配置文件变更</summary>
+    private static FileSystemWatcher? _configWatcher;
+
+    /// <summary>配置变更事件，当配置文件被外部修改时触发</summary>
+    public static event EventHandler<AppConfig>? ConfigChanged;
 
     /// <summary>
     /// 配置文件路径（程序运行目录下的 config.json）
@@ -107,7 +115,83 @@ public static class ConfigLoader
             _cachedConfig = CreateDefaultConfig();
         }
 
+        // 启动配置文件监视器（热重载）
+        StartFileWatcher();
+
         return _cachedConfig;
+    }
+
+    /// <summary>
+    /// 启动文件系统监视器，监听配置文件变更。
+    /// </summary>
+    private static void StartFileWatcher()
+    {
+        if (_configWatcher != null) return;
+
+        try
+        {
+            var configDir = Path.GetDirectoryName(ConfigPath);
+            if (string.IsNullOrEmpty(configDir) || !Directory.Exists(configDir))
+            {
+                Logger.Warn($"[ConfigLoader] Config directory does not exist: {configDir}");
+                return;
+            }
+
+            _configWatcher = new FileSystemWatcher(configDir)
+            {
+                Filter = "config.json",
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
+
+            // 使用 Debounce 避免连续触发
+            DateTime _lastChanged = DateTime.MinValue;
+            _configWatcher.Changed += (sender, e) =>
+            {
+                var now = DateTime.Now;
+                // 500ms 内不重复处理
+                if ((now - _lastChanged).TotalMilliseconds < 500) return;
+                _lastChanged = now;
+
+                Logger.Log("[ConfigLoader] Config file changed, reloading...");
+
+                // 延迟一点再读取，确保文件写入完成
+                Task.Delay(100).ContinueWith(_ =>
+                {
+                    try
+                    {
+                        Reload();
+                        var newConfig = Load();
+                        ConfigChanged?.Invoke(null, newConfig);
+                        Logger.Log("[ConfigLoader] Config reloaded successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"[ConfigLoader] Failed to reload config: {ex.Message}", ex);
+                    }
+                });
+            };
+
+            Logger.Log("[ConfigLoader] FileSystemWatcher started");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[ConfigLoader] Failed to start FileSystemWatcher: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 停止文件系统监视器。
+    /// </summary>
+    public static void StopFileWatcher()
+    {
+        if (_configWatcher != null)
+        {
+            _configWatcher.EnableRaisingEvents = false;
+            _configWatcher.Dispose();
+            _configWatcher = null;
+            Logger.Log("[ConfigLoader] FileSystemWatcher stopped");
+        }
     }
 
     /// <summary>
@@ -119,10 +203,17 @@ public static class ConfigLoader
     {
         try
         {
+            // 保存时暂时禁用监视器，避免触发自身的 Changed 事件
+            var wasEnabled = _configWatcher?.EnableRaisingEvents ?? false;
+            if (_configWatcher != null) _configWatcher.EnableRaisingEvents = false;
+
             var json = JsonSerializer.Serialize(config, JsonOptions);
             File.WriteAllText(ConfigPath, json);
 
             _cachedConfig = config;
+
+            // 恢复监视器
+            if (_configWatcher != null) _configWatcher.EnableRaisingEvents = wasEnabled;
 
             Logger.Log($"Config saved to: {ConfigPath}");
         }
