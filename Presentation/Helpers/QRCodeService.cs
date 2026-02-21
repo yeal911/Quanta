@@ -1,29 +1,32 @@
-// =============================================================================
+// ============================================================================
 // 文件名: QRCodeService.cs
-// 用途:   二维码生成服务，负责将文本内容转换为二维码图片。
-//         使用 QRCoder 库生成 PNG 格式的二维码图像。
-// =============================================================================
+// 文件描述: 二维码生成服务，负责将文本内容转换为二维码图片。
+//           使用 QRCoder 库生成 PNG 格式的二维码图像。
+// ============================================================================
 
 using System;
 using System.IO;
 using System.Windows.Media.Imaging;
 using QRCoder;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Services;
 
 /// <summary>
-/// 二维码生成服务类，提供将文本内容转换为二维码图片的功能。
+/// 二维码生成服务，提供将文本内容转换为二维码图片的功能。
 /// 支持生成 PNG 格式的二维码图像，可用于显示和复制到剪贴板。
 /// </summary>
-public static class QRCodeService
+public class QRCodeService : IQRCodeService
 {
+    public static readonly QRCodeService Instance = new();
+
     /// <summary>
     /// 生成二维码图片并返回 BitmapImage。
     /// </summary>
     /// <param name="content">要编码的内容</param>
     /// <param name="pixelsPerModule">每个模块的像素大小，值越大二维码越大</param>
     /// <returns>二维码图片的 BitmapImage</returns>
-    public static BitmapImage GenerateQRCode(string content, int pixelsPerModule = 20)
+    public BitmapImage GenerateQRCode(string content, int pixelsPerModule = 20)
     {
         if (string.IsNullOrEmpty(content))
             return null!;
@@ -60,7 +63,7 @@ public static class QRCodeService
     /// <param name="content">要编码的内容</param>
     /// <param name="pixelsPerModule">每个模块的像素大小</param>
     /// <returns>PNG 格式的二维码图片字节数组</returns>
-    public static byte[] GenerateQRCodeBytes(string content, int pixelsPerModule = 20)
+    public byte[] GenerateQRCodeBytes(string content, int pixelsPerModule = 20)
     {
         if (string.IsNullOrEmpty(content))
             return Array.Empty<byte>();
@@ -84,7 +87,7 @@ public static class QRCodeService
     /// </summary>
     /// <param name="content">要检查的内容</param>
     /// <returns>是否适合生成二维码</returns>
-    public static bool CanGenerateQRCode(string content)
+    public bool CanGenerateQRCode(string content)
     {
         if (string.IsNullOrEmpty(content))
             return false;
@@ -100,7 +103,7 @@ public static class QRCodeService
     /// </summary>
     /// <param name="content">要编码的内容</param>
     /// <returns>适合内容长度的像素模块大小</returns>
-    public static int CalculatePixelsPerModule(string content)
+    public int CalculatePixelsPerModule(string content)
     {
         int length = content?.Length ?? 0;
 
@@ -121,7 +124,7 @@ public static class QRCodeService
     /// </summary>
     /// <param name="content">要编码的内容</param>
     /// <returns>二维码图片的 BitmapImage</returns>
-    public static BitmapImage GenerateQRCodeAutoSize(string content)
+    public BitmapImage GenerateQRCodeAutoSize(string content)
     {
         int pixelsPerModule = CalculatePixelsPerModule(content);
         return GenerateQRCode(content, pixelsPerModule);

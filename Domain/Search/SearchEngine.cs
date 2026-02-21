@@ -305,7 +305,7 @@ public class SearchEngine
         }
 
         // ── 2.5. 如果查询长度超过阈值，自动生成二维码 ──────────────────
-        if (query.Length > _qrCodeThreshold && QRCodeService.CanGenerateQRCode(query))
+        if (query.Length > _qrCodeThreshold && QRCodeService.Instance.CanGenerateQRCode(query))
         {
             var qrCodeResult = new SearchResult
             {
@@ -319,7 +319,7 @@ public class SearchEngine
                 IconText = "📱",
                 QueryMatch = query,
                 QRCodeContent = query,
-                QRCodeImage = QRCodeService.GenerateQRCodeAutoSize(query)
+                QRCodeImage = QRCodeService.Instance.GenerateQRCodeAutoSize(query)
             };
             results.Add(qrCodeResult);
         }

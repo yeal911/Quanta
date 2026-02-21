@@ -10,12 +10,14 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Quanta.Core.Interfaces;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using FontFamily = System.Windows.Media.FontFamily;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using Application = System.Windows.Application;
+using IToastService = Quanta.Core.Interfaces.IToastService;
 
 namespace Quanta.Services;
 
@@ -24,7 +26,7 @@ namespace Quanta.Services;
 /// 通知会以浮动窗口形式显示在可见窗口的中央位置，
 /// 支持淡入淡出动画，自动定时消失，也可以通过点击立即关闭。
 /// </summary>
-public class ToastService
+public class ToastService : IToastService
 {
     /// <summary>
     /// 单例实例（懒加载）
@@ -61,21 +63,6 @@ public class ToastService
     }
 
     /// <summary>
-    /// Toast 通知类型枚举，定义了四种通知级别
-    /// </summary>
-    public enum ToastType
-    {
-        /// <summary>成功通知</summary>
-        Success,
-        /// <summary>错误通知</summary>
-        Error,
-        /// <summary>警告通知</summary>
-        Warning,
-        /// <summary>信息通知</summary>
-        Info
-    }
-
-    /// <summary>
     /// 设置主窗口引用，Toast 会尝试居中显示在主窗口上
     /// </summary>
     /// <param name="window">主窗口实例</param>
@@ -91,7 +78,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="type">通知类型（默认为 Info）</param>
     /// <param name="duration">显示持续时间，单位为秒（默认 1.5 秒）</param>
-    public void Show(string message, ToastType type = ToastType.Info, double duration = 1.5)
+    public void Show(string message, IToastService.ToastType type = IToastService.ToastType.Info, double duration = 1.5)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -106,7 +93,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="duration">显示持续时间，单位为秒（默认 1.5 秒）</param>
     public void ShowSuccess(string message, double duration = 1.5)
-        => Show(message, ToastType.Success, duration);
+        => Show(message, IToastService.ToastType.Success, duration);
 
     /// <summary>
     /// 显示错误类型的 Toast 通知
@@ -114,7 +101,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="duration">显示持续时间，单位为秒（默认 1.5 秒）</param>
     public void ShowError(string message, double duration = 1.5)
-        => Show(message, ToastType.Error, duration);
+        => Show(message, IToastService.ToastType.Error, duration);
 
     /// <summary>
     /// 显示警告类型的 Toast 通知
@@ -122,7 +109,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="duration">显示持续时间，单位为秒（默认 1.5 秒）</param>
     public void ShowWarning(string message, double duration = 1.5)
-        => Show(message, ToastType.Warning, duration);
+        => Show(message, IToastService.ToastType.Warning, duration);
 
     /// <summary>
     /// 显示信息类型的 Toast 通知
@@ -130,7 +117,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="duration">显示持续时间，单位为秒（默认 1.5 秒）</param>
     public void ShowInfo(string message, double duration = 1.5)
-        => Show(message, ToastType.Info, duration);
+        => Show(message, IToastService.ToastType.Info, duration);
 
     /// <summary>
     /// 创建 Toast 通知窗口。
@@ -140,7 +127,7 @@ public class ToastService
     /// <param name="message">通知消息文本</param>
     /// <param name="type">通知类型，用于决定样式</param>
     /// <returns>创建好的 Toast 窗口对象</returns>
-    private Window CreateToastWindow(string message, ToastType type)
+    private Window CreateToastWindow(string message, IToastService.ToastType type)
     {
         var (bgColor, icon, iconColor) = GetToastStyle(type);
 
@@ -234,13 +221,13 @@ public class ToastService
     /// </summary>
     /// <param name="type">通知类型</param>
     /// <returns>包含背景画刷、图标字符和图标颜色画刷的元组</returns>
-    private (Brush bg, string icon, Brush iconColor) GetToastStyle(ToastType type)
+    private (Brush bg, string icon, Brush iconColor) GetToastStyle(IToastService.ToastType type)
     {
         return type switch
         {
-            ToastType.Success => (new SolidColorBrush(Color.FromRgb(72, 187, 120)), "✓", new SolidColorBrush(Color.FromRgb(72, 187, 120))),
-            ToastType.Error => (new SolidColorBrush(Color.FromRgb(245, 101, 101)), "✕", new SolidColorBrush(Color.FromRgb(245, 101, 101))),
-            ToastType.Warning => (new SolidColorBrush(Color.FromRgb(234, 179, 8)), "⚠", new SolidColorBrush(Color.FromRgb(234, 179, 8))),
+            IToastService.ToastType.Success => (new SolidColorBrush(Color.FromRgb(72, 187, 120)), "✓", new SolidColorBrush(Color.FromRgb(72, 187, 120))),
+            IToastService.ToastType.Error => (new SolidColorBrush(Color.FromRgb(245, 101, 101)), "✕", new SolidColorBrush(Color.FromRgb(245, 101, 101))),
+            IToastService.ToastType.Warning => (new SolidColorBrush(Color.FromRgb(234, 179, 8)), "⚠", new SolidColorBrush(Color.FromRgb(234, 179, 8))),
             _ => (new SolidColorBrush(Color.FromRgb(66, 153, 225)), "ℹ", new SolidColorBrush(Color.FromRgb(66, 153, 225)))
         };
     }

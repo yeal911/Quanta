@@ -7,8 +7,9 @@
 
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
-using Quanta.Models;
+using Quanta.Core.Interfaces;
 using Quanta.Helpers;
+using Quanta.Models;
 
 namespace Quanta.Services;
 
@@ -17,7 +18,7 @@ namespace Quanta.Services;
 /// 通过 Win32 API 实现热键功能，使用 WPF 的 HwndSource 挂钩窗口消息处理。
 /// 实现 IDisposable 接口以确保在销毁时正确注销热键并释放资源。
 /// </summary>
-public class HotkeyManager : IDisposable
+public class HotkeyManager : IHotkeyManager
 {
     /// <summary>
     /// Windows 热键消息常量（WM_HOTKEY = 0x0312）

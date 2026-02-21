@@ -11,6 +11,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using Quanta.Core.Interfaces;
 using Quanta.Helpers;
 using Quanta.Interfaces;
 
@@ -27,7 +28,7 @@ namespace Quanta.Services;
 /// </list>
 /// <para>实现了 <see cref="IDisposable"/> 接口，确保托盘图标资源的正确释放。</para>
 /// </summary>
-public class TrayService : IDisposable
+public class TrayService : ITrayService
 {
     /// <summary>
     /// 主窗口服务接口，用于在托盘操作中显示、激活或刷新主窗口。

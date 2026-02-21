@@ -7,6 +7,7 @@
 using System.IO;
 using System.Text.Json;
 using Quanta.Core.Constants;
+using Quanta.Core.Interfaces;
 using Quanta.Models;
 
 namespace Quanta.Services;
@@ -18,7 +19,7 @@ public record ClipboardEntry(string Text, DateTime Time);
 /// 剪贴板历史服务（单例）。
 /// 维护最近 50 条文本剪贴板记录，支持关键字搜索，并持久化到本地磁盘。
 /// </summary>
-public class ClipboardHistoryService
+public class ClipboardHistoryService : IClipboardHistoryService
 {
     public static readonly ClipboardHistoryService Instance = new();
 
