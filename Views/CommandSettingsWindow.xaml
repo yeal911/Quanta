@@ -12,46 +12,46 @@
         Loaded="Window_Loaded"
         KeyDown="Window_KeyDown">
 
-    <!-- 资源：选中行背景色和字体颜色，可在代码中动态修改 -->
     <Window.Resources>
-        <SolidColorBrush x:Key="SelectedRowBackgroundBrush" Color="#E67E22"/>
-        <SolidColorBrush x:Key="SelectedRowForegroundBrush" Color="White"/>
-        <SolidColorBrush x:Key="HoverRowBackgroundBrush" Color="#F0F6FF"/>
-        
-        <!-- 菜单项按钮样式 -->
+        <!-- 菜单项按钮样式：使用 DynamicResource，主题切换时自动刷新 -->
         <Style x:Key="MenuButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#666"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Background"               Value="Transparent"/>
+            <Setter Property="Foreground"               Value="{DynamicResource SecondaryText}"/>
+            <Setter Property="BorderThickness"          Value="0"/>
+            <Setter Property="Padding"                  Value="12,10"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontFamily" Value="微软雅黑"/>
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize"                 Value="12"/>
+            <Setter Property="FontFamily"               Value="微软雅黑"/>
+            <Setter Property="Cursor"                   Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
+                    <!-- TemplateBinding 让 Style.Triggers 可通过 DynamicResource 控制背景/前景 -->
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}"
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="Center"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F0F0F0"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Selected">
-                                <Setter TargetName="border" Property="Background" Value="#E3F2FD"/>
-                                <Setter Property="Foreground" Value="#1976D2"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+                </Trigger>
+                <Trigger Property="Tag" Value="Selected">
+                    <Setter Property="Background" Value="{DynamicResource MenuItemSelectedBackground}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource MenuItemSelectedForeground}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Border x:Name="RootBorder" Background="White" CornerRadius="6" BorderBrush="#E0E0E0" BorderThickness="1">
+    <Border x:Name="RootBorder"
+            Background="{DynamicResource WindowBackground}"
+            CornerRadius="6"
+            BorderBrush="{DynamicResource WindowBorder}"
+            BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="36"/>
@@ -63,14 +63,16 @@
             <Grid Grid.Row="0" Margin="12,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="TitleText" Text="设置" FontSize="13" FontWeight="SemiBold"
-                               FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                               FontFamily="微软雅黑" VerticalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryText}"/>
                     <TextBlock x:Name="AutoSaveIndicator" Text=" · 保存成功" FontSize="12" FontWeight="Normal"
                                Foreground="#27AE60" FontFamily="微软雅黑" VerticalAlignment="Center"
                                Visibility="Collapsed" Margin="4,0,0,0"/>
                 </StackPanel>
-                <Button x:Name="CloseButton" Content="✕" HorizontalAlignment="Right" Background="Transparent" Foreground="#999"
-                        BorderThickness="0" Padding="6,2" Click="Cancel_Click" FontSize="13" Cursor="Hand"
-                        FontFamily="微软雅黑" Height="24" MinWidth="24"/>
+                <Button x:Name="CloseButton" Content="✕" HorizontalAlignment="Right"
+                        Background="Transparent" Foreground="{DynamicResource TertiaryText}"
+                        BorderThickness="0" Padding="6,2" Click="Cancel_Click"
+                        FontSize="13" Cursor="Hand" FontFamily="微软雅黑" Height="24" MinWidth="24"/>
             </Grid>
 
             <!-- Content: Left Menu + Right Panel -->
@@ -82,18 +84,15 @@
 
                 <!-- Left Menu -->
                 <StackPanel Grid.Column="0" Margin="4,0,8,0">
-                    <Button x:Name="MenuGeneral" Content="通用配置" Style="{StaticResource MenuButtonStyle}" 
-                            Click="MenuItem_Click" Tag="General"/>
-                    <Button x:Name="MenuRecording" Content="录音配置" Style="{StaticResource MenuButtonStyle}" 
-                            Click="MenuItem_Click" Tag="Recording"/>
-                    <Button x:Name="MenuExchangeRate" Content="汇率接口" Style="{StaticResource MenuButtonStyle}" 
-                            Click="MenuItem_Click" Tag="ExchangeRate"/>
-                    <Button x:Name="MenuCommands" Content="命令管理" Style="{StaticResource MenuButtonStyle}" 
-                            Click="MenuItem_Click" Tag="Commands"/>
+                    <Button x:Name="MenuGeneral"      Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
+                    <Button x:Name="MenuRecording"    Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
+                    <Button x:Name="MenuExchangeRate" Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
+                    <Button x:Name="MenuCommands"     Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                 </StackPanel>
 
                 <!-- Right Content Panels -->
                 <Grid Grid.Column="1">
+
                     <!-- 通用配置 Panel -->
                     <Grid x:Name="PanelGeneral" Visibility="Visible">
                         <Grid.RowDefinitions>
@@ -102,71 +101,77 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header -->
                         <Grid Grid.Row="0" Margin="0,4,0,10">
-                            <TextBlock x:Name="GeneralSectionLabel" Text="通用设置" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="#333" FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="GeneralSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Settings Content -->
                         <StackPanel Grid.Row="1">
                             <!-- 语言切换 -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                <TextBlock x:Name="LanguageLabel" Text="语言：" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                <TextBlock x:Name="LanguageLabel" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                 <ComboBox x:Name="LanguageComboBox" Width="100" FontSize="11" VerticalAlignment="Center"
                                           SelectionChanged="LanguageComboBox_SelectionChanged">
-                                    <ComboBoxItem Content="中文" Tag="zh-CN"/>
+                                    <ComboBoxItem Content="中文"    Tag="zh-CN"/>
                                     <ComboBoxItem Content="English" Tag="en-US"/>
                                 </ComboBox>
                             </StackPanel>
 
                             <!-- 快捷键 -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                <TextBlock x:Name="HotkeyLabel" Text="快捷键：" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                <TextBlock x:Name="HotkeyLabel" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                 <TextBox x:Name="HotkeyTextBox" Text="Alt+Space" Width="140"
                                          IsReadOnly="True" VerticalAlignment="Center" Padding="8,4"
-                                         Background="Transparent" BorderBrush="#DDD" BorderThickness="1"
-                                         FontSize="12" FontFamily="Consolas"
-                                         PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" GotFocus="HotkeyTextBox_GotFocus"
-                                         MouseDoubleClick="HotkeyTextBox_MouseDoubleClick" ToolTip="双击清除快捷键"/>
+                                         BorderThickness="1" FontSize="12" FontFamily="Consolas"
+                                         PreviewKeyDown="HotkeyTextBox_PreviewKeyDown"
+                                         GotFocus="HotkeyTextBox_GotFocus"
+                                         MouseDoubleClick="HotkeyTextBox_MouseDoubleClick"
+                                         ToolTip="双击清除快捷键"/>
                             </StackPanel>
 
                             <!-- 开机启动 -->
-                            <CheckBox x:Name="StartWithWindowsCheck" Content="开机启动" FontSize="12" FontFamily="微软雅黑"
+                            <CheckBox x:Name="StartWithWindowsCheck" FontSize="12" FontFamily="微软雅黑"
                                       VerticalAlignment="Center" Margin="0,0,0,12"
-                                      Checked="StartWithWindowsCheck_Changed" Unchecked="StartWithWindowsCheck_Changed"/>
+                                      Checked="StartWithWindowsCheck_Changed"
+                                      Unchecked="StartWithWindowsCheck_Changed"/>
 
-                            <!-- 暗色主题 -->
+                            <!-- 暗色主题：Content 不走国际化，直接硬编码 -->
                             <CheckBox x:Name="DarkThemeCheck" Content="暗色主题" FontSize="12" FontFamily="微软雅黑"
                                       VerticalAlignment="Center" Margin="0,0,0,12"
-                                      Checked="DarkThemeCheck_Changed" Unchecked="DarkThemeCheck_Changed"/>
+                                      Checked="DarkThemeCheck_Changed"
+                                      Unchecked="DarkThemeCheck_Changed"/>
 
                             <!-- 最多显示结果数 -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                <TextBlock x:Name="MaxResultsLabel" Text="最多显示：" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                <TextBlock x:Name="MaxResultsLabel" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                 <TextBox x:Name="MaxResultsBox" Width="50" Padding="4,2"
                                          FontSize="12" FontFamily="Consolas" TextAlignment="Center"
-                                         BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                                         BorderThickness="1" VerticalAlignment="Center"
                                          PreviewTextInput="MaxResultsBox_PreviewTextInput"
-                                         LostFocus="MaxResultsBox_LostFocus" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="MaxResultsSuffix" Text=" 条结果" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center"/>
+                                         LostFocus="MaxResultsBox_LostFocus"/>
+                                <TextBlock x:Name="MaxResultsSuffix" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                             </StackPanel>
 
                             <!-- 二维码阈值 -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                <TextBlock x:Name="QRCodeThresholdLabel" Text="二维码阈值：" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                <TextBlock x:Name="QRCodeThresholdLabel" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                 <TextBox x:Name="QRCodeThresholdBox" Width="50" Padding="4,2"
                                          FontSize="12" FontFamily="Consolas" TextAlignment="Center"
-                                         BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                                         BorderThickness="1" VerticalAlignment="Center"
                                          PreviewTextInput="QRCodeThresholdBox_PreviewTextInput"
-                                         LostFocus="QRCodeThresholdBox_LostFocus" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="QRCodeThresholdSuffix" Text=" 字符" FontSize="12" FontFamily="微软雅黑"
-                                           Foreground="#666" VerticalAlignment="Center"/>
+                                         LostFocus="QRCodeThresholdBox_LostFocus"/>
+                                <TextBlock x:Name="QRCodeThresholdSuffix" FontSize="12" FontFamily="微软雅黑"
+                                           Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
@@ -178,31 +183,32 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header -->
                         <Grid Grid.Row="0" Margin="0,4,0,10">
-                            <TextBlock x:Name="RecordingSectionLabel" Text="录音设置" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="#333" FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="RecordingSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Recording Content -->
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <!-- 录制源 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                    <TextBlock x:Name="RecordSourceLabel" Text="录制源：" FontSize="12" FontFamily="微软雅黑"
-                                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                    <TextBlock x:Name="RecordSourceLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                     <ComboBox x:Name="RecordSourceCombo" Width="120" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordSourceCombo_SelectionChanged">
-                                        <ComboBoxItem Content="Mic" Tag="Mic"/>
-                                        <ComboBoxItem Content="Speaker" Tag="Speaker"/>
+                                        <ComboBoxItem Content="Mic"           Tag="Mic"/>
+                                        <ComboBoxItem Content="Speaker"       Tag="Speaker"/>
                                         <ComboBoxItem Content="Mic&amp;Speaker" Tag="Mic&amp;Speaker"/>
                                     </ComboBox>
                                 </StackPanel>
 
                                 <!-- 输出格式 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                    <TextBlock x:Name="RecordFormatLabel" Text="输出格式：" FontSize="12" FontFamily="微软雅黑"
-                                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                    <TextBlock x:Name="RecordFormatLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                     <ComboBox x:Name="RecordFormatCombo" Width="80" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordFormatCombo_SelectionChanged">
                                         <ComboBoxItem Content="m4a" Tag="m4a"/>
@@ -212,8 +218,9 @@
 
                                 <!-- 码率 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                    <TextBlock x:Name="RecordBitrateLabel" Text="码率：" FontSize="12" FontFamily="微软雅黑"
-                                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                    <TextBlock x:Name="RecordBitrateLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                     <ComboBox x:Name="RecordBitrateCombo" Width="100" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordBitrateCombo_SelectionChanged">
                                         <ComboBoxItem Content="32 kbps"  Tag="32"/>
@@ -226,8 +233,9 @@
 
                                 <!-- 声道 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                    <TextBlock x:Name="RecordChannelsLabel" Text="声道：" FontSize="12" FontFamily="微软雅黑"
-                                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                    <TextBlock x:Name="RecordChannelsLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                     <ComboBox x:Name="RecordChannelsCombo" Width="100" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordChannelsCombo_SelectionChanged">
                                         <ComboBoxItem Content="立体声" Tag="2"/>
@@ -237,13 +245,13 @@
 
                                 <!-- 输出路径 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                                    <TextBlock x:Name="RecordOutputPathLabel" Text="输出路径：" FontSize="12" FontFamily="微软雅黑"
-                                               Foreground="#666" VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                    <TextBlock x:Name="RecordOutputPathLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
                                     <TextBox x:Name="RecordOutputPathBox" Width="280" FontSize="11" FontFamily="Consolas"
-                                             Padding="4,2" BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
-                                             VerticalAlignment="Center"
+                                             Padding="4,2" BorderThickness="1" VerticalAlignment="Center"
                                              LostFocus="RecordOutputPathBox_LostFocus"/>
-                                    <Button x:Name="RecordBrowseButton" Content="浏览" Margin="6,0,0,0"
+                                    <Button x:Name="RecordBrowseButton" Margin="6,0,0,0"
                                             Background="#0078D4" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                             BorderThickness="0" Padding="10,3" Height="26" Cursor="Hand"
                                             Click="RecordBrowseButton_Click"/>
@@ -251,9 +259,10 @@
 
                                 <!-- 预估文件大小 -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,6">
-                                    <TextBlock x:Name="RecordEstimatedSizeLabel" Text="预估大小：" FontSize="11" FontFamily="微软雅黑"
-                                               Foreground="#888" VerticalAlignment="Center" Width="120"/>
-                                    <TextBlock x:Name="RecordEstimatedSizeValue" Text="-- KB/分钟" FontSize="11" FontFamily="Consolas"
+                                    <TextBlock x:Name="RecordEstimatedSizeLabel" FontSize="11" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource TertiaryText}"
+                                               VerticalAlignment="Center" Width="120"/>
+                                    <TextBlock x:Name="RecordEstimatedSizeValue" FontSize="11" FontFamily="Consolas"
                                                Foreground="#E67E22" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </StackPanel>
@@ -267,20 +276,20 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header -->
                         <Grid Grid.Row="0" Margin="0,4,0,10">
-                            <TextBlock x:Name="ExchangeRateSectionLabel" Text="汇率接口" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="#333" FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ExchangeRateSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Exchange Rate Content -->
                         <StackPanel Grid.Row="1">
-                            <TextBlock Text="API Key (ExchangeRate-API)" FontSize="11" Foreground="#888" Margin="0,0,0,6"/>
+                            <TextBlock Text="API Key (ExchangeRate-API)" FontSize="11"
+                                       Foreground="{DynamicResource TertiaryText}" Margin="0,0,0,6"/>
                             <TextBox x:Name="ExchangeRateApiKeyBox" Width="350" FontSize="11" FontFamily="Consolas"
-                                     Padding="8,6" BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
-                                     HorizontalAlignment="Left"
+                                     Padding="8,6" BorderThickness="1" HorizontalAlignment="Left"
                                      LostFocus="ExchangeRateApiKeyBox_LostFocus"/>
-                            <TextBlock x:Name="ExchangeRateApiHint" Text="免费 API: https://exchangerate-api.com" FontSize="10" Foreground="#AAA" Margin="0,6,0,0"/>
+                            <TextBlock x:Name="ExchangeRateApiHint" FontSize="10"
+                                       Foreground="{DynamicResource TertiaryText}" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Grid>
 
@@ -293,10 +302,10 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header -->
                         <Grid Grid.Row="0" Margin="0,4,0,10">
-                            <TextBlock x:Name="CommandsSectionLabel" Text="命令管理" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="#333" FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CommandsSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
                         </Grid>
 
                         <!-- Search + Buttons -->
@@ -311,20 +320,22 @@
 
                             <Grid Grid.Column="0" Margin="0,0,8,0">
                                 <TextBox x:Name="CommandSearchBox" Padding="6,3,24,3"
-                                         FontSize="12" FontFamily="微软雅黑"
-                                         BorderBrush="#DDD" BorderThickness="1" Background="Transparent"
+                                         FontSize="12" FontFamily="微软雅黑" BorderThickness="1"
                                          TextChanged="CommandSearchBox_TextChanged"/>
-                                <TextBlock x:Name="CommandSearchPlaceholder" Text="输入关键字搜索命令"
-                                           FontSize="12" Foreground="#BBB" FontFamily="微软雅黑"
-                                           Padding="8,5" IsHitTestVisible="False" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="SearchClearBtn" Text="✕" FontSize="11" Foreground="#999"
+                                <TextBlock x:Name="CommandSearchPlaceholder" FontSize="12"
+                                           Foreground="{DynamicResource TertiaryText}"
+                                           FontFamily="微软雅黑" Padding="8,5"
+                                           IsHitTestVisible="False" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="SearchClearBtn" Text="✕" FontSize="11"
+                                           Foreground="{DynamicResource TertiaryText}"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
                                            Margin="0,0,6,0" Cursor="Hand" Visibility="Collapsed"
                                            MouseLeftButtonUp="SearchClearBtn_Click"/>
                             </Grid>
 
-                            <!-- 竖线 -->
-                            <Border Grid.Column="1" Width="1" Background="#DDD" VerticalAlignment="Stretch" Margin="0,4,8,4"/>
+                            <!-- 竖线分隔 -->
+                            <Border Grid.Column="1" Width="1" Background="{DynamicResource InputBorder}"
+                                    VerticalAlignment="Stretch" Margin="0,4,8,4"/>
 
                             <!-- 导入/导出按钮 -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
@@ -336,31 +347,34 @@
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand"/>
                             </StackPanel>
 
-                            <!-- 竖线 -->
-                            <Border Grid.Column="3" Width="1" Background="#DDD" VerticalAlignment="Stretch" Margin="0,4,8,4"/>
+                            <!-- 竖线分隔 -->
+                            <Border Grid.Column="3" Width="1" Background="{DynamicResource InputBorder}"
+                                    VerticalAlignment="Stretch" Margin="0,4,8,4"/>
 
                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button x:Name="AddButton" Content="添加" Click="AddCommand_Click"
+                                <Button x:Name="AddButton"    Click="AddCommand_Click"
                                         Background="#0078D4" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
-                                <Button x:Name="DeleteButton" Content="删除" Click="DeleteCommand_Click"
+                                <Button x:Name="DeleteButton" Click="DeleteCommand_Click"
                                         Background="#E74C3C" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
-                                <Button x:Name="TestButton" Content="测试" Click="TestCommand_Click"
+                                <Button x:Name="TestButton"   Click="TestCommand_Click"
                                         Background="#8E44AD" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
-                                <Button x:Name="SaveButton" Content="保存" Click="SaveCommand_Click"
+                                <Button x:Name="SaveButton"   Click="SaveCommand_Click"
                                         Background="#27AE60" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- DataGrid -->
+                        <!-- DataGrid：AlternationCount=2 配合 RowStyle AlternationIndex 触发器控制交替色 -->
+                        <!-- 不用 AlternatingRowBackground 属性，因为它优先级高于 RowStyle 触发器，会阻止选中色生效 -->
                         <DataGrid Grid.Row="2" x:Name="CommandsGrid"
                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                                   HeadersVisibility="Column" GridLinesVisibility="None"
                                   RowHeight="28" FontSize="12" FontFamily="微软雅黑"
                                   BorderThickness="0" Background="Transparent"
+                                  AlternationCount="2"
                                   SelectedCellsChanged="CommandsGrid_SelectedCellsChanged"
                                   LoadingRow="CommandsGrid_LoadingRow"
                                   SelectionMode="Single" SelectionUnit="FullRow"
@@ -369,8 +383,8 @@
                                   VerticalGridLinesBrush="Transparent"
                                   HorizontalGridLinesBrush="Transparent">
 
-                            <!-- Semi-transparent scrollbar -->
                             <DataGrid.Resources>
+                                <!-- 半透明滚动条 -->
                                 <Style TargetType="ScrollBar">
                                     <Setter Property="Width" Value="6"/>
                                     <Setter Property="MinWidth" Value="6"/>
@@ -381,7 +395,7 @@
                                                 <Grid>
                                                     <Track x:Name="PART_Track" IsDirectionReversed="True">
                                                         <Track.Thumb>
-                                                            <Thumb x:Name="thumb">
+                                                            <Thumb>
                                                                 <Thumb.Template>
                                                                     <ControlTemplate TargetType="Thumb">
                                                                         <Border x:Name="thumbBorder" Background="#30888888" CornerRadius="3"/>
@@ -405,31 +419,33 @@
                                 </Style>
                             </DataGrid.Resources>
 
+                            <!-- 列头：使用 DynamicResource，主题切换自动刷新 -->
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#888"/>
-                                    <Setter Property="FontSize" Value="11"/>
-                                    <Setter Property="FontWeight" Value="Normal"/>
-                                    <Setter Property="Padding" Value="6,4"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="#E8E8E8"/>
+                                    <Setter Property="Background"       Value="Transparent"/>
+                                    <Setter Property="Foreground"       Value="{DynamicResource DataGridHeaderText}"/>
+                                    <Setter Property="FontSize"         Value="11"/>
+                                    <Setter Property="FontWeight"       Value="Normal"/>
+                                    <Setter Property="Padding"          Value="6,4"/>
+                                    <Setter Property="BorderThickness"  Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush"      Value="{DynamicResource DataGridHeaderBorder}"/>
                                 </Style>
                             </DataGrid.ColumnHeaderStyle>
 
-                            <!-- Row header for row numbers -->
+                            <!-- 行号列 -->
                             <DataGrid.RowHeaderStyle>
                                 <Style TargetType="DataGridRowHeader">
-                                    <Setter Property="Width" Value="30"/>
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Width"            Value="30"/>
+                                    <Setter Property="Background"       Value="Transparent"/>
+                                    <Setter Property="BorderThickness"  Value="0"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="DataGridRowHeader">
                                                 <Border Background="Transparent">
                                                     <TextBlock Text="{TemplateBinding Content}"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               Foreground="#999" FontSize="10" FontFamily="Consolas"/>
+                                                               Foreground="{DynamicResource RowNumberText}"
+                                                               FontSize="10" FontFamily="Consolas"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -437,19 +453,53 @@
                                 </Style>
                             </DataGrid.RowHeaderStyle>
 
-                            <!-- 简洁的行样式：选中高亮 -->
+                            <!-- 行样式：触发器按优先级从低到高排列（后定义的 WPF Trigger 优先级更高）
+                                 顺序：① 交替行底色（最低优先级）
+                                       ② 悬浮色（中）
+                                       ③ 选中色（最高优先级，无论是否为交替行都生效）-->
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
                                     <Style.Triggers>
+                                        <!-- ① 交替行：偶数行透明，奇数行（AlternationIndex=1）显示交替色 -->
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                            <Setter Property="Background" Value="{DynamicResource AltRowBackground}"/>
+                                        </Trigger>
+                                        <!-- ② 悬浮（非选中状态）-->
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                <Condition Property="IsSelected"  Value="False"/>
+                                            </MultiTrigger.Conditions>
+                                            <MultiTrigger.Setters>
+                                                <Setter Property="Background" Value="{DynamicResource RowHoverBackground}"/>
+                                            </MultiTrigger.Setters>
+                                        </MultiTrigger>
+                                        <!-- ③ 选中：放最后，压过前两个触发器，交替行选中也显示选中色 -->
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#FF6B35"/>
+                                            <Setter Property="Background" Value="{DynamicResource RowSelectedBackground}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource RowSelectedForeground}"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </DataGrid.RowStyle>
 
+                            <!-- 单元格样式：选中时透明，让行背景色透出来 -->
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness"   Value="0"/>
+                                    <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background"  Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Setter Property="Foreground"  Value="{DynamicResource RowSelectedForeground}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
                             <DataGrid.Columns>
-                                <DataGridTextColumn x:Name="KeywordColumn" Header="关键字" Binding="{Binding Keyword}" Width="70">
+                                <DataGridTextColumn x:Name="KeywordColumn" Binding="{Binding Keyword}" Width="70">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="ToolTip" Value="{Binding Keyword}"/>
@@ -457,14 +507,14 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn x:Name="NameColumn" Header="名称" Binding="{Binding Name}" Width="90">
+                                <DataGridTextColumn x:Name="NameColumn" Binding="{Binding Name}" Width="90">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="ToolTip" Value="{Binding Name}"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridComboBoxColumn x:Name="TypeColumn" Header="类型" SelectedItemBinding="{Binding Type}" Width="70">
+                                <DataGridComboBoxColumn x:Name="TypeColumn" SelectedItemBinding="{Binding Type}" Width="70">
                                     <DataGridComboBoxColumn.ItemsSource>
                                         <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
                                             <sys:String>Url</sys:String>
@@ -479,30 +529,31 @@
                                         </Style>
                                     </DataGridComboBoxColumn.ElementStyle>
                                 </DataGridComboBoxColumn>
-                                <DataGridTextColumn x:Name="PathColumn" Header="路径/URL" Binding="{Binding Path}" Width="*">
+                                <DataGridTextColumn x:Name="PathColumn" Binding="{Binding Path}" Width="*">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="ToolTip" Value="{Binding Path}"/>
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            <Setter Property="ToolTip"         Value="{Binding Path}"/>
+                                            <Setter Property="TextTrimming"    Value="CharacterEllipsis"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridCheckBoxColumn x:Name="AdminColumn" Header="管理员" Binding="{Binding RunAsAdmin}" Width="55"/>
+                                <DataGridCheckBoxColumn x:Name="AdminColumn" Binding="{Binding RunAsAdmin}" Width="55"/>
                             </DataGrid.Columns>
                         </DataGrid>
-                        
+
                         <!-- 命令参数提示 -->
-                        <TextBlock x:Name="CommandHintText" Grid.Row="3" Text="提示：命令参数占位符{%p}"
-                                   Foreground="#AAA" FontSize="10" FontFamily="微软雅黑"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock x:Name="CommandHintText" Grid.Row="3"
+                                   Foreground="{DynamicResource TertiaryText}"
+                                   FontSize="10" FontFamily="微软雅黑" Margin="0,6,0,0"/>
                     </Grid>
                 </Grid>
             </Grid>
 
-            <!-- Footer (空) -->
-            <Border Grid.Row="2" BorderBrush="#EEE" BorderThickness="0,1,0,0">
-                <TextBlock x:Name="FooterText" Text=""
-                           Foreground="#AAA" FontSize="10" FontFamily="微软雅黑"
+            <!-- Footer -->
+            <Border Grid.Row="2" BorderBrush="{DynamicResource SeparatorBorder}" BorderThickness="0,1,0,0">
+                <TextBlock x:Name="FooterText"
+                           Foreground="{DynamicResource TertiaryText}"
+                           FontSize="10" FontFamily="微软雅黑"
                            Margin="12,0" VerticalAlignment="Center"/>
             </Border>
         </Grid>

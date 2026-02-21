@@ -278,49 +278,27 @@ public partial class MainWindow : Window
         ApplyTheme(_viewModel.IsDarkTheme);
         ToastService.Instance.SetTheme(_viewModel.IsDarkTheme);
 
-        // 持久化主题设置到配置文件
         var config = ConfigLoader.Load();
         config.Theme = _viewModel.IsDarkTheme ? "Dark" : "Light";
         ConfigLoader.Save(config);
     }
 
     /// <summary>
-    /// 将指定主题的颜色方案应用到主窗口的各 UI 元素。
-    /// 统一供启动时恢复主题和切换主题时使用。
+    /// 应用主题：通过 ThemeService 切换 MergedDictionaries，所有使用 DynamicResource 的控件自动刷新。
+    /// 只需额外更新无法用 DynamicResource 绑定的图标文字。
     /// </summary>
     /// <param name="isDark">是否为暗色主题</param>
     public void ApplyTheme(bool isDark)
     {
-        var border = FindName("MainBorder") as Border;
-        var icon   = FindName("ThemeIcon") as TextBlock;
+        ThemeService.ApplyTheme(isDark ? "Dark" : "Light");
+        UpdateThemeIcon(isDark);
+    }
 
-        if (border == null || icon == null) return;
-
-        // 搜索结果图标颜色（亮色白色，暗色也用白色更显眼）
-        var iconForeground = isDark 
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-
-        if (isDark)
-        {
-            border.Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            SearchBox.Foreground  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            SearchBox.CaretBrush  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            PlaceholderText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
-            icon.Text       = "☀";
-            icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-        }
-        else
-        {
-            border.Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            border.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
-            SearchBox.Foreground  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-            SearchBox.CaretBrush  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-            PlaceholderText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
-            icon.Text       = "🌙";
-            icon.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(26, 26, 26));
-        }
+    /// <summary>更新主题切换按钮的图标文字（☀ / 🌙）</summary>
+    public void UpdateThemeIcon(bool isDark)
+    {
+        if (FindName("ThemeIcon") is TextBlock icon)
+            icon.Text = isDark ? "☀" : "🌙";
     }
 
     /// <summary>

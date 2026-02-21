@@ -196,227 +196,12 @@ public partial class CommandSettingsWindow : Window
     }
 
     /// <summary>
-    /// 设置当前主题（明/暗），并立即应用主题样式
+    /// 设置当前主题（明/暗）。
+    /// 颜色由 DynamicResource + ThemeService 统一处理，此处只记录状态。
     /// </summary>
-    /// <param name="isDark">是否为暗色主题</param>
     public void SetDarkTheme(bool isDark)
     {
         _isDarkTheme = isDark;
-        ToastService.Instance.SetTheme(isDark);
-        ApplyTheme();
-    }
-
-    /// <summary>
-    /// 根据 _isDarkTheme 标志，统一应用明暗主题的颜色方案
-    /// 确保在任何主题下，表格文字、选中行、悬停行都清晰可见
-    /// </summary>
-    private void ApplyTheme()
-    {
-        if (_isDarkTheme)
-        {
-            // === 暗色主题 ===
-            RootBorder.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
-            TitleText.Foreground = System.Windows.Media.Brushes.White;
-            AutoSaveIndicator.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(46, 204, 113));
-            CloseButton.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
-            
-            // 左侧菜单 - 使用更亮的颜色
-            MenuGeneral.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            MenuRecording.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            MenuExchangeRate.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            MenuCommands.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            
-            // 通用设置面板 - 使用更亮的颜色
-            LanguageLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            HotkeyTextBox.Foreground = System.Windows.Media.Brushes.White;
-            HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
-            LanguageComboBox.Foreground = System.Windows.Media.Brushes.White;
-            LanguageComboBox.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            foreach (System.Windows.Controls.ComboBoxItem item in LanguageComboBox.Items)
-            {
-                item.Foreground = System.Windows.Media.Brushes.White;
-                item.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40));
-            }
-            StartWithWindowsCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            DarkThemeCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            MaxResultsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            QRCodeThresholdLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            QRCodeThresholdSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            
-            // 面板标题
-            GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            RecordingSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            ExchangeRateSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            
-            // 录音设置面板 - 使用更亮的颜色
-            RecordSourceLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            RecordFormatLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            RecordBitrateLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            RecordChannelsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            RecordOutputPathLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200));
-            RecordEstimatedSizeLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(180, 180, 180));
-            RecordEstimatedSizeValue.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(230, 126, 34));
-            
-            // 命令搜索
-            CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150));
-            SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(180, 180, 180));
-            FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150));
-            CommandHintText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(180, 180, 180));
-
-            // DataGrid 整体前景色（未选中行的文字颜色）
-            CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 220, 220));
-            CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
-            CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 38, 38));
-
-            // DataGrid 列头样式 - 暗色主题
-            CommandsGrid.ColumnHeaderStyle = CreateColumnHeaderStyle(isDark: true);
-            CommandsGrid.RowHeaderStyle = CreateRowHeaderStyle(isDark: true);
-
-            // 暗色主题：选中行黄色背景，悬停行深色背景
-            if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
-                selectedBrush.Color = System.Windows.Media.Color.FromRgb(255, 215, 0); // 黄色
-            if (Resources["SelectedRowForegroundBrush"] is System.Windows.Media.SolidColorBrush selectedForegroundBrush)
-                selectedForegroundBrush.Color = System.Windows.Media.Color.FromRgb(0, 0, 0); // 暗色主题下选中行字体黑色
-            if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
-                hoverBrush.Color = System.Windows.Media.Color.FromRgb(50, 50, 50); // 暗色悬停
-        }
-        else
-        {
-            // === 亮色主题 ===
-            RootBorder.Background = System.Windows.Media.Brushes.White;
-            RootBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(224, 224, 224));
-            TitleText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            AutoSaveIndicator.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(46, 204, 113));
-            CloseButton.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
-            
-            // 左侧菜单
-            MenuGeneral.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            MenuRecording.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            MenuExchangeRate.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            MenuCommands.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            
-            // 通用设置面板
-            LanguageLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            HotkeyLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            HotkeyTextBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            HotkeyTextBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            LanguageComboBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            LanguageComboBox.Background = System.Windows.Media.Brushes.White;
-            foreach (System.Windows.Controls.ComboBoxItem item in LanguageComboBox.Items)
-            {
-                item.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-                item.Background = System.Windows.Media.Brushes.White;
-            }
-            StartWithWindowsCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            DarkThemeCheck.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            MaxResultsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            MaxResultsBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            MaxResultsBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            MaxResultsSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            QRCodeThresholdLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            QRCodeThresholdBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            QRCodeThresholdBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            QRCodeThresholdSuffix.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            
-            // 面板标题
-            GeneralSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            RecordingSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            ExchangeRateSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            CommandsSectionLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            
-            // 录音设置面板
-            RecordSourceLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            RecordFormatLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            RecordBitrateLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            RecordChannelsLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            RecordOutputPathLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
-            RecordOutputPathBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            RecordOutputPathBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            RecordEstimatedSizeLabel.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136));
-            RecordEstimatedSizeValue.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(230, 126, 34));
-            
-            // 汇率设置面板
-            ExchangeRateApiKeyBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            ExchangeRateApiKeyBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            ExchangeRateApiHint.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
-            
-            // 命令搜索
-            CommandSearchBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            CommandSearchBox.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(221, 221, 221));
-            CommandSearchPlaceholder.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(187, 187, 187));
-            SearchClearBtn.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153));
-            FooterText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
-            CommandHintText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
-
-            CommandsGrid.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
-            CommandsGrid.RowBackground = System.Windows.Media.Brushes.Transparent;
-            CommandsGrid.AlternatingRowBackground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(248, 248, 248));
-
-            // DataGrid 列头样式 - 亮色主题
-            CommandsGrid.ColumnHeaderStyle = CreateColumnHeaderStyle(isDark: false);
-            CommandsGrid.RowHeaderStyle = CreateRowHeaderStyle(isDark: false);
-
-            // 亮色主题：选中行橙色背景，悬停行浅色背景
-            if (Resources["SelectedRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush selectedBrush)
-                selectedBrush.Color = System.Windows.Media.Color.FromRgb(230, 126, 34); // 橙色
-            if (Resources["SelectedRowForegroundBrush"] is System.Windows.Media.SolidColorBrush selectedForegroundBrush)
-                selectedForegroundBrush.Color = System.Windows.Media.Color.FromRgb(0, 0, 0); // 亮色主题下选中行字体黑色，更清晰
-            if (Resources["HoverRowBackgroundBrush"] is System.Windows.Media.SolidColorBrush hoverBrush)
-                hoverBrush.Color = System.Windows.Media.Color.FromRgb(240, 246, 255); // 亮色悬停
-        }
-    }
-
-    /// <summary>
-    /// 创建 DataGrid 列头样式
-    /// </summary>
-    private System.Windows.Style CreateColumnHeaderStyle(bool isDark)
-    {
-        var style = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridColumnHeader));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.ForegroundProperty, 
-            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170)) 
-                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136))));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.FontSizeProperty, 11.0));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.FontWeightProperty, System.Windows.FontWeights.Normal));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.PaddingProperty, new System.Windows.Thickness(6, 4, 6, 4)));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BorderThicknessProperty, new System.Windows.Thickness(0, 0, 0, 1)));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridColumnHeader.BorderBrushProperty, 
-            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60))
-                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 232, 232))));
-        return style;
-    }
-
-    /// <summary>
-    /// 创建 DataGrid 行号样式
-    /// </summary>
-    private System.Windows.Style CreateRowHeaderStyle(bool isDark)
-    {
-        var style = new System.Windows.Style(typeof(System.Windows.Controls.Primitives.DataGridRowHeader));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.WidthProperty, 30.0));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.BorderThicknessProperty, new System.Windows.Thickness(0)));
-        
-        var template = new System.Windows.Controls.ControlTemplate(typeof(System.Windows.Controls.Primitives.DataGridRowHeader));
-        var border = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.Border));
-        border.SetValue(System.Windows.Controls.Border.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
-        var textBlock = new System.Windows.FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
-        textBlock.SetValue(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding("{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"));
-        textBlock.SetValue(System.Windows.Controls.TextBlock.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
-        textBlock.SetValue(System.Windows.Controls.TextBlock.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
-        textBlock.SetValue(System.Windows.Controls.TextBlock.ForegroundProperty, 
-            isDark ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150))
-                   : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(153, 153, 153)));
-        textBlock.SetValue(System.Windows.Controls.TextBlock.FontSizeProperty, 10.0);
-        textBlock.SetValue(System.Windows.Controls.TextBlock.FontFamilyProperty, new System.Windows.Media.FontFamily("Consolas"));
-        border.AppendChild(textBlock);
-        template.VisualTree = border;
-        style.Setters.Add(new System.Windows.Setter(System.Windows.Controls.Primitives.DataGridRowHeader.TemplateProperty, template));
-        
-        return style;
     }
 
     /// <summary>
@@ -802,21 +587,20 @@ public partial class CommandSettingsWindow : Window
     private void DarkThemeCheck_Changed(object sender, RoutedEventArgs e)
     {
         bool isDark = DarkThemeCheck.IsChecked == true;
-        
-        // 保存主题到配置
+
         var config = ConfigLoader.Load();
         config.Theme = isDark ? "Dark" : "Light";
         ConfigLoader.Save(config);
-        
-        // 应用主题到当前窗口
+
+        // ThemeService 切换 MergedDictionaries，所有 DynamicResource 绑定自动刷新（含本窗口 + 主窗口）
+        ThemeService.ApplyTheme(isDark ? "Dark" : "Light");
         SetDarkTheme(isDark);
-        
-        // 通知主窗口刷新主题
+        ToastService.Instance.SetTheme(isDark);
+
+        // 主窗口只需更新图标文字（颜色已通过 DynamicResource 自动刷新）
         if (Owner is Views.MainWindow mainWindow)
-        {
-            mainWindow.ApplyTheme(isDark);
-        }
-        
+            mainWindow.UpdateThemeIcon(isDark);
+
         ShowAutoSaveToast();
     }
 
@@ -869,7 +653,7 @@ public partial class CommandSettingsWindow : Window
             {
                 LocalizationService.CurrentLanguage = langCode;
                 ApplyLocalization();
-                ApplyTheme();
+                // 颜色已通过 DynamicResource 自动管理，无需手动重新应用主题
             }
         }
     }
