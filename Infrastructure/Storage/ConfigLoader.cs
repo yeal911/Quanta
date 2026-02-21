@@ -7,6 +7,7 @@
 
 using System.IO;
 using System.Text.Json;
+using Quanta.Core.Constants;
 using Quanta.Models;
 using Quanta.Services;
 
@@ -48,11 +49,7 @@ public static class ConfigLoader
     }
 
     /// <summary>JSON 序列化选项：缩进格式、属性名大小写不敏感</summary>
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true
-    };
+    private static readonly JsonSerializerOptions JsonOptions = JsonDefaults.Standard;
 
     /// <summary>
     /// 加载应用配置。优先从缓存返回，其次从 config.json 读取。
@@ -78,9 +75,9 @@ public static class ConfigLoader
             {
                 var json = File.ReadAllText(ConfigPath);
                 Logger.Debug($"Config file content length: {json.Length} characters");
-                
+
                 _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
-                
+
                 if (_cachedConfig != null)
                 {
                     Logger.Log($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
@@ -93,7 +90,7 @@ public static class ConfigLoader
                     {
                         Logger.Log("No commands found in file");
                     }
-                    
+
                     // Migrate if needed
                     _cachedConfig = MigrateConfig(_cachedConfig);
                 }

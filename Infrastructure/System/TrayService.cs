@@ -173,7 +173,7 @@ public class TrayService : IDisposable
     private Icon LoadAppIcon()
     {
         var baseDir = AppContext.BaseDirectory;
-        
+
         // 尝试多个可能的路径
         string[] tryPaths = new[]
         {

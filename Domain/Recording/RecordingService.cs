@@ -19,30 +19,13 @@ using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Lame;
+using Quanta.Core.Interfaces;
 using Quanta.Helpers;
 using Quanta.Models;
 
 namespace Quanta.Services;
 
-public enum RecordingState { Idle, Recording, Paused, Stopping }
-
-public class RecordingProgressEventArgs : EventArgs
-{
-    public TimeSpan Duration { get; init; }
-    public long FileSizeBytes { get; init; }
-    public string FileSizeDisplay => FormatSize(FileSizeBytes);
-    public long EstimatedCompressedBytes { get; init; }
-    public string EstimatedCompressedDisplay => FormatSize(EstimatedCompressedBytes);
-
-    private static string FormatSize(long bytes)
-    {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024):F2} MB";
-    }
-}
-
-public partial class RecordingService : IDisposable
+public partial class RecordingService : IRecordingService
 {
     // ── 配置 ──────────────────────────────────────────────────────────
     private RecordingSettings _settings = new();
@@ -143,7 +126,7 @@ public partial class RecordingService : IDisposable
         }
 
         if (!RecordingFileUtils.CheckWritePermission(outputDir)) { OnError(LocalizationService.Get("RecordNoPermission")); return false; }
-        if (!RecordingFileUtils.CheckDiskSpace(outputDir))       { OnError(LocalizationService.Get("RecordDiskFull"));     return false; }
+        if (!RecordingFileUtils.CheckDiskSpace(outputDir)) { OnError(LocalizationService.Get("RecordDiskFull")); return false; }
 
         // 内部总是先写 MP3，停止时再按需转换
         _mp3OutputPath = Path.ChangeExtension(outputFilePath, ".mp3");
@@ -186,12 +169,12 @@ public partial class RecordingService : IDisposable
         SetState(RecordingState.Recording);
     }
 
-    public async Task StopAsync()
+    public async Task<bool> StopAsync()
     {
         lock (_stateLock)
         {
             if (_state == RecordingState.Idle || _state == RecordingState.Stopping)
-            { Logger.Warn("StopAsync: already stopped"); return; }
+            { Logger.Warn("StopAsync: already stopped"); return false; }
         }
         Logger.Debug("RecordingService.StopAsync");
         SetState(RecordingState.Stopping);
@@ -202,7 +185,7 @@ public partial class RecordingService : IDisposable
 
         // 停止定时器
         _progressTimer?.Dispose(); _progressTimer = null;
-        _flushTimer?.Dispose();    _flushTimer = null;
+        _flushTimer?.Dispose(); _flushTimer = null;
 
         Logger.Debug($"RecordingService: stats mic={_totalBytesMic}, loopback={_totalBytesLoopback}, written={_totalBytesWritten}");
 
@@ -280,14 +263,15 @@ public partial class RecordingService : IDisposable
 
         Cleanup();
         SetState(RecordingState.Idle);
+        return true;
     }
 
-    public async Task DiscardAsync()
+    public async Task<bool> DiscardAsync()
     {
         lock (_stateLock)
         {
             if (_state == RecordingState.Idle || _state == RecordingState.Stopping)
-            { Logger.Warn("DiscardAsync: already stopped"); return; }
+            { Logger.Warn("DiscardAsync: already stopped"); return false; }
         }
         Logger.Debug("RecordingService.DiscardAsync");
         SetState(RecordingState.Stopping);
@@ -295,7 +279,7 @@ public partial class RecordingService : IDisposable
         try { _micCapture?.StopRecording(); } catch { }
         try { _loopbackCapture?.StopRecording(); } catch { }
         _progressTimer?.Dispose(); _progressTimer = null;
-        _flushTimer?.Dispose();    _flushTimer = null;
+        _flushTimer?.Dispose(); _flushTimer = null;
 
         await Task.Delay(200);
 
@@ -311,6 +295,7 @@ public partial class RecordingService : IDisposable
         Cleanup();
         SetState(RecordingState.Idle);
         Logger.Debug("RecordingService.DiscardAsync: done");
+        return true;
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -333,18 +318,18 @@ public partial class RecordingService : IDisposable
     private void Cleanup()
     {
         Logger.Debug("RecordingService.Cleanup");
-        _micCapture?.Dispose();     _micCapture = null;
+        _micCapture?.Dispose(); _micCapture = null;
         _loopbackCapture?.Dispose(); _loopbackCapture = null;
-        _loopbackBuffer   = null;
+        _loopbackBuffer = null;
         _loopbackConverted = null;
-        _micBuffer        = null;
+        _micBuffer = null;
         lock (_writeLock)
         {
             _mp3Writer?.Dispose(); _mp3Writer = null;
             _mp3FileStream?.Dispose(); _mp3FileStream = null;
         }
         _progressTimer?.Dispose(); _progressTimer = null;
-        _flushTimer?.Dispose();    _flushTimer = null;
+        _flushTimer?.Dispose(); _flushTimer = null;
     }
 
     public void Dispose()

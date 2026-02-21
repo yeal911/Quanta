@@ -13,6 +13,7 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using NAudio.Lame;
 using Quanta.Helpers;
+using Quanta.Core.Interfaces;
 using Quanta.Models;
 
 namespace Quanta.Services;
@@ -26,7 +27,7 @@ public partial class RecordingService
     private bool InitializeAndStartCapture()
     {
         var source = _settings.Source;
-        int channels   = Math.Min(Math.Max(_settings.Channels, 1), 2); // clamp 1-2
+        int channels = Math.Min(Math.Max(_settings.Channels, 1), 2); // clamp 1-2
         int sampleRate = _settings.SampleRate;
 
         // LameMP3FileWriter 只支持 16-bit PCM 输入
@@ -56,7 +57,7 @@ public partial class RecordingService
                 {
                     Logger.Warn($"RecordingService: cannot set mic format ({ex.Message}), using native: {_micCapture.WaveFormat}");
                 }
-                _micCapture.DataAvailable    += OnMicDataAvailable;
+                _micCapture.DataAvailable += OnMicDataAvailable;
                 _micCapture.RecordingStopped += OnCaptureStopped;
             }
 
@@ -114,7 +115,7 @@ public partial class RecordingService
                 _loopbackConverted = sp.ToWaveProvider16();
                 Logger.Debug("RecordingService: loopback conversion chain ready");
 
-                _loopbackCapture.DataAvailable    += OnLoopbackDataAvailable;
+                _loopbackCapture.DataAvailable += OnLoopbackDataAvailable;
                 _loopbackCapture.RecordingStopped += OnCaptureStopped;
             }
 
@@ -171,11 +172,11 @@ public partial class RecordingService
         }
 
         // ── 启动采集 ──────────────────────────────────────────────────
-        _startTime       = DateTime.Now;
-        _pausedDuration  = TimeSpan.Zero;
-        _totalBytesMic   = 0;
+        _startTime = DateTime.Now;
+        _pausedDuration = TimeSpan.Zero;
+        _totalBytesMic = 0;
         _totalBytesLoopback = 0;
-        _totalBytesWritten  = 0;
+        _totalBytesWritten = 0;
 
         try { _micCapture?.StartRecording(); Logger.Debug("RecordingService: mic started"); }
         catch (NAudio.MmException ex)
@@ -282,13 +283,13 @@ public partial class RecordingService
             _loopbackCapture = null;
             if (old != null)
             {
-                old.DataAvailable    -= OnLoopbackDataAvailable;
+                old.DataAvailable -= OnLoopbackDataAvailable;
                 old.RecordingStopped -= OnCaptureStopped;
                 try { old.Dispose(); } catch { }
             }
 
             // 2. 创建新实例（自动绑定当前默认输出设备），立即读取设备名
-            var newCapture  = new WasapiLoopbackCapture();
+            var newCapture = new WasapiLoopbackCapture();
             try
             {
                 using var e2 = new MMDeviceEnumerator();
@@ -296,9 +297,9 @@ public partial class RecordingService
                 _speakerDeviceName = d2.FriendlyName;
             }
             catch { _speakerDeviceName = null; }
-            var nativeFmt   = newCapture.WaveFormat;
-            int channels    = _writeFormat.Channels;
-            int sampleRate  = _writeFormat.SampleRate;
+            var nativeFmt = newCapture.WaveFormat;
+            int channels = _writeFormat.Channels;
+            int sampleRate = _writeFormat.SampleRate;
             Logger.Debug($"RecordingService: new loopback native format: {nativeFmt}");
 
             // 3. 重建格式转换链
@@ -324,14 +325,14 @@ public partial class RecordingService
             // 4. 在 _writeLock 内原子替换转换链（避免 DrainMicAndLoopbackToMp3 读到半初始化状态）
             lock (_writeLock)
             {
-                _loopbackBuffer    = newBuffer;
+                _loopbackBuffer = newBuffer;
                 _loopbackConverted = newConverted;
             }
 
             // 5. 绑定事件、启动新采集
             // 先清标志再 StartRecording：若新实例立刻失败（设备仍在重置），
             // OnCaptureStopped 能正常调度下一次重试而不被 Interlocked 阻挡。
-            newCapture.DataAvailable    += OnLoopbackDataAvailable;
+            newCapture.DataAvailable += OnLoopbackDataAvailable;
             newCapture.RecordingStopped += OnCaptureStopped;
             _loopbackCapture = newCapture;
             Interlocked.Exchange(ref _loopbackRestarting, 0); // 清标志（StartRecording 前）
@@ -368,7 +369,7 @@ public partial class RecordingService
             _micCapture = null;
             if (old != null)
             {
-                old.DataAvailable    -= OnMicDataAvailable;
+                old.DataAvailable -= OnMicDataAvailable;
                 old.RecordingStopped -= OnCaptureStopped;
                 try { old.Dispose(); } catch { }
             }
@@ -401,7 +402,7 @@ public partial class RecordingService
 
             // 4. 绑定事件、启动新采集
             // 先清标志再 StartRecording：若新实例立刻失败，OnCaptureStopped 能正常调度下一次重试。
-            newCapture.DataAvailable    += OnMicDataAvailable;
+            newCapture.DataAvailable += OnMicDataAvailable;
             newCapture.RecordingStopped += OnCaptureStopped;
             _micCapture = newCapture;
             Interlocked.Exchange(ref _micRestarting, 0); // 清标志（StartRecording 前）

@@ -134,9 +134,9 @@ public class RecordCommandData : INotifyPropertyChanged
     /// <summary>录制源对应的 Emoji 图标：Mic=🎙，Speaker=🔊，Mic&amp;Speaker=🎙🔊</summary>
     public string SourceIcon => _source switch
     {
-        "Speaker"     => "🔊",
+        "Speaker" => "🔊",
         "Mic&Speaker" => "🎙🔊",
-        _             => "🎙"
+        _ => "🎙"
     };
 
     /// <summary>输出格式</summary>
@@ -218,10 +218,10 @@ public class ColorInfo
 {
     /// <summary>HEX格式</summary>
     public string Hex { get; set; } = "";
-    
+
     /// <summary>RGB格式</summary>
     public string Rgb { get; set; } = "";
-    
+
     /// <summary>HSL格式</summary>
     public string Hsl { get; set; } = "";
 }

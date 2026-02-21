@@ -6,6 +6,7 @@
 
 using System.IO;
 using System.Text.Json;
+using Quanta.Core.Constants;
 using Quanta.Models;
 
 namespace Quanta.Services;
@@ -20,11 +21,7 @@ public class CommandService
     /// <summary>
     /// JSON 序列化/反序列化选项，启用缩进格式化和属性名大小写不敏感
     /// </summary>
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true
-    };
+    private static readonly JsonSerializerOptions JsonOptions = JsonDefaults.Standard;
 
     /// <summary>
     /// 将命令列表导出到指定的 JSON 文件。

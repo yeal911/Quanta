@@ -6,6 +6,7 @@
 
 using System.IO;
 using System.Text.Json;
+using Quanta.Core.Constants;
 using Quanta.Models;
 
 namespace Quanta.Services;
@@ -80,16 +81,16 @@ public class ClipboardHistoryService
 
             return new SearchResult
             {
-                Index      = idx + 1,
-                Title      = preview,
-                Subtitle   = FormatTime(entry.Time),
-                Type       = SearchResultType.Calculator, // 复用 Calculator 的复制逻辑
-                IconText   = "📋",
+                Index = idx + 1,
+                Title = preview,
+                Subtitle = FormatTime(entry.Time),
+                Type = SearchResultType.Calculator, // 复用 Calculator 的复制逻辑
+                IconText = "📋",
                 GroupLabel = "Clip",
                 GroupOrder = 0,          // 剪贴板历史排在最前面
                 MatchScore = 1000 - idx, // 越新分数越高
-                Path       = string.Empty,
-                Data       = new CommandResult { Success = true, Output = entry.Text }
+                Path = string.Empty,
+                Data = new CommandResult { Success = true, Output = entry.Text }
             };
         }).ToList();
     }
@@ -128,8 +129,7 @@ public class ClipboardHistoryService
             lock (_lock) { snapshot = _history.ToList(); }
 
             Directory.CreateDirectory(Path.GetDirectoryName(_storagePath)!);
-            var json = JsonSerializer.Serialize(snapshot,
-                new JsonSerializerOptions { WriteIndented = false });
+            var json = JsonSerializer.Serialize(snapshot, JsonDefaults.Standard);
             File.WriteAllText(_storagePath, json);
         }
         catch { /* 保存失败时静默忽略 */ }

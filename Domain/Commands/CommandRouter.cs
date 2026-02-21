@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // 文件名: CommandRouter.cs
 // 文件描述: 命令路由服务，负责解析用户输入并将其分发到对应的命令处理器。
 //           支持 PowerShell 命令执行、数学表达式计算和浏览器搜索三种命令类型。
@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Quanta.Core.Constants;
 using Quanta.Models;
 
 namespace Quanta.Services;
@@ -31,216 +32,15 @@ public interface ICommandHandler
     Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker);
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// 数学表达式解析器（递归下降），支持 +、-、*、/、%、^ 和括号
-// 优先级（由低到高）：加减 < 乘除模 < 幂 < 一元符号 < 括号/数字
-// ═════════════════════════════════════════════════════════════════════════════
-internal static class MathParser
-{
-    public static double Evaluate(string expression)
-    {
-        string expr = expression.Replace(" ", "");
-        int pos = 0;
-        double result = ParseAddSub(expr, ref pos);
-        if (pos != expr.Length)
-            throw new FormatException($"Unexpected character '{expr[pos]}' at position {pos}");
-        return result;
-    }
-
-    private static double ParseAddSub(string expr, ref int pos)
-    {
-        double result = ParseMulDiv(expr, ref pos);
-        while (pos < expr.Length && (expr[pos] == '+' || expr[pos] == '-'))
-        {
-            char op = expr[pos++];
-            double right = ParseMulDiv(expr, ref pos);
-            result = op == '+' ? result + right : result - right;
-        }
-        return result;
-    }
-
-    private static double ParseMulDiv(string expr, ref int pos)
-    {
-        double result = ParsePow(expr, ref pos);
-        while (pos < expr.Length && (expr[pos] == '*' || expr[pos] == '/' || expr[pos] == '%'))
-        {
-            char op = expr[pos++];
-            double right = ParsePow(expr, ref pos);
-            result = op == '*' ? result * right
-                   : op == '/' ? result / right
-                   : result % right;
-        }
-        return result;
-    }
-
-    private static double ParsePow(string expr, ref int pos)
-    {
-        double result = ParseUnary(expr, ref pos);
-        if (pos < expr.Length && expr[pos] == '^')
-        {
-            pos++;
-            double exp = ParsePow(expr, ref pos);
-            result = Math.Pow(result, exp);
-        }
-        return result;
-    }
-
-    private static double ParseUnary(string expr, ref int pos)
-    {
-        if (pos < expr.Length && expr[pos] == '-') { pos++; return -ParseFactor(expr, ref pos); }
-        if (pos < expr.Length && expr[pos] == '+') { pos++; }
-        return ParseFactor(expr, ref pos);
-    }
-
-    private static double ParseFactor(string expr, ref int pos)
-    {
-        if (pos < expr.Length && expr[pos] == '(')
-        {
-            pos++;
-            double val = ParseAddSub(expr, ref pos);
-            if (pos < expr.Length && expr[pos] == ')') pos++;
-            return val;
-        }
-        int start = pos;
-        while (pos < expr.Length && (char.IsDigit(expr[pos]) || expr[pos] == '.')) pos++;
-        if (pos == start) throw new FormatException($"Expected number at position {pos}");
-        return double.Parse(expr.Substring(start, pos - start),
-                            System.Globalization.CultureInfo.InvariantCulture);
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// 单位换算静态工具类
-// 支持长度、重量、速度和温度的常见单位互转
-// ─────────────────────────────────────────────────────────────
-internal static class UnitConverter
-{
-    // ── 长度（基准单位：米）──────────────────────────────────
-    private static readonly Dictionary<string, double> _length = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["m"] = 1, ["meter"] = 1, ["meters"] = 1, ["米"] = 1,
-        ["km"] = 1000, ["kilometer"] = 1000, ["kilometers"] = 1000, ["千米"] = 1000, ["公里"] = 1000,
-        ["cm"] = 0.01, ["centimeter"] = 0.01, ["厘米"] = 0.01,
-        ["mm"] = 0.001, ["millimeter"] = 0.001, ["毫米"] = 0.001,
-        ["ft"] = 0.3048, ["foot"] = 0.3048, ["feet"] = 0.3048, ["英尺"] = 0.3048,
-        ["in"] = 0.0254, ["inch"] = 0.0254, ["inches"] = 0.0254, ["英寸"] = 0.0254,
-        ["mi"] = 1609.344, ["mile"] = 1609.344, ["miles"] = 1609.344, ["英里"] = 1609.344,
-        ["yd"] = 0.9144, ["yard"] = 0.9144, ["yards"] = 0.9144,
-        ["nm"] = 1852, ["nautical mile"] = 1852,
-    };
-
-    // ── 重量（基准单位：千克）────────────────────────────────
-    private static readonly Dictionary<string, double> _weight = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["kg"] = 1, ["kilogram"] = 1, ["kilograms"] = 1, ["千克"] = 1, ["公斤"] = 1,
-        ["g"] = 0.001, ["gram"] = 0.001, ["grams"] = 0.001, ["克"] = 0.001,
-        ["mg"] = 0.000001, ["milligram"] = 0.000001, ["毫克"] = 0.000001,
-        ["t"] = 1000, ["tonne"] = 1000, ["ton"] = 1000, ["吨"] = 1000,
-        ["lb"] = 0.453592, ["pound"] = 0.453592, ["pounds"] = 0.453592, ["磅"] = 0.453592,
-        ["oz"] = 0.0283495, ["ounce"] = 0.0283495, ["ounces"] = 0.0283495, ["盎司"] = 0.0283495,
-        ["jin"] = 0.5, ["斤"] = 0.5,
-        ["liang"] = 0.05, ["两"] = 0.05,
-    };
-
-    // ── 速度（基准单位：米/秒）───────────────────────────────
-    private static readonly Dictionary<string, double> _speed = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["m/s"] = 1, ["ms"] = 1, ["米每秒"] = 1,
-        ["km/h"] = 1.0 / 3.6, ["kph"] = 1.0 / 3.6, ["kmh"] = 1.0 / 3.6, ["公里每小时"] = 1.0 / 3.6,
-        ["mph"] = 0.44704, ["英里每小时"] = 0.44704,
-        ["knot"] = 0.514444, ["knots"] = 0.514444, ["节"] = 0.514444,
-    };
-
-    /// <summary>
-    /// 尝试进行单位换算，返回原始 double 值由调用方格式化。
-    /// </summary>
-    /// <param name="value">数值</param>
-    /// <param name="from">源单位</param>
-    /// <param name="to">目标单位</param>
-    /// <param name="result">换算后的原始数值</param>
-    /// <returns>换算是否成功</returns>
-    public static bool TryConvert(double value, string from, string to, out double result)
-    {
-        result = 0;
-
-        // 温度特殊处理
-        var tempResult = ConvertTemperature(value, from, to);
-        if (tempResult.HasValue)
-        {
-            result = tempResult.Value;
-            return true;
-        }
-
-        // 标准单位换算（长度、重量、速度）
-        foreach (var table in new[] { _length, _weight, _speed })
-        {
-            if (table.TryGetValue(from, out double fromFactor) && table.TryGetValue(to, out double toFactor))
-            {
-                result = value * fromFactor / toFactor;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// 判断单位是否为温度单位。温度转换是仿射变换，不存在线性基准换算率。
-    /// </summary>
-    internal static bool IsTemperature(string unit)
-    {
-        string norm = unit.ToLower().Trim('°', ' ');
-        return norm is "c" or "celsius" or "摄氏" or "摄氏度"
-                    or "f" or "fahrenheit" or "华氏" or "华氏度"
-                    or "k" or "kelvin" or "开" or "开尔文";
-    }
-
-    private static double? ConvertTemperature(double value, string from, string to)
-    {
-        // 归一化温度单位别名
-        string NormalizeTemp(string s) => s.ToLower().Trim(new[] { '°', ' ' }) switch
-        {
-            "c" or "celsius" or "摄氏" or "摄氏度" => "c",
-            "f" or "fahrenheit" or "华氏" or "华氏度" => "f",
-            "k" or "kelvin" or "开" or "开尔文" => "k",
-            _ => s.ToLower()
-        };
-
-        var nFrom = NormalizeTemp(from);
-        var nTo   = NormalizeTemp(to);
-        if (!new[] { "c", "f", "k" }.Contains(nFrom) || !new[] { "c", "f", "k" }.Contains(nTo))
-            return null;
-        if (nFrom == nTo) return value;
-
-        // 先转为摄氏度
-        double celsius = nFrom switch
-        {
-            "c" => value,
-            "f" => (value - 32) * 5.0 / 9,
-            "k" => value - 273.15,
-            _ => double.NaN
-        };
-        if (double.IsNaN(celsius)) return null;
-
-        // 从摄氏度转为目标单位
-        return nTo switch
-        {
-            "c" => celsius,
-            "f" => celsius * 9.0 / 5 + 32,
-            "k" => celsius + 273.15,
-            _ => double.NaN
-        };
-    }
-
-    /// <summary>
-    /// 将 double 格式化为简洁字符串（最多 2 位小数，超大/超小数用科学计数法）。
-    /// </summary>
-    internal static string FormatNumber(double n)
-    {
-        if (Math.Abs(n) >= 1e9 || (Math.Abs(n) < 0.005 && n != 0))
-            return n.ToString("G4");
-        return Math.Round(n, 2, MidpointRounding.AwayFromZero).ToString("0.##");
-    }
-}
+/// <summary>
+/// 命令路由器，负责解析用户输入的文本并路由到对应的命令处理逻辑。
+/// 支持以下命令格式：
+/// <list type="bullet">
+///   <item><description><c>&gt; command</c> — 执行 PowerShell 命令</description></item>
+///   <item><description><c>calc expression</c> — 计算数学表达式</description></item>
+///   <item><description><c>g keyword</c> — 在浏览器中进行 Google 搜索</description></item>
+/// </list>
+/// </summary>
 
 /// <summary>
 /// 命令路由器，负责解析用户输入的文本并路由到对应的命令处理逻辑。
@@ -317,12 +117,12 @@ public class CommandRouter
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     // ── 文本工具 ──────────────────────────────────────────────
-    private static readonly Regex Base64Regex      = new(@"^base64\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Base64Regex = new(@"^base64\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     private static readonly Regex Base64DecodeRegex = new(@"^base64d\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-    private static readonly Regex Md5Regex         = new(@"^md5\s+(.+)$",     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-    private static readonly Regex Sha256Regex      = new(@"^sha256\s+(.+)$",  RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-    private static readonly Regex UrlToolRegex     = new(@"^url\s+(.+)$",     RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-    private static readonly Regex JsonToolRegex    = new(@"^json\s+(.+)$",    RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Md5Regex = new(@"^md5\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex Sha256Regex = new(@"^sha256\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex UrlToolRegex = new(@"^url\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Regex JsonToolRegex = new(@"^json\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
     /// <summary>
     /// 初始化命令路由器
@@ -377,7 +177,7 @@ public class CommandRouter
             var colorResult = ConvertColor(hexMatch.Value);
             if (colorResult != null) return colorResult;
         }
-        
+
         // 尝试RGB格式
         var rgbMatch = ColorRgbRegex.Match(input);
         if (rgbMatch.Success)
@@ -385,7 +185,7 @@ public class CommandRouter
             var colorResult = ConvertColor(rgbMatch.Value);
             if (colorResult != null) return colorResult;
         }
-        
+
         // 尝试HSL格式
         var hslMatch = ColorHslRegex.Match(input);
         if (hslMatch.Success)
@@ -479,7 +279,8 @@ public class CommandRouter
             result.Data = new CommandResult { Success = true, Output = computedStr };
             _usageTracker.RecordUsage($"calc:{expression}");
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             result.Subtitle = $"Error: {ex.Message}";
             result.Data = new CommandResult { Success = false, Error = ex.Message };
         }
@@ -546,7 +347,7 @@ public class CommandRouter
             // SubtitleSmall: 双向汇率（小字体）
             // Subtitle: 时间 + 缓存标记（正常字体）
             var subtitleSmall = rateResult.UnitRate;  // 1 CNY = 0.1371 USD · 1 USD = 7.2950 CNY
-            
+
             var subtitle = "";
             if (!string.IsNullOrEmpty(rateResult.FetchTime))
             {
@@ -557,7 +358,7 @@ public class CommandRouter
                 var cacheLabel = LocalizationService.Get("ExchangeRateFromCache");
                 subtitle += string.IsNullOrEmpty(subtitle) ? cacheLabel : $" · {cacheLabel}";
             }
-            
+
             return new SearchResult
             {
                 Title = rateResult.Result,
@@ -599,7 +400,7 @@ public class CommandRouter
             int r, g, b;
             string input = colorInput.Trim();
             string inputLower = input.ToLower();
-            
+
             // 解析输入颜色
             if (inputLower.StartsWith("rgb"))
             {
@@ -637,38 +438,38 @@ public class CommandRouter
                 // HEX格式: #RRGGBB, RRGGBB, #RGB, RGB
                 string hex = input;
                 if (!hex.StartsWith("#")) hex = "#" + hex;
-                
+
                 // 处理3位Hex
                 if (hex.Length == 4)
                 {
                     hex = $"#{hex[1]}{hex[1]}{hex[2]}{hex[2]}{hex[3]}{hex[3]}";
                 }
-                
+
                 if (hex.Length != 7) return null;
-                
+
                 r = Convert.ToInt32(hex.Substring(1, 2), 16);
                 g = Convert.ToInt32(hex.Substring(3, 2), 16);
                 b = Convert.ToInt32(hex.Substring(5, 2), 16);
             }
-            
+
             // 验证RGB值
             if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
             {
                 return null;
             }
-            
+
             // RGB转HSL
             double h, s, l;
             RgbToHsl(r, g, b, out h, out s, out l);
-            
+
             // 构建三种格式的输出
             string hexStr = $"#{r:X2}{g:X2}{b:X2}";
             string rgbStr = $"rgb({r}, {g}, {b})";
             string hslStr = $"hsl({h:F0}, {s:F0}%, {l:F0}%)";
-            
+
             // 创建颜色预览
             var colorBitmap = CreateColorPreview((byte)r, (byte)g, (byte)b);
-            
+
             // 主标题显示HEX，副标题显示完整转换结果
             return new SearchResult
             {
@@ -704,13 +505,13 @@ public class CommandRouter
         double rNorm = r / 255.0;
         double gNorm = g / 255.0;
         double bNorm = b / 255.0;
-        
+
         double max = Math.Max(rNorm, Math.Max(gNorm, bNorm));
         double min = Math.Min(rNorm, Math.Min(gNorm, bNorm));
         double delta = max - min;
-        
+
         l = (max + min) / 2;
-        
+
         if (delta == 0)
         {
             h = 0;
@@ -719,7 +520,7 @@ public class CommandRouter
         else
         {
             s = l < 0.5 ? delta / (max + min) : delta / (2 - max - min);
-            
+
             if (max == rNorm)
                 h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) * 60;
             else if (max == gNorm)
@@ -739,11 +540,11 @@ public class CommandRouter
             r = g = b = (int)(l * 255);
             return;
         }
-        
+
         double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         double p = 2 * l - q;
         double hNorm = h / 360.0;
-        
+
         r = (int)(HueToRgb(p, q, hNorm + 1.0 / 3) * 255);
         g = (int)(HueToRgb(p, q, hNorm) * 255);
         b = (int)(HueToRgb(p, q, hNorm - 1.0 / 3) * 255);
@@ -766,14 +567,14 @@ public class CommandRouter
     {
         int width = 40;
         int height = 40;
-        
+
         var bitmap = new System.Windows.Media.Imaging.BitmapImage();
         using (var stream = new System.IO.MemoryStream())
         {
             // 创建BMP图像
             var bmpData = new System.Windows.Media.Imaging.WriteableBitmap(width, height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
             byte[] pixels = new byte[width * height * 4];
-            
+
             for (int i = 0; i < width * height; i++)
             {
                 int offset = i * 4;
@@ -782,21 +583,21 @@ public class CommandRouter
                 pixels[offset + 2] = r; // Red
                 pixels[offset + 3] = 255; // Alpha
             }
-            
+
             bmpData.WritePixels(new System.Windows.Int32Rect(0, 0, width, height), pixels, width * 4, 0);
-            
+
             var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
             encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmpData));
             encoder.Save(stream);
             stream.Position = 0;
-            
+
             bitmap.BeginInit();
             bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
             bitmap.StreamSource = stream;
             bitmap.EndInit();
             bitmap.Freeze();
         }
-        
+
         return bitmap;
     }
 
@@ -863,14 +664,14 @@ public class CommandRouter
     /// </summary>
     private static SearchResult MakeTextResult(string output, string label, string icon) => new()
     {
-        Title      = label,
-        Subtitle   = output,
-        Type       = SearchResultType.Calculator,
-        IconText   = icon,
+        Title = label,
+        Subtitle = output,
+        Type = SearchResultType.Calculator,
+        IconText = icon,
         GroupLabel = "Text",
         GroupOrder = 5,
         MatchScore = 2.0,
-        Data       = new CommandResult { Success = true, Output = output }
+        Data = new CommandResult { Success = true, Output = output }
     };
 
     /// <summary>Base64 编码（始终编码，无歧义）。</summary>
@@ -898,13 +699,13 @@ public class CommandRouter
         {
             return new SearchResult
             {
-                Title      = "Base64 解码失败",
-                Subtitle   = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
-                Type       = SearchResultType.Calculator,
-                IconText   = "B",
+                Title = "Base64 解码失败",
+                Subtitle = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
+                Type = SearchResultType.Calculator,
+                IconText = "B",
                 GroupLabel = "Text",
                 GroupOrder = 5,
-                Data       = new CommandResult { Success = false }
+                Data = new CommandResult { Success = false }
             };
         }
     }
@@ -946,35 +747,35 @@ public class CommandRouter
             using var doc = JsonDocument.Parse(input.Trim());
             string formatted = JsonSerializer.Serialize(
                 doc.RootElement,
-                new JsonSerializerOptions { WriteIndented = true });
+                JsonDefaults.Indented);
 
-            int lines   = formatted.Split('\n').Length;
+            int lines = formatted.Split('\n').Length;
             string preview = formatted.ReplaceLineEndings(" ");
             if (preview.Length > 120) preview = preview[..120] + "…";
 
             return new SearchResult
             {
-                Title      = $"JSON ({lines} 行)",
-                Subtitle   = preview,
-                Type       = SearchResultType.Calculator,
-                IconText   = "{",
+                Title = $"JSON ({lines} 行)",
+                Subtitle = preview,
+                Type = SearchResultType.Calculator,
+                IconText = "{",
                 GroupLabel = "Text",
                 GroupOrder = 5,
                 MatchScore = 2.0,
-                Data       = new CommandResult { Success = true, Output = formatted }
+                Data = new CommandResult { Success = true, Output = formatted }
             };
         }
         catch (JsonException ex)
         {
             return new SearchResult
             {
-                Title      = "JSON 格式错误",
-                Subtitle   = ex.Message,
-                Type       = SearchResultType.Calculator,
-                IconText   = "{",
+                Title = "JSON 格式错误",
+                Subtitle = ex.Message,
+                Type = SearchResultType.Calculator,
+                IconText = "{",
                 GroupLabel = "Text",
                 GroupOrder = 5,
-                Data       = new CommandResult { Success = false, Error = ex.Message }
+                Data = new CommandResult { Success = false, Error = ex.Message }
             };
         }
     }

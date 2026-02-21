@@ -168,7 +168,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanExecuteSelected))]
     private async Task ExecuteSelectedAsync()
     {
-        if (SelectedResult == null) 
+        if (SelectedResult == null)
         {
             Logger.Debug("ExecuteSelectedAsync: SelectedResult is null!");
             return;
@@ -289,16 +289,16 @@ public partial class MainViewModel : ObservableObject
     private void ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
-        
+
         // 应用主题
         ThemeService.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
         ToastService.Instance.SetTheme(IsDarkTheme);
-        
+
         // 持久化配置
         var config = ConfigLoader.Load();
         config.Theme = IsDarkTheme ? "Dark" : "Light";
         ConfigLoader.Save(config);
-        
+
         // 触发事件通知视图层更新（如图标）
         ThemeChanged?.Invoke(this, IsDarkTheme);
     }

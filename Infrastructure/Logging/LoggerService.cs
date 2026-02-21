@@ -9,7 +9,7 @@ namespace Quanta.Services;
 public sealed class LoggerService : IAppLogger
 {
     public void Log(string message, string level = "INFO") => Logger.Log(message, level);
-    public void Error(string message, Exception? ex = null)  => Logger.Error(message, ex);
-    public void Warn(string message)                         => Logger.Warn(message);
-    public void Debug(string message)                        => Logger.Debug(message);
+    public void Error(string message, Exception? ex = null) => Logger.Error(message, ex);
+    public void Warn(string message) => Logger.Warn(message);
+    public void Debug(string message) => Logger.Debug(message);
 }

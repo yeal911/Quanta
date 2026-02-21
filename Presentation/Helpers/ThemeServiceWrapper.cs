@@ -8,6 +8,6 @@ namespace Quanta.Services;
 /// </summary>
 public sealed class ThemeServiceWrapper : IThemeService
 {
-    public string CurrentTheme           => ThemeService.CurrentTheme;
+    public string CurrentTheme => ThemeService.CurrentTheme;
     public void ApplyTheme(string theme) => ThemeService.ApplyTheme(theme);
 }

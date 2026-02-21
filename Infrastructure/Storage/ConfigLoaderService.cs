@@ -9,7 +9,7 @@ namespace Quanta.Helpers;
 /// </summary>
 public sealed class ConfigLoaderService : IConfigLoader
 {
-    public AppConfig Load()              => ConfigLoader.Load();
-    public void Save(AppConfig config)   => ConfigLoader.Save(config);
-    public AppConfig Reload()            => ConfigLoader.Reload();
+    public AppConfig Load() => ConfigLoader.Load();
+    public void Save(AppConfig config) => ConfigLoader.Save(config);
+    public AppConfig Reload() => ConfigLoader.Reload();
 }

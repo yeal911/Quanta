@@ -46,14 +46,14 @@ public static class Logger
         get
         {
             int currentMonth = DateTime.Now.Year * 12 + DateTime.Now.Month;
-            
+
             // 如果月份变了，重新计算路径
             if (_currentLogFilePath == null || _lastLogMonth != currentMonth)
             {
                 _lastLogMonth = currentMonth;
                 _currentLogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMM}.log");
             }
-            
+
             return _currentLogFilePath;
         }
     }
@@ -68,16 +68,16 @@ public static class Logger
         // 获取 exe 所在的目录
         // 单文件发布时，需要获取实际 exe 所在目录，而不是临时解压目录
         var exeDir = AppDomain.CurrentDomain.BaseDirectory;
-        
+
         // 尝试获取实际 exe 路径（单文件发布时更准确）
         var processPath = Environment.ProcessPath;
         if (!string.IsNullOrEmpty(processPath))
         {
             exeDir = Path.GetDirectoryName(processPath) ?? exeDir;
         }
-        
+
         LogDirectory = Path.Combine(exeDir, "logs");
-        
+
         try
         {
             Directory.CreateDirectory(LogDirectory);
@@ -88,11 +88,11 @@ public static class Logger
             LogDirectory = Path.Combine(Path.GetTempPath(), "QuantaLogs");
             Directory.CreateDirectory(LogDirectory);
         }
-        
+
         // 初始化当前月份
         _lastLogMonth = DateTime.Now.Year * 12 + DateTime.Now.Month;
         _currentLogFilePath = Path.Combine(LogDirectory, $"quanta_{DateTime.Now:yyyyMM}.log");
-        
+
         // 调试：输出实际路径
         try
         {

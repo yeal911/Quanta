@@ -11,6 +11,7 @@ using System.Windows.Input;
 using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Views;
 
@@ -23,7 +24,7 @@ public partial class MainWindow
     {
         try
         {
-            if (_recordingService != null && _recordingService.State != RecordingState.Idle)
+            if (_recordingService.State != RecordingState.Idle)
             {
                 ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
                 return;
@@ -37,35 +38,30 @@ public partial class MainWindow
 
             // 保存当前配置到 AppConfig
             var config = ConfigLoader.Load();
-            config.RecordingSettings.Source   = recordData.Source;
-            config.RecordingSettings.Format   = recordData.Format;
-            config.RecordingSettings.Bitrate  = recordData.Bitrate;
+            config.RecordingSettings.Source = recordData.Source;
+            config.RecordingSettings.Format = recordData.Format;
+            config.RecordingSettings.Bitrate = recordData.Bitrate;
             config.RecordingSettings.Channels = recordData.Channels;
             config.RecordingSettings.OutputPath = recordData.OutputPath;
             ConfigLoader.Save(config);
 
-            _recordingService = new RecordingService();
+
 
             _recordingOverlay = new RecordingOverlayWindow(_recordingService, outputDir);
             _recordingOverlay.Closed += (s, e) =>
             {
                 _recordingOverlay = null;
-                if (_recordingService?.State != RecordingState.Idle)
-                    _ = _recordingService?.StopAsync();
-                _recordingService?.Dispose();
-                _recordingService = null;
+                if (_recordingService.State != RecordingState.Idle)
+                    _ = _recordingService.StopAsync();
             };
 
             bool started = await _recordingService.StartAsync(config.RecordingSettings, outputPath);
             if (!started)
             {
                 _recordingOverlay?.Close();
-                _recordingService?.Dispose();
-                _recordingService = null;
                 _recordingOverlay = null;
                 return;
             }
-
             _recordingOverlay.Dispatcher.Invoke(() => { });
             _recordingOverlay.Show();
             _recordingOverlay.ShowRecordingUI();
@@ -74,10 +70,7 @@ public partial class MainWindow
         {
             Logger.Error($"StartRecordingFromResult failed: {ex}");
             ToastService.Instance.ShowError(LocalizationService.Get("RecordError") + ": " + ex.Message);
-
             try { _recordingOverlay?.Close(); } catch { }
-            try { _recordingService?.Dispose(); } catch { }
-            _recordingService = null;
             _recordingOverlay = null;
         }
     }
@@ -172,8 +165,8 @@ public partial class MainWindow
         var config = ConfigLoader.Load();
         switch (field)
         {
-            case "Source":  config.RecordingSettings.Source  = value; break;
-            case "Format":  config.RecordingSettings.Format  = value; break;
+            case "Source": config.RecordingSettings.Source = value; break;
+            case "Format": config.RecordingSettings.Format = value; break;
             case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
         }
         ConfigLoader.Save(config);
@@ -181,7 +174,7 @@ public partial class MainWindow
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (_recordingService != null && _recordingService.State != RecordingState.Idle)
+        if (_recordingService.State != RecordingState.Idle)
         {
             ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
             e.Cancel = true;
@@ -193,10 +186,9 @@ public partial class MainWindow
     protected override void OnClosed(EventArgs e)
     {
         _clipboardMonitor.Stop();
-        if (_recordingService != null)
+        if (_recordingService.State != RecordingState.Idle)
         {
             _ = _recordingService.StopAsync();
-            _recordingService.Dispose();
         }
         _recordingOverlay?.Close();
         base.OnClosed(e);

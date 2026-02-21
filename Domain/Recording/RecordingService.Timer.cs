@@ -7,6 +7,7 @@
 using System;
 using System.IO;
 using Quanta.Helpers;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Services;
 
@@ -31,8 +32,8 @@ public partial class RecordingService
 
         ProgressUpdated?.Invoke(this, new RecordingProgressEventArgs
         {
-            Duration               = elapsed,
-            FileSizeBytes          = fileSize,
+            Duration = elapsed,
+            FileSizeBytes = fileSize,
             EstimatedCompressedBytes = estimatedCompressed
         });
     }

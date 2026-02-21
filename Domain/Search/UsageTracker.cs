@@ -7,6 +7,7 @@
 
 using System.IO;
 using System.Text.Json;
+using Quanta.Core.Constants;
 using System.Timers;
 using Quanta.Models;
 using Timer = System.Timers.Timer;
@@ -117,7 +118,7 @@ public class UsageTracker : IDisposable
 
             try
             {
-                File.WriteAllText(_dataFilePath, JsonSerializer.Serialize(_usageData, new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(_dataFilePath, JsonSerializer.Serialize(_usageData, JsonDefaults.Indented));
                 _hasChanges = false;
                 Logger.Debug("Usage data saved");
             }

@@ -53,7 +53,7 @@ internal static class AudioMixingUtils
             short sA = (i + 1 < aLen) ? BitConverter.ToInt16(a, i) : (short)0;
             short sB = (i + 1 < bLen) ? BitConverter.ToInt16(b, i) : (short)0;
             int mixed = Math.Clamp(sA + sB, short.MinValue, short.MaxValue);
-            result[i]     = (byte)(mixed & 0xFF);
+            result[i] = (byte)(mixed & 0xFF);
             result[i + 1] = (byte)((mixed >> 8) & 0xFF);
         }
         return result;

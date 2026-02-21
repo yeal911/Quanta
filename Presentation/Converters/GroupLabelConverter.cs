@@ -22,14 +22,14 @@ public class GroupLabelConverter : IValueConverter
         return (value?.ToString() ?? "") switch
         {
             "Command" => LocalizationService.Get("GroupCommand"),
-            "App"     => LocalizationService.Get("GroupApp"),
-            "File"    => LocalizationService.Get("GroupFile"),
-            "Window"  => LocalizationService.Get("GroupWindow"),
-            "Calc"    => LocalizationService.Get("GroupCalc"),
-            "Web"     => LocalizationService.Get("GroupWeb"),
-            "Text"    => LocalizationService.Get("GroupText"),
-            "Clip"    => LocalizationService.Get("GroupClip"),
-            _         => value?.ToString() ?? ""
+            "App" => LocalizationService.Get("GroupApp"),
+            "File" => LocalizationService.Get("GroupFile"),
+            "Window" => LocalizationService.Get("GroupWindow"),
+            "Calc" => LocalizationService.Get("GroupCalc"),
+            "Web" => LocalizationService.Get("GroupWeb"),
+            "Text" => LocalizationService.Get("GroupText"),
+            "Clip" => LocalizationService.Get("GroupClip"),
+            _ => value?.ToString() ?? ""
         };
     }
 

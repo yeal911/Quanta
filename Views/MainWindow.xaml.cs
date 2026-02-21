@@ -11,28 +11,16 @@
 //   MainWindow.UI.cs            ← 主题/本地化/颜色复制事件
 // ============================================================================
 
-using System;
-using System.Collections.Specialized;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Data;
-using System.Windows.Media.Animation;
 using Quanta.Helpers;
-using Quanta.Models;
 using Quanta.Services;
 using Quanta.ViewModels;
 using Quanta.Interfaces;
-using Brushes = System.Windows.Media.Brushes;
-using Color = System.Windows.Media.Color;
-using SolidColorBrush = System.Windows.Media.SolidColorBrush;
-using WpfTextBox = System.Windows.Controls.TextBox;
-using WpfBinding = System.Windows.Data.Binding;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Views;
 
@@ -66,8 +54,8 @@ public partial class MainWindow : Window, IMainWindowService
     /// <summary>执行完毕后是否需要向前台窗口发送 Ctrl+V 粘贴</summary>
     private bool _pendingPaste;
 
-    /// <summary>当前录音服务实例（录音进行中时不为 null）</summary>
-    private Services.RecordingService? _recordingService;
+    /// <summary>录音服务实例（DI 注入）</summary>
+    private readonly IRecordingService _recordingService;
 
     /// <summary>当前录音悬浮窗口</summary>
     private RecordingOverlayWindow? _recordingOverlay;
@@ -87,13 +75,15 @@ public partial class MainWindow : Window, IMainWindowService
     public MainWindow(
         MainViewModel viewModel,
         HotkeyManager hotkeyManager,
-        ClipboardMonitor clipboardMonitor)
+        ClipboardMonitor clipboardMonitor,
+        IRecordingService recordingService)
     {
         InitializeComponent();
 
         _viewModel = viewModel;
         _hotkeyManager = hotkeyManager;
         _clipboardMonitor = clipboardMonitor;
+        _recordingService = recordingService;
 
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
@@ -201,7 +191,7 @@ public partial class MainWindow : Window, IMainWindowService
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
         _trayService.CanExit = () =>
         {
-            if (_recordingService != null && _recordingService.State != Services.RecordingState.Idle)
+            if (_recordingService != null && _recordingService.State != RecordingState.Idle)
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording")));

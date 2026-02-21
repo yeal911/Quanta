@@ -7,6 +7,7 @@
 using System;
 using NAudio.Wave;
 using Quanta.Helpers;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Services;
 

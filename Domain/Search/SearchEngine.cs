@@ -1,4 +1,4 @@
-﻿/// <summary>
+/// <summary>
 /// 搜索引擎核心模块
 /// 负责处理用户输入的搜索查询，匹配自定义命令、内置命令、应用程序、文件和最近使用的文件。
 /// 提供模糊匹配评分、命令执行、文件启动等功能。
@@ -102,6 +102,16 @@ public class SearchEngine
     private int _qrCodeThreshold = 20;
 
     /// <summary>
+    /// 搜索结果评分器
+    /// </summary>
+    private readonly ISearchResultScorer _scorer;
+
+    /// <summary>
+    /// 可执行文件路径缓存
+    /// </summary>
+    private readonly IExecutablePathCache _pathCache;
+
+    /// <summary>
     /// Windows 系统内置命令列表（静态模板，不含本地化文本）
     /// Keyword 为唯一标识，Name/Description 通过 LocalizationService 动态获取
     /// </summary>
@@ -146,7 +156,7 @@ public class SearchEngine
     /// </summary>
     private List<CommandConfig> GetBuiltInCommands()
     {
-        return BuiltInCommandsTemplate.Select(cmd => 
+        return BuiltInCommandsTemplate.Select(cmd =>
         {
             var localized = new CommandConfig
             {
@@ -177,9 +187,12 @@ public class SearchEngine
         _windowManager = new WindowManager();
         _fileSearchProvider = fileSearchProvider;
         _applicationSearchProvider = new ApplicationSearchProvider();
+        _scorer = SearchResultScorer.Instance;
+        _pathCache = ExecutablePathCache.Instance;
 
         LoadCustomCommands();
     }
+
 
     /// <summary>
     /// 从配置文件加载用户自定义命令到内存
@@ -268,8 +281,8 @@ public class SearchEngine
         if (commandResult != null)
         {
             // 避免重复：如果 SearchCustomCommands 已经添加了同名的系统操作命令，则跳过
-            bool alreadyExists = customResults.Any(r => 
-                r.Type == SearchResultType.SystemAction && 
+            bool alreadyExists = customResults.Any(r =>
+                r.Type == SearchResultType.SystemAction &&
                 r.Path?.Equals(commandResult.Subtitle, StringComparison.OrdinalIgnoreCase) == true);
             if (!alreadyExists)
             {
@@ -376,20 +389,20 @@ public class SearchEngine
                 {
                     var windows = _windowManager.GetVisibleWindows();
                     var queryLower = query.ToLower();
-                    
+
                     foreach (var w in windows)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         var titleLower = w.Title.ToLower();
-                        
+
                         // 使用包含匹配
                         if (titleLower.Contains(queryLower))
                         {
                             // 完全匹配 = 1.0，前缀匹配 = 0.9，包含匹配 = 0.8
-                            double score = titleLower == queryLower ? 1.0 
-                                : titleLower.StartsWith(queryLower) ? 0.9 
+                            double score = titleLower == queryLower ? 1.0
+                                : titleLower.StartsWith(queryLower) ? 0.9
                                 : 0.8;
-                            
+
                             w.MatchScore = score;
                             w.GroupLabel = "Window";
                             w.GroupOrder = 3;
@@ -550,12 +563,12 @@ public class SearchEngine
     {
         var typeName = cmd.Type.ToLower() switch
         {
-            "url"        => "🌐 " + cmd.Name,
-            "program"    => "📦 " + cmd.Name,
-            "directory"  => "📁 " + cmd.Name,
-            "shell"      => "⚡ " + cmd.Name,
+            "url" => "🌐 " + cmd.Name,
+            "program" => "📦 " + cmd.Name,
+            "directory" => "📁 " + cmd.Name,
+            "shell" => "⚡ " + cmd.Name,
             "calculator" => "🔢 " + cmd.Name,
-            _            => cmd.Name
+            _ => cmd.Name
         };
 
         return new SearchResult
@@ -903,8 +916,8 @@ public class SearchEngine
     public async Task<bool> ExecuteCustomCommandAsync(SearchResult result, string param)
     {
         Logger.Debug($"ExecuteCustomCommandAsync called: Keyword={result.CommandConfig?.Keyword}, Type={result.CommandConfig?.Type}, Param='{param}'");
-        
-        if (result.CommandConfig == null) 
+
+        if (result.CommandConfig == null)
         {
             Logger.Debug("ExecuteCustomCommandAsync: CommandConfig is null!");
             return false;

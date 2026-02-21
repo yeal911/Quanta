@@ -56,7 +56,7 @@ public static class HighlightHelper
     /// </summary>
     private static void RefreshHighlight(TextBlock tb)
     {
-        var text  = GetText(tb)  ?? "";
+        var text = GetText(tb) ?? "";
         var query = GetQuery(tb) ?? "";
 
         tb.Inlines.Clear();
@@ -117,7 +117,7 @@ public static class HighlightHelper
     /// </summary>
     private static List<int> FindMatchIndices(string text, string query)
     {
-        var textLower  = text.ToLower();
+        var textLower = text.ToLower();
         var queryLower = query.ToLower();
 
         // 连续子串匹配（最高优先级，textLower 和 queryLower 已全部小写）

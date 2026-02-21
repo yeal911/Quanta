@@ -5,21 +5,14 @@
 //          各功能面板的具体逻辑分别位于同名 partial 文件中。
 // ============================================================================
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using Quanta.Models;
-using Quanta.Helpers;
 using Quanta.Services;
-using System.Threading.Tasks;
-using Microsoft.Win32;
 
 namespace Quanta.Views;
 
@@ -95,7 +88,7 @@ public partial class CommandSettingsWindow : Window
         RootBorder.RenderTransform = scaleTransform;
 
         RootBorder.Opacity = 0;
-        var fadeIn  = new System.Windows.Media.Animation.DoubleAnimation { From = 0,   To = 1, Duration = System.TimeSpan.FromMilliseconds(100) };
+        var fadeIn = new System.Windows.Media.Animation.DoubleAnimation { From = 0, To = 1, Duration = System.TimeSpan.FromMilliseconds(100) };
         var scaleIn = new System.Windows.Media.Animation.DoubleAnimation { From = 0.9, To = 1, Duration = System.TimeSpan.FromMilliseconds(100) };
 
         scaleTransform.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleIn);
@@ -139,21 +132,21 @@ public partial class CommandSettingsWindow : Window
     {
         _currentMenu = menuName;
 
-        MenuGeneral.Tag      = null;
-        MenuRecording.Tag    = null;
+        MenuGeneral.Tag = null;
+        MenuRecording.Tag = null;
         MenuExchangeRate.Tag = null;
-        MenuCommands.Tag     = null;
+        MenuCommands.Tag = null;
 
         FrameworkElement? currentPanel = null;
-        if      (PanelGeneral.Visibility      == Visibility.Visible) currentPanel = PanelGeneral;
-        else if (PanelRecording.Visibility    == Visibility.Visible) currentPanel = PanelRecording;
+        if (PanelGeneral.Visibility == Visibility.Visible) currentPanel = PanelGeneral;
+        else if (PanelRecording.Visibility == Visibility.Visible) currentPanel = PanelRecording;
         else if (PanelExchangeRate.Visibility == Visibility.Visible) currentPanel = PanelExchangeRate;
-        else if (PanelCommands.Visibility     == Visibility.Visible) currentPanel = PanelCommands;
+        else if (PanelCommands.Visibility == Visibility.Visible) currentPanel = PanelCommands;
 
-        PanelGeneral.Visibility      = Visibility.Collapsed;
-        PanelRecording.Visibility    = Visibility.Collapsed;
+        PanelGeneral.Visibility = Visibility.Collapsed;
+        PanelRecording.Visibility = Visibility.Collapsed;
         PanelExchangeRate.Visibility = Visibility.Collapsed;
-        PanelCommands.Visibility     = Visibility.Collapsed;
+        PanelCommands.Visibility = Visibility.Collapsed;
 
         Grid? targetPanel = null;
         switch (menuName)
@@ -208,34 +201,34 @@ public partial class CommandSettingsWindow : Window
     {
         TitleText.Text = LocalizationService.Get("SettingsTitle");
 
-        MenuGeneral.Content      = LocalizationService.Get("MenuGeneral");
-        MenuRecording.Content    = LocalizationService.Get("MenuRecording");
+        MenuGeneral.Content = LocalizationService.Get("MenuGeneral");
+        MenuRecording.Content = LocalizationService.Get("MenuRecording");
         MenuExchangeRate.Content = LocalizationService.Get("MenuExchangeRate");
-        MenuCommands.Content     = LocalizationService.Get("MenuCommands");
+        MenuCommands.Content = LocalizationService.Get("MenuCommands");
 
-        GeneralSectionLabel.Text      = LocalizationService.Get("GeneralSettings");
-        CommandsSectionLabel.Text     = LocalizationService.Get("CommandManagement");
-        RecordingSectionLabel.Text    = LocalizationService.Get("RecordingSettings");
+        GeneralSectionLabel.Text = LocalizationService.Get("GeneralSettings");
+        CommandsSectionLabel.Text = LocalizationService.Get("CommandManagement");
+        RecordingSectionLabel.Text = LocalizationService.Get("RecordingSettings");
         ExchangeRateSectionLabel.Text = LocalizationService.Get("MenuExchangeRate");
-        ExchangeRateApiHint.Text      = LocalizationService.Get("ExchangeRateApiHint");
+        ExchangeRateApiHint.Text = LocalizationService.Get("ExchangeRateApiHint");
 
-        HotkeyLabel.Text          = LocalizationService.Get("Hotkey");
-        ImportButton.Content      = LocalizationService.Get("ImportCommand");
-        ExportButton.Content      = LocalizationService.Get("ExportCommand");
+        HotkeyLabel.Text = LocalizationService.Get("Hotkey");
+        ImportButton.Content = LocalizationService.Get("ImportCommand");
+        ExportButton.Content = LocalizationService.Get("ExportCommand");
         StartWithWindowsCheck.Content = LocalizationService.Get("StartWithWindows");
-        DarkThemeCheck.Content    = LocalizationService.Get("DarkTheme");
-        MaxResultsLabel.Text      = LocalizationService.Get("MaxResults");
-        MaxResultsSuffix.Text     = LocalizationService.Get("MaxResultsSuffix");
+        DarkThemeCheck.Content = LocalizationService.Get("DarkTheme");
+        MaxResultsLabel.Text = LocalizationService.Get("MaxResults");
+        MaxResultsSuffix.Text = LocalizationService.Get("MaxResultsSuffix");
         QRCodeThresholdLabel.Text = LocalizationService.Get("QRCodeThreshold");
         QRCodeThresholdSuffix.Text = LocalizationService.Get("QRCodeThresholdSuffix");
-        LanguageLabel.Text        = LocalizationService.Get("LanguageLabel");
+        LanguageLabel.Text = LocalizationService.Get("LanguageLabel");
 
-        RecordSourceLabel.Text      = LocalizationService.Get("RecordSource")     + "：";
-        RecordFormatLabel.Text      = LocalizationService.Get("RecordFormat")     + "：";
-        RecordBitrateLabel.Text     = LocalizationService.Get("RecordBitrate")    + "：";
-        RecordChannelsLabel.Text    = LocalizationService.Get("RecordChannels")   + "：";
-        RecordOutputPathLabel.Text  = LocalizationService.Get("RecordOutputPath") + "：";
-        RecordBrowseButton.Content  = LocalizationService.Get("RecordBrowse");
+        RecordSourceLabel.Text = LocalizationService.Get("RecordSource") + "：";
+        RecordFormatLabel.Text = LocalizationService.Get("RecordFormat") + "：";
+        RecordBitrateLabel.Text = LocalizationService.Get("RecordBitrate") + "：";
+        RecordChannelsLabel.Text = LocalizationService.Get("RecordChannels") + "：";
+        RecordOutputPathLabel.Text = LocalizationService.Get("RecordOutputPath") + "：";
+        RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
         RecordEstimatedSizeLabel.Text = LocalizationService.Get("RecordEstimatedSize") + "：";
 
         PopulateLanguageComboBox();
@@ -244,17 +237,17 @@ public partial class CommandSettingsWindow : Window
         PopulateRecordBitrateCombo();
         PopulateRecordChannelsCombo();
 
-        AddButton.Content            = LocalizationService.Get("Add");
-        DeleteButton.Content         = LocalizationService.Get("Delete");
-        TestButton.Content           = LocalizationService.Get("TestCommand");
-        SaveButton.Content           = LocalizationService.Get("Save");
-        KeywordColumn.Header         = LocalizationService.Get("Keyword");
-        NameColumn.Header            = LocalizationService.Get("Name");
-        TypeColumn.Header            = LocalizationService.Get("Type");
-        PathColumn.Header            = LocalizationService.Get("Path");
-        AdminColumn.Header           = LocalizationService.Get("Admin");
-        FooterText.Text              = "";
-        CommandHintText.Text         = LocalizationService.Get("Footer");
+        AddButton.Content = LocalizationService.Get("Add");
+        DeleteButton.Content = LocalizationService.Get("Delete");
+        TestButton.Content = LocalizationService.Get("TestCommand");
+        SaveButton.Content = LocalizationService.Get("Save");
+        KeywordColumn.Header = LocalizationService.Get("Keyword");
+        NameColumn.Header = LocalizationService.Get("Name");
+        TypeColumn.Header = LocalizationService.Get("Type");
+        PathColumn.Header = LocalizationService.Get("Path");
+        AdminColumn.Header = LocalizationService.Get("Admin");
+        FooterText.Text = "";
+        CommandHintText.Text = LocalizationService.Get("Footer");
         CommandSearchPlaceholder.Text = LocalizationService.Get("SearchCommands");
     }
 

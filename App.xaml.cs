@@ -12,6 +12,7 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Quanta.Interfaces;
+using Quanta.Core.Interfaces;
 using Quanta.Services;
 using Quanta.Helpers;
 using Quanta.ViewModels;
@@ -66,6 +67,8 @@ public partial class App : System.Windows.Application
         services.AddSingleton<SearchEngine>();
         services.AddSingleton<HotkeyManager>();
         services.AddSingleton<ClipboardMonitor>();
+        // ── 录音服务 ──
+        services.AddSingleton<IRecordingService, RecordingService>();
 
         // ── 已有单例（通过工厂桥接，不改变其单例语义） ──
         services.AddSingleton(_ => ToastService.Instance);

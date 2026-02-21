@@ -9,9 +9,11 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Quanta.Core.Constants;
 using System.Threading.Tasks;
 using Quanta.Helpers;
 using Quanta.Models;
+using Quanta.Core.Interfaces;
 
 namespace Quanta.Services;
 
@@ -22,16 +24,16 @@ public class ExchangeRateResult
 {
     /// <summary>是否成功</summary>
     public bool Success { get; set; }
-    
+
     /// <summary>转换结果（如 "¥736.50 CNY"）</summary>
     public string Result { get; set; } = string.Empty;
-    
+
     /// <summary>1单位源货币对应的目标货币金额（如 "1 CNY = 0.1371 USD"）</summary>
     public string UnitRate { get; set; } = string.Empty;
-    
+
     /// <summary>汇率数据获取时间</summary>
     public string FetchTime { get; set; } = string.Empty;
-    
+
     /// <summary>是否使用了缓存数据</summary>
     public bool IsFromCache { get; set; }
 }
@@ -39,7 +41,7 @@ public class ExchangeRateResult
 /// <summary>
 /// 汇率服务类，提供货币转换功能
 /// </summary>
-public class ExchangeRateService
+public class ExchangeRateService : IExchangeRateService
 {
     private static ExchangeRateService? _instance;
     public static ExchangeRateService Instance => _instance ??= new ExchangeRateService();
@@ -47,7 +49,7 @@ public class ExchangeRateService
     private readonly HttpClient _httpClient;
     private readonly Dictionary<string, CacheEntry> _memoryCache = new();
     private readonly object _cacheLock = new();
-    
+
     /// <summary>汇率数据文件路径</summary>
     private readonly string _ratesFilePath;
 
@@ -55,10 +57,10 @@ public class ExchangeRateService
     {
         public Dictionary<string, double> Rates { get; set; } = new();
         public DateTime Expiry { get; set; }
-        
+
         /// <summary>汇率数据的实际更新时间（来自API）- DateTime格式</summary>
         public DateTime ApiUpdateTime { get; set; }
-        
+
         /// <summary>汇率数据的实际更新时间（来自API）- 原始UTC字符串</summary>
         public string? ApiUpdateTimeUtc { get; set; }
     }
@@ -80,15 +82,15 @@ public class ExchangeRateService
     {
         [JsonPropertyName("rates")]
         public Dictionary<string, double> Rates { get; set; } = new();
-        
+
         /// <summary>汇率数据的实际更新时间（来自API）- DateTime格式</summary>
         [JsonPropertyName("api_update_time")]
         public DateTime ApiUpdateTime { get; set; }
-        
+
         /// <summary>汇率数据的实际更新时间（来自API）- 原始UTC字符串</summary>
         [JsonPropertyName("api_update_time_utc")]
         public string? ApiUpdateTimeUtc { get; set; }
-        
+
         [JsonPropertyName("expiry")]
         public DateTime Expiry { get; set; }
     }
@@ -96,7 +98,7 @@ public class ExchangeRateService
     public ExchangeRateService()
     {
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        
+
         // 汇率数据保存在exe目录下
         var exeDir = AppDomain.CurrentDomain.BaseDirectory;
         if (!string.IsNullOrEmpty(Environment.ProcessPath))
@@ -109,7 +111,9 @@ public class ExchangeRateService
     /// <summary>
     /// 获取支持的货币代码列表
     /// </summary>
-    public static readonly Dictionary<string, string> SupportedCurrencies = new()
+    public Dictionary<string, string> SupportedCurrencies => _supportedCurrencies;
+
+    private static readonly Dictionary<string, string> _supportedCurrencies = new()
     {
         // 主要货币
         ["USD"] = "美元",
@@ -161,12 +165,18 @@ public class ExchangeRateService
     };
 
     /// <summary>
+    /// 获取支持的货币代码列表（静态属性，用于向后兼容）
+    /// </summary>
+    public static readonly Dictionary<string, string> SupportedCurrenciesStatic = _supportedCurrencies;
+
+
+    /// <summary>
     /// 异步获取汇率并转换为目标货币
     /// </summary>
     public async Task<ExchangeRateResult> ConvertAsync(double amount, string fromCurrency, string toCurrency)
     {
         Logger.Debug($"[ExchangeRate] ConvertAsync called: {amount} {fromCurrency} -> {toCurrency}");
-        
+
         var config = ConfigLoader.Load();
         var apiKey = config.ExchangeRateSettings?.ApiKey ?? "f02c1174e7cdfb412a48337c";
         var cacheMinutes = config.ExchangeRateSettings?.CacheMinutes ?? 60;
@@ -193,9 +203,9 @@ public class ExchangeRateService
         DateTime apiUpdateTime = DateTime.MinValue;
         string? apiUpdateTimeUtc = null;
         bool isFromCache = false;
-        
+
         var (cachedRates, cachedApiTime, cachedApiTimeUtc, cachedIsFromCache) = await GetRatesAsync(fromCurrency, apiKey, cacheMinutes);
-        
+
         if (cachedRates != null)
         {
             rates = cachedRates;
@@ -224,7 +234,7 @@ public class ExchangeRateService
             // 文件缓存也没有或过期，调用API
             Logger.Warn("[ExchangeRate] All cache failed, calling API...");
             var (apiRates, apiTime) = await FetchFromApiAsync(fromCurrency, apiKey, cacheMinutes);
-            
+
             if (apiRates != null)
             {
                 rates = apiRates;
@@ -258,14 +268,14 @@ public class ExchangeRateService
 
         double result = amount * rate;
         Logger.Debug($"[ExchangeRate] Conversion: {amount} {fromCurrency} * {rate} = {result} {toCurrency}");
-        
+
         string formattedResult = FormatCurrency(result, toCurrency);
         string unitRate = FormatUnitRate(1, fromCurrency, rate, toCurrency, reverseRate);
         // 直接使用API返回的原始时间字符串，不做任何转换
         string fetchTimeStr = apiUpdateTimeUtc ?? "";
-        
+
         Logger.Debug($"[ExchangeRate] Result: {formattedResult}, Unit: {unitRate}, Time: {fetchTimeStr}");
-        
+
         return new ExchangeRateResult
         {
             Success = true,
@@ -303,7 +313,7 @@ public class ExchangeRateService
                 }
             }
         }
-        
+
         Logger.Debug($"[ExchangeRate] Memory cache MISS for {cacheKey}");
         return Task.FromResult<(Dictionary<string, double>?, DateTime, string?, bool)>((null, now, null, false));
     }
@@ -315,25 +325,25 @@ public class ExchangeRateService
     {
         var cacheKey = baseCurrency.ToUpper();
         var now = DateTime.Now;
-        
+
         Logger.Debug($"[ExchangeRate] Fetching from API for {cacheKey}...");
 
         try
         {
             var url = $"https://v6.exchangerate-api.com/v6/{apiKey}/latest/{cacheKey}";
             Logger.Debug($"[ExchangeRate] Request URL: {url}");
-            
+
             var response = await _httpClient.GetStringAsync(url);
             Logger.Debug($"[ExchangeRate] Response received, length: {response?.Length ?? 0}");
-            
+
             if (string.IsNullOrEmpty(response))
             {
                 Logger.Warn("[ExchangeRate] API returned empty response");
                 return (null, now);
             }
-            
+
             Logger.Debug($"[ExchangeRate] Response preview: {response.Substring(0, Math.Min(200, response.Length))}...");
-            
+
             var apiResult = JsonSerializer.Deserialize<ExchangeRateApiResponse>(response);
 
             if (apiResult == null)
@@ -341,7 +351,7 @@ public class ExchangeRateService
                 Logger.Warn("[ExchangeRate] Failed to deserialize API response");
                 return (null, now);
             }
-            
+
             Logger.Debug($"[ExchangeRate] API Result: {apiResult.Result}, BaseCode: {apiResult.BaseCode}");
 
             if (apiResult?.Result != "success" || apiResult.ConversionRates == null)
@@ -360,10 +370,10 @@ public class ExchangeRateService
             {
                 apiUpdateTime = now;
             }
-            
+
             // 获取原始UTC时间字符串
             string? apiUpdateTimeUtc = apiResult.TimeLastUpdateUtc;
-            
+
             // 存入内存缓存
             var rates = apiResult.ConversionRates;
             lock (_cacheLock)
@@ -376,7 +386,7 @@ public class ExchangeRateService
                     ApiUpdateTimeUtc = apiUpdateTimeUtc
                 };
             }
-            
+
             Logger.Debug($"[ExchangeRate] Cached {rates.Count} rates for {cacheKey}, API update time: {apiUpdateTime}");
 
             // 保存到文件缓存
@@ -409,7 +419,7 @@ public class ExchangeRateService
         try
         {
             FileCacheData cacheData;
-            
+
             // 读取现有缓存
             if (File.Exists(_ratesFilePath))
             {
@@ -427,7 +437,7 @@ public class ExchangeRateService
             {
                 cacheData = new FileCacheData();
             }
-            
+
             // 更新或添加该币种的数据
             cacheData.Currencies[baseCode] = new CurrencyCacheData
             {
@@ -436,8 +446,8 @@ public class ExchangeRateService
                 ApiUpdateTimeUtc = apiUpdateTimeUtc,
                 Expiry = expiry
             };
-            
-            var newJson = JsonSerializer.Serialize(cacheData, new JsonSerializerOptions { WriteIndented = true });
+
+            var newJson = JsonSerializer.Serialize(cacheData, JsonDefaults.Indented);
             File.WriteAllText(_ratesFilePath, newJson);
             Logger.Debug($"[ExchangeRate] Saved {baseCode} rates to file, total currencies: {cacheData.Currencies.Count}");
         }
@@ -453,7 +463,7 @@ public class ExchangeRateService
     private FileCacheData? LoadFromFileCache(string baseCode)
     {
         const int cacheThresholdMinutes = 60; // 1小时内认为是有效的
-        
+
         try
         {
             if (!File.Exists(_ratesFilePath))
@@ -464,7 +474,7 @@ public class ExchangeRateService
 
             var json = File.ReadAllText(_ratesFilePath);
             var cacheData = JsonSerializer.Deserialize<FileCacheData>(json);
-            
+
             if (cacheData == null || cacheData.Currencies.Count == 0)
             {
                 Logger.Debug("[ExchangeRate] File cache is empty or invalid");
@@ -488,7 +498,7 @@ public class ExchangeRateService
             }
 
             Logger.Debug($"[ExchangeRate] File cache HIT for {upperCode}: {currencyData.Rates.Count} rates, age: {age.TotalMinutes:F1} minutes");
-            
+
             // 构建只包含请求币种的数据返回
             var result = new FileCacheData
             {
@@ -512,7 +522,7 @@ public class ExchangeRateService
     private string NormalizeCurrencyCode(string code)
     {
         code = code.Trim().ToUpper();
-        
+
         // 处理中文货币名称
         foreach (var kvp in SupportedCurrencies)
         {
@@ -521,7 +531,7 @@ public class ExchangeRateService
                 return kvp.Key;
             }
         }
-        
+
         return code;
     }
 
@@ -552,7 +562,7 @@ public class ExchangeRateService
     {
         string rateStr = rate.ToString("0.0000");
         string reverseRateStr = reverseRate.ToString("0.0000");
-        
+
         // 双向展示: 1 CNY = 0.1371 USD · 1 USD = 7.2950 CNY
         return $"1 {fromCurrency} = {rateStr} {toCurrency} · 1 {toCurrency} = {reverseRateStr} {fromCurrency}";
     }
@@ -566,7 +576,7 @@ public class ExchangeRateService
         {
             return "";
         }
-        
+
         // 使用国际化：今天是"今天 HH:mm"，昨天是"昨天 HH:mm"，其他是"MM-dd HH:mm"
         var now = DateTime.Now;
         if (apiUpdateTime.Date == now.Date)
@@ -591,17 +601,17 @@ internal class ExchangeRateApiResponse
 {
     [JsonPropertyName("result")]
     public string? Result { get; set; }
-    
+
     [JsonPropertyName("base_code")]
     public string? BaseCode { get; set; }
-    
+
     [JsonPropertyName("conversion_rates")]
     public Dictionary<string, double>? ConversionRates { get; set; }
-    
+
     /// <summary>汇率数据更新时间（Unix时间戳）</summary>
     [JsonPropertyName("time_last_update_unix")]
     public long TimeLastUpdateUnix { get; set; }
-    
+
     /// <summary>汇率数据更新时间（UTC字符串）</summary>
     [JsonPropertyName("time_last_update_utc")]
     public string? TimeLastUpdateUtc { get; set; }

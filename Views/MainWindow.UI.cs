@@ -10,6 +10,7 @@ using System.Windows.Input;
 using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
+using Quanta.Core.Interfaces;
 using WpfButton = System.Windows.Controls.Button;
 using WpfToolTip = System.Windows.Controls.ToolTip;
 
@@ -70,7 +71,7 @@ public partial class MainWindow
         {
             var langMenuItem = new MenuItem
             {
-                Header    = LocalizationService.Get(lang.Code),
+                Header = LocalizationService.Get(lang.Code),
                 IsChecked = LocalizationService.CurrentLanguage == lang.Code
             };
             langMenuItem.Click += (s, args) =>
@@ -172,7 +173,7 @@ public partial class MainWindow
         {
             var langMenuItem = new MenuItem
             {
-                Header    = LocalizationService.Get(lang.Code),
+                Header = LocalizationService.Get(lang.Code),
                 IsChecked = LocalizationService.CurrentLanguage == lang.Code
             };
             langMenuItem.Click += (s, e) =>

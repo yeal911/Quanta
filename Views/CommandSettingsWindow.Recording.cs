@@ -24,8 +24,8 @@ public partial class CommandSettingsWindow
     {
         var currentSource = GetComboTag(RecordSourceCombo) ?? "Mic";
         RecordSourceCombo.Items.Clear();
-        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMic"),        Tag = "Mic" });
-        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceSpeaker"),    Tag = "Speaker" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMic"), Tag = "Mic" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceSpeaker"), Tag = "Speaker" });
         RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMicSpeaker"), Tag = "Mic&Speaker" });
         SelectComboByTag(RecordSourceCombo, currentSource);
     }
@@ -45,9 +45,9 @@ public partial class CommandSettingsWindow
     {
         var currentBitrate = GetComboTag(RecordBitrateCombo) ?? "128";
         RecordBitrateCombo.Items.Clear();
-        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate32"),  Tag = "32" });
-        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate64"),  Tag = "64" });
-        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate96"),  Tag = "96" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate32"), Tag = "32" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate64"), Tag = "64" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate96"), Tag = "96" });
         RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate128"), Tag = "128" });
         RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate160"), Tag = "160" });
         SelectComboByTag(RecordBitrateCombo, currentBitrate);
@@ -59,7 +59,7 @@ public partial class CommandSettingsWindow
         var currentChannels = GetComboTag(RecordChannelsCombo) ?? "2";
         RecordChannelsCombo.Items.Clear();
         RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsStereo"), Tag = "2" });
-        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsMono"),   Tag = "1" });
+        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsMono"), Tag = "1" });
         SelectComboByTag(RecordChannelsCombo, currentChannels);
     }
 
@@ -73,9 +73,9 @@ public partial class CommandSettingsWindow
         var config = ConfigLoader.Load();
         var rec = config.RecordingSettings;
 
-        SelectComboByTag(RecordSourceCombo,   rec.Source);
-        SelectComboByTag(RecordFormatCombo,   rec.Format);
-        SelectComboByTag(RecordBitrateCombo,  rec.Bitrate.ToString());
+        SelectComboByTag(RecordSourceCombo, rec.Source);
+        SelectComboByTag(RecordFormatCombo, rec.Format);
+        SelectComboByTag(RecordBitrateCombo, rec.Bitrate.ToString());
         SelectComboByTag(RecordChannelsCombo, rec.Channels.ToString());
 
         RecordOutputPathBox.Text = string.IsNullOrEmpty(rec.OutputPath)
@@ -88,10 +88,10 @@ public partial class CommandSettingsWindow
     private void SaveRecordingSettings(bool showToast = false)
     {
         var config = ConfigLoader.Load();
-        config.RecordingSettings.Source     = GetComboTag(RecordSourceCombo)   ?? "Mic";
-        config.RecordingSettings.Format     = GetComboTag(RecordFormatCombo)   ?? "m4a";
-        config.RecordingSettings.Bitrate    = int.TryParse(GetComboTag(RecordBitrateCombo),  out int br) ? br : 32;
-        config.RecordingSettings.Channels   = int.TryParse(GetComboTag(RecordChannelsCombo), out int ch) ? ch : 1;
+        config.RecordingSettings.Source = GetComboTag(RecordSourceCombo) ?? "Mic";
+        config.RecordingSettings.Format = GetComboTag(RecordFormatCombo) ?? "m4a";
+        config.RecordingSettings.Bitrate = int.TryParse(GetComboTag(RecordBitrateCombo), out int br) ? br : 32;
+        config.RecordingSettings.Channels = int.TryParse(GetComboTag(RecordChannelsCombo), out int ch) ? ch : 1;
         config.RecordingSettings.OutputPath = RecordOutputPathBox.Text.Trim();
         ConfigLoader.Save(config);
 

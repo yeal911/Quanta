@@ -14,7 +14,7 @@ public sealed class LocalizationServiceWrapper : ILocalizationService
         set => LocalizationService.CurrentLanguage = value;
     }
 
-    public void LoadFromConfig()                          => LocalizationService.LoadFromConfig();
-    public string Get(string key)                         => LocalizationService.Get(key);
-    public string Get(string key, params object[] args)   => LocalizationService.Get(key, args);
+    public void LoadFromConfig() => LocalizationService.LoadFromConfig();
+    public string Get(string key) => LocalizationService.Get(key);
+    public string Get(string key, params object[] args) => LocalizationService.Get(key, args);
 }
