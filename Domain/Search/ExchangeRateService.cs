@@ -56,8 +56,11 @@ public class ExchangeRateService
         public Dictionary<string, double> Rates { get; set; } = new();
         public DateTime Expiry { get; set; }
         
-        /// <summary>汇率数据的实际更新时间（来自API）</summary>
+        /// <summary>汇率数据的实际更新时间（来自API）- DateTime格式</summary>
         public DateTime ApiUpdateTime { get; set; }
+        
+        /// <summary>汇率数据的实际更新时间（来自API）- 原始UTC字符串</summary>
+        public string? ApiUpdateTimeUtc { get; set; }
     }
 
     /// <summary>
@@ -78,9 +81,13 @@ public class ExchangeRateService
         [JsonPropertyName("rates")]
         public Dictionary<string, double> Rates { get; set; } = new();
         
-        /// <summary>汇率数据的实际更新时间（来自API）</summary>
+        /// <summary>汇率数据的实际更新时间（来自API）- DateTime格式</summary>
         [JsonPropertyName("api_update_time")]
         public DateTime ApiUpdateTime { get; set; }
+        
+        /// <summary>汇率数据的实际更新时间（来自API）- 原始UTC字符串</summary>
+        [JsonPropertyName("api_update_time_utc")]
+        public string? ApiUpdateTimeUtc { get; set; }
         
         [JsonPropertyName("expiry")]
         public DateTime Expiry { get; set; }
@@ -184,17 +191,19 @@ public class ExchangeRateService
         // 优先使用缓存数据（1小时内）
         Dictionary<string, double>? rates = null;
         DateTime apiUpdateTime = DateTime.MinValue;
+        string? apiUpdateTimeUtc = null;
         bool isFromCache = false;
         
-        var (cachedRates, cachedApiTime, cachedIsFromCache) = await GetRatesAsync(fromCurrency, apiKey, cacheMinutes);
+        var (cachedRates, cachedApiTime, cachedApiTimeUtc, cachedIsFromCache) = await GetRatesAsync(fromCurrency, apiKey, cacheMinutes);
         
         if (cachedRates != null)
         {
             rates = cachedRates;
             apiUpdateTime = cachedApiTime;
+            apiUpdateTimeUtc = cachedApiTimeUtc;
             isFromCache = cachedIsFromCache;
         }
-        
+
         if (rates == null)
         {
             // 缓存没有或过期，尝试从文件缓存获取（1小时内）
@@ -204,6 +213,7 @@ public class ExchangeRateService
             {
                 rates = currencyData.Rates;
                 apiUpdateTime = currencyData.ApiUpdateTime;
+                apiUpdateTimeUtc = currencyData.ApiUpdateTimeUtc;
                 isFromCache = true;
                 Logger.Debug("[ExchangeRate] Using file cache data");
             }
@@ -251,7 +261,8 @@ public class ExchangeRateService
         
         string formattedResult = FormatCurrency(result, toCurrency);
         string unitRate = FormatUnitRate(1, fromCurrency, rate, toCurrency, reverseRate);
-        string fetchTimeStr = FormatFetchTime(apiUpdateTime);
+        // 直接使用API返回的原始时间字符串，不做任何转换
+        string fetchTimeStr = apiUpdateTimeUtc ?? "";
         
         Logger.Debug($"[ExchangeRate] Result: {formattedResult}, Unit: {unitRate}, Time: {fetchTimeStr}");
         
@@ -268,7 +279,7 @@ public class ExchangeRateService
     /// <summary>
     /// 异步获取汇率（仅检查内存缓存，不调用API）
     /// </summary>
-    private Task<(Dictionary<string, double>? Rates, DateTime FetchTime, bool IsFromCache)> GetRatesAsync(string baseCurrency, string apiKey, int cacheMinutes)
+    private Task<(Dictionary<string, double>? Rates, DateTime FetchTime, string? FetchTimeUtc, bool IsFromCache)> GetRatesAsync(string baseCurrency, string apiKey, int cacheMinutes)
     {
         var cacheKey = baseCurrency.ToUpper();
         var now = DateTime.Now;
@@ -282,19 +293,19 @@ public class ExchangeRateService
                 if (entry.Expiry > now)
                 {
                     Logger.Debug($"[ExchangeRate] Memory cache HIT (valid) for {cacheKey}, expires at {entry.Expiry}");
-                    return Task.FromResult<(Dictionary<string, double>?, DateTime, bool)>((entry.Rates, entry.ApiUpdateTime, true));
+                    return Task.FromResult<(Dictionary<string, double>?, DateTime, string?, bool)>((entry.Rates, entry.ApiUpdateTime, entry.ApiUpdateTimeUtc, true));
                 }
                 else
                 {
                     // 过期但还有数据，返回过期标记
                     Logger.Debug($"[ExchangeRate] Memory cache HIT (expired) for {cacheKey}, expired at {entry.Expiry}");
-                    return Task.FromResult<(Dictionary<string, double>?, DateTime, bool)>((entry.Rates, entry.ApiUpdateTime, true));
+                    return Task.FromResult<(Dictionary<string, double>?, DateTime, string?, bool)>((entry.Rates, entry.ApiUpdateTime, entry.ApiUpdateTimeUtc, true));
                 }
             }
         }
         
         Logger.Debug($"[ExchangeRate] Memory cache MISS for {cacheKey}");
-        return Task.FromResult<(Dictionary<string, double>?, DateTime, bool)>((null, now, false));
+        return Task.FromResult<(Dictionary<string, double>?, DateTime, string?, bool)>((null, now, null, false));
     }
 
     /// <summary>
@@ -350,6 +361,9 @@ public class ExchangeRateService
                 apiUpdateTime = now;
             }
             
+            // 获取原始UTC时间字符串
+            string? apiUpdateTimeUtc = apiResult.TimeLastUpdateUtc;
+            
             // 存入内存缓存
             var rates = apiResult.ConversionRates;
             lock (_cacheLock)
@@ -358,14 +372,15 @@ public class ExchangeRateService
                 {
                     Rates = rates,
                     Expiry = now.AddMinutes(cacheMinutes),
-                    ApiUpdateTime = apiUpdateTime
+                    ApiUpdateTime = apiUpdateTime,
+                    ApiUpdateTimeUtc = apiUpdateTimeUtc
                 };
             }
             
             Logger.Debug($"[ExchangeRate] Cached {rates.Count} rates for {cacheKey}, API update time: {apiUpdateTime}");
 
             // 保存到文件缓存
-            SaveToFileCache(cacheKey, rates, apiUpdateTime, now.AddMinutes(cacheMinutes));
+            SaveToFileCache(cacheKey, rates, apiUpdateTime, now.AddMinutes(cacheMinutes), apiUpdateTimeUtc);
 
             return (rates, apiUpdateTime);
         }
@@ -389,7 +404,7 @@ public class ExchangeRateService
     /// <summary>
     /// 保存汇率数据到文件（支持多币种）
     /// </summary>
-    private void SaveToFileCache(string baseCode, Dictionary<string, double> rates, DateTime apiUpdateTime, DateTime expiry)
+    private void SaveToFileCache(string baseCode, Dictionary<string, double> rates, DateTime apiUpdateTime, DateTime expiry, string? apiUpdateTimeUtc = null)
     {
         try
         {
@@ -418,6 +433,7 @@ public class ExchangeRateService
             {
                 Rates = rates,
                 ApiUpdateTime = apiUpdateTime,
+                ApiUpdateTimeUtc = apiUpdateTimeUtc,
                 Expiry = expiry
             };
             

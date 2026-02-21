@@ -733,7 +733,16 @@ public partial class CommandSettingsWindow : Window
             if (LocalizationService.CurrentLanguage != langCode)
             {
                 LocalizationService.CurrentLanguage = langCode;
+                
+                // 刷新设置窗口的本地化
                 ApplyLocalization();
+                
+                // 通知主窗口刷新本地化
+                if (Owner is MainWindow mainWindow)
+                {
+                    mainWindow.RefreshLocalization();
+                }
+                
                 // 颜色已通过 DynamicResource 自动管理，无需手动重新应用主题
             }
         }
