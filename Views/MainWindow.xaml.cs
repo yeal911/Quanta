@@ -54,7 +54,7 @@ public partial class MainWindow : Window
     private TrayService? _trayService;
 
     /// <summary>剪贴板变化监听器</summary>
-    private readonly ClipboardMonitor _clipboardMonitor = new();
+    private readonly ClipboardMonitor _clipboardMonitor;
 
     /// <summary>执行完毕后是否需要向前台窗口发送 Ctrl+V 粘贴</summary>
     private bool _pendingPaste;
@@ -75,18 +75,18 @@ public partial class MainWindow : Window
     private const uint KEYEVENTF_KEYUP = 0x0002;
 
     /// <summary>
-    /// 构造函数，初始化组件并创建各服务实例。
+    /// 构造函数，通过 DI 注入所有依赖服务。
     /// </summary>
-    public MainWindow()
+    public MainWindow(
+        MainViewModel viewModel,
+        HotkeyManager hotkeyManager,
+        ClipboardMonitor clipboardMonitor)
     {
         InitializeComponent();
 
-        var usageTracker = new UsageTracker();
-        var commandRouter = new CommandRouter(usageTracker);
-        var searchEngine = new SearchEngine(usageTracker, commandRouter);
-
-        _viewModel = new MainViewModel(searchEngine, usageTracker);
-        _hotkeyManager = new HotkeyManager();
+        _viewModel = viewModel;
+        _hotkeyManager = hotkeyManager;
+        _clipboardMonitor = clipboardMonitor;
 
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;

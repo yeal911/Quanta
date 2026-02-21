@@ -116,16 +116,17 @@ public class SearchEngine
     };
 
     /// <summary>
-    /// 搜索引擎构造函数，初始化所有搜索提供程序
+    /// 搜索引擎构造函数，通过 DI 注入所有依赖
     /// </summary>
     /// <param name="usageTracker">使用频率追踪器实例</param>
     /// <param name="commandRouter">命令路由器实例</param>
-    public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter)
+    /// <param name="fileSearchProvider">文件搜索提供程序</param>
+    public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter, FileSearchProvider fileSearchProvider)
     {
         _usageTracker = usageTracker;
         _commandRouter = commandRouter;
         _windowManager = new WindowManager();
-        _fileSearchProvider = new FileSearchProvider();
+        _fileSearchProvider = fileSearchProvider;
 
         LoadCustomCommands();
     }

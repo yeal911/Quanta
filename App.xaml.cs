@@ -7,9 +7,13 @@
 using System;
 using System.Diagnostics;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Quanta.Helpers;
+using Quanta.Interfaces;
 using Quanta.Services;
+using Quanta.ViewModels;
+using Quanta.Views;
 
 namespace Quanta;
 
@@ -20,8 +24,10 @@ namespace Quanta;
 /// </summary>
 public partial class App : System.Windows.Application
 {
+    private IServiceProvider? _serviceProvider;
+
     /// <summary>
-    /// 应用启动事件处理。检查单实例约束，如果已有实例运行则关闭当前应用。
+    /// 应用启动事件处理。检查单实例约束，建立 DI 组合根，创建主窗口。
     /// </summary>
     /// <param name="e">启动事件参数</param>
     protected override void OnStartup(StartupEventArgs e)
@@ -29,6 +35,43 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         if (!EnsureSingleInstance()) { Current.Shutdown(); return; }
         ApplyStartWithWindows();
+
+        _serviceProvider = BuildServiceProvider();
+        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+        mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
+    }
+
+    /// <summary>
+    /// 构建 DI 服务容器，注册所有应用服务。
+    /// App.xaml.cs 是唯一的组合根，所有依赖关系在此声明。
+    /// </summary>
+    private static IServiceProvider BuildServiceProvider()
+    {
+        var services = new ServiceCollection();
+
+        // ── 基础设施（接口 → 包装实现，保留原静态类向后兼容） ──
+        services.AddSingleton<IAppLogger, LoggerService>();
+        services.AddSingleton<IConfigLoader, ConfigLoaderService>();
+
+        // ── 搜索提供者 ──
+        services.AddSingleton<FileSearchProvider>();
+
+        // ── 领域服务 ──
+        services.AddSingleton<UsageTracker>();
+        services.AddSingleton<CommandRouter>();
+        services.AddSingleton<SearchEngine>();
+        services.AddSingleton<HotkeyManager>();
+        services.AddSingleton<ClipboardMonitor>();
+
+        // ── 已有单例（通过工厂桥接，不改变其单例语义） ──
+        services.AddSingleton(_ => ToastService.Instance);
+        services.AddSingleton(_ => ClipboardHistoryService.Instance);
+
+        // ── UI 层 ──
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainWindow>();
+
+        return services.BuildServiceProvider();
     }
 
     /// <summary>
