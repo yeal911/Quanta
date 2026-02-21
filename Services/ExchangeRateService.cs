@@ -282,7 +282,7 @@ public class ExchangeRateService
                 if (entry.Expiry > now)
                 {
                     Logger.Debug($"[ExchangeRate] Memory cache HIT (valid) for {cacheKey}, expires at {entry.Expiry}");
-                    return Task.FromResult((entry.Rates, entry.ApiUpdateTime, true));
+                    return Task.FromResult<(Dictionary<string, double>?, DateTime, bool)>((entry.Rates, entry.ApiUpdateTime, true));
                 }
                 else
                 {

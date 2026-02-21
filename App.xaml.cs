@@ -52,6 +52,8 @@ public partial class App : System.Windows.Application
         // ── 基础设施（接口 → 包装实现，保留原静态类向后兼容） ──
         services.AddSingleton<IAppLogger, LoggerService>();
         services.AddSingleton<IConfigLoader, ConfigLoaderService>();
+        services.AddSingleton<ILocalizationService, LocalizationServiceWrapper>();
+        services.AddSingleton<IThemeService, ThemeServiceWrapper>();
 
         // ── 搜索提供者 ──
         services.AddSingleton<FileSearchProvider>();

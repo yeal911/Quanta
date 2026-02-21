@@ -226,16 +226,16 @@ public partial class RecordingOverlayWindow : Window
 
             // 读取每帧延迟
             _gifFrameDelays = new int[frameCount];
-            try
+            var delayProp = gif.GetPropertyItem(0x5100); // PropertyTagFrameDelay
+            if (delayProp?.Value is byte[] propBytes && propBytes.Length >= frameCount * 4)
             {
-                var delayProp = gif.GetPropertyItem(0x5100); // PropertyTagFrameDelay
                 for (int i = 0; i < frameCount; i++)
                 {
-                    int delay = BitConverter.ToInt32(delayProp.Value!, i * 4) * 10; // 1/100s → ms
+                    int delay = BitConverter.ToInt32(propBytes, i * 4) * 10; // 1/100s → ms
                     _gifFrameDelays[i] = Math.Max(delay, 40); // 最低 40ms
                 }
             }
-            catch
+            else
             {
                 for (int i = 0; i < frameCount; i++)
                     _gifFrameDelays[i] = 40;
