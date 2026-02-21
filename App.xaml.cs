@@ -2,16 +2,18 @@
 // 文件名：App.xaml.cs
 // 文件用途：WPF 应用程序入口类，负责应用启动时的初始化工作。
 //          实现单实例运行机制，防止同一时间运行多个 Quanta 实例。
+//          使用 Microsoft.Extensions.DependencyInjection 实现依赖注入。
 // ============================================================================
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
-using Quanta.Helpers;
 using Quanta.Interfaces;
 using Quanta.Services;
+using Quanta.Helpers;
 using Quanta.ViewModels;
 using Quanta.Views;
 
