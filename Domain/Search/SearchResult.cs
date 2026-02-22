@@ -177,6 +177,9 @@ public class RecordCommandData : INotifyPropertyChanged
     /// <summary>声道芯片 Tooltip（本地化）</summary>
     public string ChannelsTooltip => LocalizationService.Get("RecordRightClickChannels");
 
+    /// <summary>芯片操作提示文字（本地化），显示在芯片行下方</summary>
+    public string ChipHint => LocalizationService.Get("RecordChipHint");
+
     /// <summary>预览输出文件名</summary>
     public string OutputFileName
     {

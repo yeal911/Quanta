@@ -124,6 +124,9 @@ public class CommandConfig
 
     /// <summary>参数替换占位符，用于在路径或参数中动态替换用户输入</summary>
     [JsonPropertyName("ParamPlaceholder")] public string ParamPlaceholder { get; set; } = "{param}";
+
+    /// <summary>分组标识键（国际化 key），仅内置命令使用，不序列化到配置文件</summary>
+    [JsonIgnore] public string GroupKey { get; set; } = "";
 }
 
 /// <summary>

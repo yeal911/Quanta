@@ -3,6 +3,7 @@
 // 文件用途：汇率设置面板的加载与保存逻辑。
 // ============================================================================
 
+using System;
 using System.Windows;
 using Quanta.Helpers;
 using Quanta.Models;
@@ -20,6 +21,7 @@ public partial class CommandSettingsWindow
         var config = ConfigLoader.Load();
         var exchangeSettings = config.ExchangeRateSettings ?? new ExchangeRateSettings();
         ExchangeRateApiKeyBox.Text = exchangeSettings.ApiKey;
+        ExchangeRateCacheHoursBox.Text = Math.Max(1, exchangeSettings.CacheMinutes / 60).ToString();
     }
 
     /// <summary>
@@ -31,6 +33,8 @@ public partial class CommandSettingsWindow
         if (config.ExchangeRateSettings == null)
             config.ExchangeRateSettings = new ExchangeRateSettings();
         config.ExchangeRateSettings.ApiKey = ExchangeRateApiKeyBox.Text.Trim();
+        if (int.TryParse(ExchangeRateCacheHoursBox.Text.Trim(), out int hours) && hours >= 1)
+            config.ExchangeRateSettings.CacheMinutes = hours * 60;
         ConfigLoader.Save(config);
 
         if (showToast)
@@ -42,6 +46,19 @@ public partial class CommandSettingsWindow
     /// </summary>
     private void ExchangeRateApiKeyBox_LostFocus(object sender, RoutedEventArgs e)
     {
+        SaveExchangeRateSettings(showToast: true);
+    }
+
+    /// <summary>
+    /// 缓存时长输入框失焦时自动保存（值不合法则回填当前值）。
+    /// </summary>
+    private void ExchangeRateCacheHoursBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (!int.TryParse(ExchangeRateCacheHoursBox.Text.Trim(), out int hours) || hours < 1)
+        {
+            var config = ConfigLoader.Load();
+            ExchangeRateCacheHoursBox.Text = Math.Max(1, (config.ExchangeRateSettings?.CacheMinutes ?? 60) / 60).ToString();
+        }
         SaveExchangeRateSettings(showToast: true);
     }
 }

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  A lightweight Windows launcher — summon with a hotkey, fuzzy-search, execute instantly.
+  A lightweight Windows quick launcher. Summon it with a global hotkey, fuzzy search, instant execution.
 </p>
 
 ---
@@ -18,48 +18,212 @@
 
 ### Core
 
-- **Global hotkey** — default `Alt+R`, fully customizable
-- **Fuzzy search** — matches keyword, name, and description; ranked by score + usage
-- **Custom commands** — supports Url, Program, Shell, Directory, Calculator types
-- **Parameter mode** — press `Tab` to pass arguments (e.g., `g > rust`)
-- **Ctrl+Number** — `Ctrl+1~9` to instantly execute by position
-- **Single-click execution** — click any result to run it
-- **Auto-hide on blur** — clicking another window hides Quanta
+- **Global Hotkey** - Default `Alt+R`, customizable in settings
+- **Fuzzy Search** - Smart matching on keyword / name / description, supports prefix fuzzy match (type `rec` to match `record`)
+- **Grouped Results** - Results organized by category, sorted by match score within each group
+- **Custom Commands** - Supports Url, Program, Shell, Directory, Calculator types
+- **Parameter Mode** - Press `Tab` to enter parameter input (e.g. `g > rust` to Google search)
+- **Ctrl+Number** - `Ctrl+1~9` to instantly run the Nth result
+- **Auto-hide on Blur** - Hides automatically when you click elsewhere
 
-### Built-in Commands
+---
 
-| Keyword | Description | Keyword | Description |
-|---------|-------------|---------|-------------|
-| `cmd` | Command Prompt | `powershell` | PowerShell |
-| `notepad` | Notepad | `calc` | Calculator |
-| `explorer` | File Explorer | `taskmgr` | Task Manager |
-| `control` | Control Panel | `regedit` | Registry |
-| `services` | Services | `devmgmt` | Device Manager |
-| `ping` | Ping | `ipconfig` | IP Config |
-| `tracert` | Traceroute | `nslookup` | DNS Lookup |
-| `netstat` | Network Status | `mspaint` | Paint |
-| `lock` | Lock Screen | `shutdown` | Shutdown |
-| `restart` | Restart | `sleep` | Sleep |
-| `emptybin` | Empty Recycle Bin | `winrecord` | Voice Recorder |
-| `b` | Baidu Search | `g` | Google Search |
-| `gh` | GitHub Search | | |
+## Built-in Commands
+
+All built-in commands support fuzzy search matching.
+
+### Command Line
+
+| Keyword | Description |
+|---------|-------------|
+| `cmd` | Open Command Prompt |
+| `powershell` | Open PowerShell |
+
+### Applications
+
+| Keyword | Description |
+|---------|-------------|
+| `notepad` | Notepad |
+| `calc` | Windows Calculator |
+| `mspaint` | Paint |
+| `explorer` | File Explorer |
+| `winrecord` | Windows built-in Voice Recorder |
+
+### System Management
+
+| Keyword | Description |
+|---------|-------------|
+| `taskmgr` | Task Manager |
+| `devmgmt` | Device Manager |
+| `services` | Services |
+| `regedit` | Registry Editor |
+| `control` | Control Panel |
+| `emptybin` | Empty Recycle Bin |
+
+### Network Diagnostics
+
+| Keyword | Description |
+|---------|-------------|
+| `ipconfig` | View IP configuration |
+| `ping` | Ping (runs in PowerShell) |
+| `tracert` | Trace Route |
+| `nslookup` | DNS Lookup |
+| `netstat` | View network connections |
+
+### Power Management
+
+| Keyword | Description |
+|---------|-------------|
+| `lock` | Lock screen |
+| `shutdown` | Shutdown in 10 seconds |
+| `restart` | Restart in 10 seconds |
+| `sleep` | Enter sleep mode |
 
 ### Special Features
 
-- **Calculator** — type math expressions directly (e.g., `2+2`, `sqrt(16)*3`)
-- **Unit conversion** — supports length, weight, temperature, area, volume (e.g., `100 km to miles`, `100 c to f`, `1 kg to lbs`)
-- **Currency conversion** — query exchange rates (e.g., `100 usd to cny`), requires API Key
-- **Clipboard history** — type `clip` to view clipboard history with search filtering
-- **Screen recording** — type `record` to start recording (mic/speaker), supports m4a/mp3
-- **QR code generation** — text over 20 chars automatically generates QR, copied to clipboard
+| Keyword | Description |
+|---------|-------------|
+| `record` | Launch Quanta recording |
+| `clip` | Search clipboard history |
 
-### UI & Experience
+### Quanta System Commands
 
-- **Light / Dark theme** — toggle with the top-right icon, settings auto-saved
-- **Multi-language** — Chinese / English / Español, switches instantly
-- **System tray** — runs minimized; right-click for menu
-- **Auto-start** — configure to run on Windows startup
-- **Toast notifications** — success/failure feedback
+| Keyword | Description |
+|---------|-------------|
+| `setting` | Open settings |
+| `about` | About |
+| `exit` | Quit Quanta |
+| `english` | Switch UI language to English |
+| `chinese` | Switch UI language to Chinese |
+| `spanish` | Switch UI language to Spanish |
+
+---
+
+## Smart Input
+
+Type directly into the search box — no command selection needed. Results appear in real time.
+
+### Math Calculator
+
+Type any math expression:
+
+```
+2+2*3         → 8
+(100-32)/1.8  → 37.778
+2^10          → 1024
+15%4          → 3
+```
+
+Supported operators: `+ - * / % ^`, parentheses and decimals supported.
+
+### Unit Conversion
+
+Format: `value source_unit to target_unit`
+
+```
+100 km to miles    → 62.137 miles
+100 c to f         → 212 °F
+30 f to c          → -1.111 °C
+1 kg to lbs        → 2.205 lbs
+500 g to oz        → 17.637 oz
+1 gallon to l      → 3.785 l
+1 acre to m2       → 4046.856 m²
+```
+
+Supported categories: length, weight, temperature, area, volume
+
+### Currency Conversion
+
+Format: `value source_currency to target_currency` (API Key required in settings)
+
+```
+100 usd to cny     → ¥736.50 CNY
+1000 cny to jpy    → ¥20,500 JPY
+50 eur to gbp      → £42.30 GBP
+```
+
+Supports 40+ currencies. Rates cached locally (configurable duration, default 1 hour).
+
+### Color Conversion
+
+Supports HEX, RGB, HSL — auto-converts between all formats with a live color preview:
+
+```
+#E67E22            → rgb(230,126,34)  hsl(28,79%,52%)
+rgb(230,126,34)    → #E67E22  hsl(28,79%,52%)
+hsl(28,79%,52%)    → #E67E22  rgb(230,126,34)
+255,165,0          → #FFA500  hsl(38,100%,50%)
+```
+
+### Text Tools
+
+| Prefix | Function | Example |
+|--------|----------|---------|
+| `base64 text` | Base64 encode | `base64 hello` → `aGVsbG8=` |
+| `base64d text` | Base64 decode | `base64d aGVsbG8=` → `hello` |
+| `md5 text` | MD5 hash | `md5 hello` → `5d41402a...` |
+| `sha256 text` | SHA-256 hash | `sha256 hello` → `2cf24dba...` |
+| `url text` | URL encode / auto-decode | `url hello world` → `hello%20world` |
+| `json JSON` | Pretty-print JSON | `json {"a":1}` → formatted output |
+
+### Google Search
+
+Format: `g keyword`
+
+```
+g rust programming  → Opens Google search in browser
+```
+
+### PowerShell Execution
+
+Prefix `>` to run a PowerShell command directly:
+
+```
+> Get-Process      → List all processes
+> dir C:\          → List C: drive
+```
+
+### QR Code Generation
+
+Type text longer than the threshold (default 20 characters) to auto-generate a QR code copied to clipboard:
+
+```
+https://github.com/yeal911/Quanta   → QR code auto-generated
+```
+
+---
+
+## Recording
+
+Type `record` to open the recording panel:
+
+- **Source**: Microphone / Speaker (system audio) / Microphone + Speaker
+- **Format**: m4a (AAC) / mp3
+- **Bitrate**: 32 / 64 / 96 / 128 / 160 kbps
+- **Channels**: Mono / Stereo
+- **Controls**: Start → Pause / Resume → Stop; output saved to configured directory
+- **Right-click chips** to switch any parameter at any time
+
+---
+
+## Clipboard History
+
+Type `clip` or `clip keyword` to search clipboard history:
+
+- Automatically records copied text, stores up to 50 entries
+- Keyword filtering, shows the 20 most recent matches
+- Click any result to copy it back to the clipboard
+- History is persisted across restarts
+
+---
+
+## UI & Experience
+
+- **Light / Dark Theme** - Switch in settings, saved automatically
+- **Multilingual** - Chinese / English / Español, takes effect immediately
+- **System Tray** - Stays in the tray, right-click for quick actions
+- **Start with Windows** - Enable in settings
+- **Toast Notifications** - Instant feedback on success / failure
 
 ---
 
@@ -76,7 +240,7 @@
 dotnet run
 ```
 
-### Publish
+### Publish Single File
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained false
@@ -84,38 +248,7 @@ dotnet publish -c Release -r win-x64 --self-contained false
 
 ---
 
-## Usage
-
-### Basic Flow
-
-1. Launch Quanta — it hides to the system tray
-2. Press `Alt+R` to open the search box
-3. Type a keyword (e.g., `g`, `notepad`, `clip`)
-4. Navigate with arrow keys or `Ctrl+Number`
-5. Press `Enter` to execute, `Esc` to hide
-
-### Parameter Mode
-
-After matching a command, press `Tab` to pass arguments:
-
-```
-Type: g          → matches "Google Search"
-Press Tab → g >     → enter parameter mode
-Type: g > rust   → executes Google Search for "rust"
-```
-
-### Calculator & Conversions
-
-```
-Type: 2+2*3      → Result: 8
-Type: sqrt(16)   → Result: 4
-Type: 100 km to miles → Unit conversion
-Type: 100 c to f     → Temperature: 212 °F
-Type: 1 kg to lbs    → Weight: 2.205 lbs
-Type: 100 usd to cny → Currency conversion
-```
-
-### Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -123,124 +256,87 @@ Type: 100 usd to cny → Currency conversion
 | `Enter` | Execute selected command |
 | `Tab` | Enter parameter mode |
 | `Esc` | Exit parameter mode / hide window |
-| `↑` / `↓` | Navigate results |
-| `Ctrl+1~9` | Execute result at that position |
-| `Backspace` | In param mode: step back to normal search |
-
-### Command Management
-
-- **Right-click tray icon** → open Command Settings
-- Edit keyword, name, type, path directly in the table
-- Import / Export as JSON for backup
-
-### Settings
-
-| Setting | Description |
-|---------|-------------|
-| Hotkey | Custom global hotkey |
-| Theme | Light / Dark |
-| Language | 中文 / English / Español |
-| Auto-start | Run on Windows startup |
-| Max Results | Search result limit |
-| QR Threshold | Characters to trigger QR |
+| `↑` / `↓` | Move selection up / down |
+| `Ctrl+1~9` | Instantly run the Nth result |
+| `Backspace` | Return to normal search from parameter mode |
 
 ---
 
-## Configuration
+## Command Management
 
-The config file is `config.json` in the application directory.
+Open settings (`setting` or right-click tray icon) → **Commands** tab:
 
-### Command Fields
-
-| Field | Description |
-|-------|-------------|
-| `Keyword` | Search trigger word |
-| `Name` | Display name |
-| `Type` | Url / Program / Shell / Directory / Calculator |
-| `Path` | URL or executable path; supports `{param}` |
-| `Arguments` | Launch arguments |
-| `RunAsAdmin` | Run with elevated privileges |
-| `RunHidden` | Hide the console/window |
+- Edit keyword, name, type, path directly in the grid
+- Import / export as JSON for backup and migration
 
 ### Command Types
 
-| Type | Example | Result |
-|------|---------|--------|
-| `Url` | `https://google.com/search?q={param}` | Opens in browser |
-| `Program` | `notepad.exe` | Launches executable |
-| `Shell` | `ping {param}` | Runs via cmd |
-| `Directory` | `C:\Users\Public` | Opens in Explorer |
-| `Calculator` | `{param}` | Evaluates expression |
-
-### Config Example
-
-```json
-{
-  "Hotkey": {
-    "Modifier": "Alt",
-    "Key": "R"
-  },
-  "Theme": "Light",
-  "Language": "en-US",
-  "Commands": [
-    {
-      "Keyword": "g",
-      "Name": "Google Search",
-      "Type": "Url",
-      "Path": "https://www.google.com/search?q={param}"
-    },
-    {
-      "Keyword": "code",
-      "Name": "VS Code",
-      "Type": "Program",
-      "Path": "C:\\Users\\YourName\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
-    }
-  ]
-}
-```
+| Type | Description | Example |
+|------|-------------|---------|
+| `Url` | Open URL in browser (supports `{param}`) | `https://google.com/search?q={param}` |
+| `Program` | Launch a program | `notepad.exe` |
+| `Shell` | Run command in cmd | `ping {param}` |
+| `Directory` | Open folder in Explorer | `C:\Users\Public` |
+| `Calculator` | Evaluate an expression | `{param}` |
 
 ---
 
-## Architecture
+## Settings Reference
+
+| Setting | Description |
+|---------|-------------|
+| Hotkey | Global hotkey (default `Alt+R`) |
+| Theme | Light / Dark |
+| Language | Chinese / English / Español |
+| Start with Windows | Auto-run on startup |
+| Max results | Limit number of search results |
+| QR code threshold | Character count to trigger QR code generation |
+| Exchange Rate API Key | API Key from exchangerate-api.com |
+| Exchange Rate Cache | Cache duration in hours (default 1) |
+| Record source | Microphone / Speaker / Both |
+| Record format | m4a / mp3 |
+| Record bitrate | 32 / 64 / 96 / 128 / 160 kbps |
+| Record channels | Mono / Stereo |
+| Record output path | Directory for saved recordings |
+
+---
+
+## Technical Architecture
 
 ### Project Structure
 
 ```
 Quanta/
-├── App.xaml / App.xaml.cs     # Entry point
-├── Quanta.csproj              # Project config
-├── config.json                # User config
-├── Views/                     # UI layer
-│   ├── MainWindow.xaml        # Main search window
-│   ├── SettingsWindow.xaml    # Settings window
-│   └── CommandSettingsWindow.xaml  # Command management
-├── ViewModels/                # View models
-├── Models/                    # Data models
-├── Services/                  # Service layer
-├── Helpers/                   # Utilities
-├── Infrastructure/            # Infrastructure
-│   ├── Storage/              # Config storage
-│   ├── Logging/              # Logging service
-│   └── System/               # System integration
-└── Resources/                 # Resources
-    └── Themes/                # Theme files
+├── App.xaml / App.xaml.cs          # Entry point, tray, theme, lifecycle
+├── Views/                           # UI layer
+│   ├── MainWindow.xaml              # Main search window
+│   ├── RecordingOverlayWindow.xaml  # Recording overlay
+│   └── CommandSettingsWindow.xaml   # Settings (5 partial files)
+├── Domain/
+│   ├── Search/                      # Search engine, providers, result types
+│   └── Commands/                    # Command router and handlers
+├── Core/
+│   ├── Config/                      # AppConfig, ConfigLoader
+│   └── Services/                    # RecordingService, ToastService
+├── Infrastructure/
+│   ├── System/                      # Clipboard history, window management
+│   └── Logging/
+├── Presentation/
+│   └── Helpers/                     # LocalizationService
+└── Resources/
+    └── Themes/                      # LightTheme.xaml, DarkTheme.xaml
 ```
 
 ### Tech Stack
 
 | Item | Technology |
-|------|------------|
+|------|-----------|
 | Framework | .NET 8.0 / WPF |
-| Architecture | MVVM |
+| Architecture | MVVM (CommunityToolkit.Mvvm) |
 | Language | C# |
-| UI | WPF |
-
-### Dependencies
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| CommunityToolkit.Mvvm | 8.2.2 | MVVM Framework |
-| System.Drawing.Common | 8.0.0 | Graphics Processing |
+| Audio | NAudio (WASAPI) |
+| QR Code | QRCoder |
+| Exchange Rate | exchangerate-api.com |
 
 ---
 

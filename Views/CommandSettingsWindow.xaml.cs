@@ -211,6 +211,9 @@ public partial class CommandSettingsWindow : Window
         RecordingSectionLabel.Text = LocalizationService.Get("RecordingSettings");
         ExchangeRateSectionLabel.Text = LocalizationService.Get("MenuExchangeRate");
         ExchangeRateApiHint.Text = LocalizationService.Get("ExchangeRateApiHint");
+        ExchangeRateCacheLabel.Text = LocalizationService.Get("ExchangeRateCacheLabel");
+        ExchangeRateCacheUnit.Text = LocalizationService.Get("ExchangeRateCacheUnit");
+        ExchangeRateCacheHint.Text = LocalizationService.Get("ExchangeRateCacheHint");
 
         HotkeyLabel.Text = LocalizationService.Get("Hotkey");
         ImportButton.Content = LocalizationService.Get("ImportCommand");

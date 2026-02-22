@@ -311,8 +311,8 @@
 
                                     <!-- Description -->
                                     <StackPanel Grid.Column="5" Margin="8,0,0,0" VerticalAlignment="Center">
-                                        <!-- SubtitleSmall (larger font for exchange rate) -->
-                                        <TextBlock Text="{Binding SubtitleSmall}" FontSize="12" Foreground="{DynamicResource SecondaryText}"
+                                        <!-- SubtitleSmall: 汇率转换结果数字（大字加粗） -->
+                                        <TextBlock Text="{Binding SubtitleSmall}" FontSize="16" Foreground="{DynamicResource PrimaryText}"
                                                    TextTrimming="CharacterEllipsis" FontWeight="SemiBold">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -327,8 +327,8 @@
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                        <!-- Subtitle (smaller font for time/cache) -->
-                                        <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="{DynamicResource TertiaryText}"
+                                        <!-- Subtitle: 单位汇率 + 时间戳（小字） -->
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="9" Foreground="{DynamicResource TertiaryText}"
                                                    TextTrimming="CharacterEllipsis">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -448,6 +448,12 @@
                                                 </StackPanel>
                                             </Border>
                                         </WrapPanel>
+
+                                        <!-- 操作提示：右键芯片切换参数 -->
+                                        <TextBlock Text="{Binding RecordData.ChipHint}"
+                                                   FontSize="9" FontStyle="Italic"
+                                                   Foreground="{DynamicResource TertiaryText}"
+                                                   Opacity="0.65" Margin="0,0,0,3"/>
 
                                         <!-- 输出路径（只读显示） -->
                                         <TextBlock Text="{Binding RecordData.OutputFileName}"

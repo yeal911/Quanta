@@ -87,7 +87,7 @@ public class ClipboardHistoryService : IClipboardHistoryService
                 Subtitle = FormatTime(entry.Time),
                 Type = SearchResultType.Calculator, // 复用 Calculator 的复制逻辑
                 IconText = "📋",
-                GroupLabel = "Clip",
+                GroupLabel = LocalizationService.Get("GroupClip"),
                 GroupOrder = 0,          // 剪贴板历史排在最前面
                 MatchScore = 1000 - idx, // 越新分数越高
                 Path = string.Empty,

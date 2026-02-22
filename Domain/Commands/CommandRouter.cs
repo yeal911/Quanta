@@ -343,33 +343,25 @@ public class CommandRouter
 
         if (rateResult.Success)
         {
-            // 成功，显示转换结果
-            // SubtitleSmall: 双向汇率（小字体）
-            // Subtitle: 时间 + 缓存标记（正常字体）
-            var subtitleSmall = rateResult.UnitRate;  // 1 CNY = 0.1371 USD · 1 USD = 7.2950 CNY
-
-            var subtitle = "";
+            // SubtitleSmall: 转换结果数字（大字显示）
+            // Subtitle: 单位汇率 + 时间戳（小字）
+            var subtitle = rateResult.UnitRate;
             if (!string.IsNullOrEmpty(rateResult.FetchTime))
-            {
-                subtitle = rateResult.FetchTime;
-            }
+                subtitle += $"  ·  {rateResult.FetchTime}";
             if (rateResult.IsFromCache)
-            {
-                var cacheLabel = LocalizationService.Get("ExchangeRateFromCache");
-                subtitle += string.IsNullOrEmpty(subtitle) ? cacheLabel : $" · {cacheLabel}";
-            }
+                subtitle += $"  {LocalizationService.Get("ExchangeRateFromCache")}";
 
             return new SearchResult
             {
-                Title = rateResult.Result,
-                Subtitle = subtitle,
-                SubtitleSmall = subtitleSmall,
+                Title = $"{amount} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}",
+                SubtitleSmall = rateResult.Result,   // 结果数字（大字显示）
+                Subtitle = subtitle,                  // 单位汇率 + 时间（小字）
                 Type = SearchResultType.Calculator,
                 GroupLabel = "",
                 GroupOrder = 0,
                 MatchScore = 1.0,
                 IconText = "💱",
-                QueryMatch = rateResult.Result
+                QueryMatch = rateResult.Result       // 点击复制结果数字
             };
         }
         else
@@ -668,8 +660,8 @@ public class CommandRouter
         Subtitle = output,
         Type = SearchResultType.Calculator,
         IconText = icon,
-        GroupLabel = "Text",
-        GroupOrder = 5,
+        GroupLabel = LocalizationService.Get("GroupText"),
+        GroupOrder = 6,
         MatchScore = 2.0,
         Data = new CommandResult { Success = true, Output = output }
     };
@@ -703,8 +695,8 @@ public class CommandRouter
                 Subtitle = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
                 Type = SearchResultType.Calculator,
                 IconText = "B",
-                GroupLabel = "Text",
-                GroupOrder = 5,
+                GroupLabel = LocalizationService.Get("GroupText"),
+                GroupOrder = 6,
                 Data = new CommandResult { Success = false }
             };
         }
@@ -759,8 +751,8 @@ public class CommandRouter
                 Subtitle = preview,
                 Type = SearchResultType.Calculator,
                 IconText = "{",
-                GroupLabel = "Text",
-                GroupOrder = 5,
+                GroupLabel = LocalizationService.Get("GroupText"),
+                GroupOrder = 6,
                 MatchScore = 2.0,
                 Data = new CommandResult { Success = true, Output = formatted }
             };
@@ -773,8 +765,8 @@ public class CommandRouter
                 Subtitle = ex.Message,
                 Type = SearchResultType.Calculator,
                 IconText = "{",
-                GroupLabel = "Text",
-                GroupOrder = 5,
+                GroupLabel = LocalizationService.Get("GroupText"),
+                GroupOrder = 6,
                 Data = new CommandResult { Success = false, Error = ex.Message }
             };
         }

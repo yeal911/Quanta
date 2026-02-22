@@ -12,7 +12,7 @@
     <SolidColorBrush x:Key="MenuItemSelectedBackground" Color="#1E3A5F"/>
     <SolidColorBrush x:Key="ListItemSelectedBackground" Color="#2D2D2D"/>
     <SolidColorBrush x:Key="ListItemHoverBackground"    Color="#252525"/>
-    <SolidColorBrush x:Key="AltRowBackground"           Color="#2D2D2D"/>
+    <SolidColorBrush x:Key="AltRowBackground"           Color="#3A3A3A"/>
     <SolidColorBrush x:Key="RowSelectedBackground"      Color="#FFD700"/>
     <SolidColorBrush x:Key="RowHoverBackground"         Color="#323232"/>
 
@@ -46,17 +46,103 @@
         <Setter Property="SelectionBrush" Value="#4D0078D4"/>
     </Style>
 
-    <!-- ComboBox（折叠状态）-->
+    <!-- ComboBox：自定义 ControlTemplate，彻底修复折叠态和展开态背景色 -->
     <Style TargetType="ComboBox">
-        <Setter Property="Foreground"  Value="{StaticResource PrimaryText}"/>
-        <Setter Property="Background"  Value="{StaticResource WindowBackground}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource InputBorder}"/>
+        <Setter Property="Foreground"               Value="{StaticResource PrimaryText}"/>
+        <Setter Property="Background"               Value="#2C2C2C"/>
+        <Setter Property="BorderBrush"              Value="{StaticResource InputBorder}"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <Setter Property="Padding"                  Value="6,2"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="MaxDropDownHeight"        Value="220"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid x:Name="root">
+                        <!-- 折叠态外观：暗色背景 + 边框 -->
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="18"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- 已选中的内容 -->
+                                <ContentPresenter Grid.Column="0"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  IsHitTestVisible="False"
+                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                <!-- 下拉箭头 -->
+                                <Path x:Name="arrow" Grid.Column="1"
+                                      Data="M 0 0 L 4 4 L 8 0 Z"
+                                      Fill="#909090"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsHitTestVisible="False"/>
+                                <!-- 透明 ToggleButton，覆盖全区域捕获点击 -->
+                                <ToggleButton Grid.ColumnSpan="2"
+                                              Focusable="False" ClickMode="Press"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+                        <!-- 下拉弹出列表 -->
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Bottom"
+                               PopupAnimation="Slide">
+                            <Border Background="#2C2C2C"
+                                    BorderBrush="{StaticResource InputBorder}"
+                                    BorderThickness="1"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="220">
+                                <ScrollViewer CanContentScroll="True">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"
+                                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#707070"/>
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="#808080"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <!-- ComboBoxItem（下拉条目）-->
+    <!-- ComboBoxItem（下拉条目，含高亮触发器）-->
     <Style TargetType="ComboBoxItem">
         <Setter Property="Foreground"  Value="{StaticResource PrimaryText}"/>
-        <Setter Property="Background"  Value="{StaticResource WindowBackground}"/>
+        <Setter Property="Background"  Value="Transparent"/>
+        <Setter Property="Padding"     Value="6,4"/>
+        <Style.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter Property="Background" Value="{StaticResource MenuItemSelectedBackground}"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- CheckBox -->

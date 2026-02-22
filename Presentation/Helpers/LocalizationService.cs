@@ -184,6 +184,8 @@ public static class LocalizationService
             ["ThemeSwitch"] = "切换主题",
             // 右键复制
             ["RightClickCopy"] = "右键复制",
+            // 录音命令提示
+            ["RecordChipHint"] = "右键点击可切换参数",
             // 录音悬浮窗按钮提示
             ["RecordPauseTooltip"] = "暂停录音",
             ["RecordResumeTooltip"] = "继续录音",
@@ -200,6 +202,9 @@ public static class LocalizationService
             ["RecordChannelsMono"] = "单声道",
             // API Key 标签
             ["ExchangeRateApiKeyLabel"] = "API Key (ExchangeRate-API)",
+            ["ExchangeRateCacheLabel"] = "缓存时长",
+            ["ExchangeRateCacheUnit"] = "小时",
+            ["ExchangeRateCacheHint"] = "超过此时长将重新调接口更新汇率",
             // ── 内置命令名称 ──────────────────────────────────────────
             ["BuiltinCmd_cmd"] = "命令提示符",
             ["BuiltinCmd_powershell"] = "PowerShell",
@@ -257,7 +262,22 @@ public static class LocalizationService
             ["BuiltinDesc_english"] = "切换界面语言为英文",
             ["BuiltinDesc_chinese"] = "切换界面语言为中文",
             ["BuiltinDesc_spanish"] = "切换界面语言为西班牙语",
-            ["BuiltinDesc_winrecord"] = "打开 Windows 内置录音机"
+            ["BuiltinDesc_winrecord"] = "打开 Windows 内置录音机",
+            // ── 新增分组 key ─────────────────────────────────────────
+            ["GroupSystem"] = "系统",
+            ["GroupNetwork"] = "网络",
+            ["GroupPower"] = "电源",
+            ["GroupQuanta"] = "Quanta",
+            ["GroupFeature"] = "功能",
+            ["GroupQRCode"] = "二维码",
+            // 二维码 Toast 提示
+            ["QRCodeGenerate"] = "生成二维码",
+            ["QRCodeCopied"] = "二维码已复制到剪贴板",
+            // record / clip 内置命令
+            ["BuiltinCmd_record"] = "录音",
+            ["BuiltinDesc_record"] = "开始一段新录音",
+            ["BuiltinCmd_clip"] = "剪贴板历史",
+            ["BuiltinDesc_clip"] = "搜索剪贴板历史记录"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -418,6 +438,8 @@ public static class LocalizationService
             ["ThemeSwitch"] = "Toggle theme",
             // Right-click copy
             ["RightClickCopy"] = "Right-click to copy",
+            // Recording chip hint
+            ["RecordChipHint"] = "Right-click to change settings",
             // Recording overlay button tooltips
             ["RecordPauseTooltip"] = "Pause recording",
             ["RecordResumeTooltip"] = "Resume recording",
@@ -434,6 +456,9 @@ public static class LocalizationService
             ["RecordChannelsMono"] = "Mono",
             // API Key label
             ["ExchangeRateApiKeyLabel"] = "API Key (ExchangeRate-API)",
+            ["ExchangeRateCacheLabel"] = "Cache Duration",
+            ["ExchangeRateCacheUnit"] = "hours",
+            ["ExchangeRateCacheHint"] = "Rates older than this duration will be refreshed from API",
             // ── Built-in Command Names ─────────────────────────────────────
             ["BuiltinCmd_cmd"] = "Command Prompt",
             ["BuiltinCmd_powershell"] = "PowerShell",
@@ -491,7 +516,22 @@ public static class LocalizationService
             ["BuiltinDesc_english"] = "Switch language to English",
             ["BuiltinDesc_chinese"] = "Switch language to Chinese",
             ["BuiltinDesc_spanish"] = "Switch language to Spanish",
-            ["BuiltinDesc_winrecord"] = "Open Windows Recorder"
+            ["BuiltinDesc_winrecord"] = "Open Windows Recorder",
+            // ── New group keys ──────────────────────────────────────────
+            ["GroupSystem"] = "System",
+            ["GroupNetwork"] = "Network",
+            ["GroupPower"] = "Power",
+            ["GroupQuanta"] = "Quanta",
+            ["GroupFeature"] = "Features",
+            ["GroupQRCode"] = "QR Code",
+            // QR Code toast
+            ["QRCodeGenerate"] = "Generate QR Code",
+            ["QRCodeCopied"] = "QR code copied to clipboard",
+            // record / clip built-in commands
+            ["BuiltinCmd_record"] = "Recording",
+            ["BuiltinDesc_record"] = "Start a new recording",
+            ["BuiltinCmd_clip"] = "Clipboard History",
+            ["BuiltinDesc_clip"] = "Search clipboard history"
         },
         ["es-ES"] = new Dictionary<string, string>
         {
@@ -653,6 +693,8 @@ public static class LocalizationService
             // Right-click copy
             ["RightClickCopy"] = "Clic derecho para copiar",
             // Recording overlay button tooltips
+            // Sugerencia de chip de grabación
+            ["RecordChipHint"] = "Clic derecho para cambiar ajustes",
             ["RecordPauseTooltip"] = "Pausar grabación",
             ["RecordResumeTooltip"] = "Reanudar grabación",
             ["RecordStopTooltip"] = "Detener grabación",
@@ -668,6 +710,9 @@ public static class LocalizationService
             ["RecordChannelsMono"] = "Mono",
             // API Key 标签
             ["ExchangeRateApiKeyLabel"] = "Clave API (ExchangeRate-API)",
+            ["ExchangeRateCacheLabel"] = "Duración de Caché",
+            ["ExchangeRateCacheUnit"] = "horas",
+            ["ExchangeRateCacheHint"] = "Las tasas más antiguas serán actualizadas desde la API",
             // ── 内置命令名称 ──────────────────────────────────────────
             ["BuiltinCmd_cmd"] = "Símbolo del Sistema",
             ["BuiltinCmd_powershell"] = "PowerShell",
@@ -725,7 +770,22 @@ public static class LocalizationService
             ["BuiltinDesc_english"] = "Cambiar idioma a Inglés",
             ["BuiltinDesc_chinese"] = "Cambiar idioma a Chino",
             ["BuiltinDesc_spanish"] = "Cambiar idioma a Español",
-            ["BuiltinDesc_winrecord"] = "Abrir Grabadora de Windows"
+            ["BuiltinDesc_winrecord"] = "Abrir Grabadora de Windows",
+            // ── Nuevas claves de grupo ──────────────────────────────────
+            ["GroupSystem"] = "Sistema",
+            ["GroupNetwork"] = "Red",
+            ["GroupPower"] = "Energía",
+            ["GroupQuanta"] = "Quanta",
+            ["GroupFeature"] = "Funciones",
+            ["GroupQRCode"] = "Código QR",
+            // Toast QR Code
+            ["QRCodeGenerate"] = "Generar Código QR",
+            ["QRCodeCopied"] = "Código QR copiado al portapapeles",
+            // Comandos internos record / clip
+            ["BuiltinCmd_record"] = "Grabación",
+            ["BuiltinDesc_record"] = "Iniciar una nueva grabación",
+            ["BuiltinCmd_clip"] = "Historial del portapapeles",
+            ["BuiltinDesc_clip"] = "Buscar historial del portapapeles"
         }
     };
 

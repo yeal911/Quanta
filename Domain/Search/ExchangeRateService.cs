@@ -233,12 +233,13 @@ public class ExchangeRateService : IExchangeRateService
         {
             // 文件缓存也没有或过期，调用API
             Logger.Warn("[ExchangeRate] All cache failed, calling API...");
-            var (apiRates, apiTime) = await FetchFromApiAsync(fromCurrency, apiKey, cacheMinutes);
+            var (apiRates, apiTime, apiTimeUtc) = await FetchFromApiAsync(fromCurrency, apiKey, cacheMinutes);
 
             if (apiRates != null)
             {
                 rates = apiRates;
                 apiUpdateTime = apiTime;
+                apiUpdateTimeUtc = apiTimeUtc;
                 isFromCache = false;
             }
         }
@@ -271,8 +272,10 @@ public class ExchangeRateService : IExchangeRateService
 
         string formattedResult = FormatCurrency(result, toCurrency);
         string unitRate = FormatUnitRate(1, fromCurrency, rate, toCurrency, reverseRate);
-        // 直接使用API返回的原始时间字符串，不做任何转换
-        string fetchTimeStr = apiUpdateTimeUtc ?? "";
+        // 转换为本地时区时间并格式化
+        string fetchTimeStr = apiUpdateTime != DateTime.MinValue
+            ? apiUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+            : "";
 
         Logger.Debug($"[ExchangeRate] Result: {formattedResult}, Unit: {unitRate}, Time: {fetchTimeStr}");
 
@@ -321,7 +324,7 @@ public class ExchangeRateService : IExchangeRateService
     /// <summary>
     /// 直接从API获取汇率（不检查缓存）
     /// </summary>
-    private async Task<(Dictionary<string, double>? Rates, DateTime ApiUpdateTime)> FetchFromApiAsync(string baseCurrency, string apiKey, int cacheMinutes)
+    private async Task<(Dictionary<string, double>? Rates, DateTime ApiUpdateTime, string? ApiUpdateTimeUtc)> FetchFromApiAsync(string baseCurrency, string apiKey, int cacheMinutes)
     {
         var cacheKey = baseCurrency.ToUpper();
         var now = DateTime.Now;
@@ -339,7 +342,7 @@ public class ExchangeRateService : IExchangeRateService
             if (string.IsNullOrEmpty(response))
             {
                 Logger.Warn("[ExchangeRate] API returned empty response");
-                return (null, now);
+                return (null, now, null);
             }
 
             Logger.Debug($"[ExchangeRate] Response preview: {response.Substring(0, Math.Min(200, response.Length))}...");
@@ -349,7 +352,7 @@ public class ExchangeRateService : IExchangeRateService
             if (apiResult == null)
             {
                 Logger.Warn("[ExchangeRate] Failed to deserialize API response");
-                return (null, now);
+                return (null, now, null);
             }
 
             Logger.Debug($"[ExchangeRate] API Result: {apiResult.Result}, BaseCode: {apiResult.BaseCode}");
@@ -357,7 +360,7 @@ public class ExchangeRateService : IExchangeRateService
             if (apiResult?.Result != "success" || apiResult.ConversionRates == null)
             {
                 Logger.Warn($"[ExchangeRate] API returned error result: {apiResult?.Result}");
-                return (null, now);
+                return (null, now, null);
             }
 
             // 从API响应获取汇率更新时间
@@ -392,22 +395,22 @@ public class ExchangeRateService : IExchangeRateService
             // 保存到文件缓存
             SaveToFileCache(cacheKey, rates, apiUpdateTime, now.AddMinutes(cacheMinutes), apiUpdateTimeUtc);
 
-            return (rates, apiUpdateTime);
+            return (rates, apiUpdateTime, apiUpdateTimeUtc);
         }
         catch (HttpRequestException hex)
         {
             Logger.Error($"[ExchangeRate] HTTP请求失败: {hex.Message}", hex);
-            return (null, now);
+            return (null, now, null);
         }
         catch (TaskCanceledException tex)
         {
             Logger.Error($"[ExchangeRate] 请求超时: {tex.Message}", tex);
-            return (null, now);
+            return (null, now, null);
         }
         catch (Exception ex)
         {
             Logger.Error($"[ExchangeRate] API异常: {ex.Message}", ex);
-            return (null, now);
+            return (null, now, null);
         }
     }
 

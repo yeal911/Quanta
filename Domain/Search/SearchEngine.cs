@@ -114,41 +114,47 @@ public class SearchEngine
     /// <summary>
     /// Windows 系统内置命令列表（静态模板，不含本地化文本）
     /// Keyword 为唯一标识，Name/Description 通过 LocalizationService 动态获取
+    /// GroupKey 用于确定搜索结果分组（国际化 key）
     /// </summary>
     private static readonly List<CommandConfig> BuiltInCommandsTemplate = new()
     {
-        // ── 常用系统工具 ──────────────────────────────────────────
-        new() { Keyword = "cmd",       Type = "Program", Path = "cmd.exe",      Arguments = "/k {param}", IsBuiltIn = true },
-        new() { Keyword = "powershell",Type = "Program", Path = "powershell.exe",Arguments = "-NoExit -Command \"{param}\"", IsBuiltIn = true },
-        new() { Keyword = "notepad",   Type = "Program", Path = "notepad.exe",  Arguments = "{param}",    IsBuiltIn = true },
-        new() { Keyword = "calc",      Type = "Program", Path = "calc.exe",                               IsBuiltIn = true },
-        new() { Keyword = "mspaint",   Type = "Program", Path = "mspaint.exe",                            IsBuiltIn = true },
-        new() { Keyword = "explorer",  Type = "Program", Path = "explorer.exe", Arguments = "{param}",    IsBuiltIn = true },
-        new() { Keyword = "taskmgr",   Type = "Program", Path = "taskmgr.exe",                            IsBuiltIn = true },
-        new() { Keyword = "devmgmt",   Type = "Program", Path = "devmgmt.msc",                            IsBuiltIn = true },
-        new() { Keyword = "services",  Type = "Program", Path = "services.msc",                           IsBuiltIn = true },
-        new() { Keyword = "regedit",   Type = "Program", Path = "regedit.exe",                            IsBuiltIn = true },
-        new() { Keyword = "control",   Type = "Program", Path = "control.exe",                            IsBuiltIn = true },
-        // ── 网络诊断 ──────────────────────────────────────────────
-        new() { Keyword = "ipconfig",  Type = "Shell",   Path = "ipconfig {param}",                       IsBuiltIn = true },
-        new() { Keyword = "ping",      Type = "Shell",   Path = "ping {param}",                           IsBuiltIn = true },
-        new() { Keyword = "tracert",   Type = "Shell",   Path = "tracert {param}",                        IsBuiltIn = true },
-        new() { Keyword = "nslookup",  Type = "Shell",   Path = "nslookup {param}",                       IsBuiltIn = true },
-        new() { Keyword = "netstat",   Type = "Shell",   Path = "netstat -an",                            IsBuiltIn = true },
-        // ── 系统控制 ──────────────────────────────────────────────
-        new() { Keyword = "lock",      Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", IsBuiltIn = true, IconPath = "🔒", RunHidden = true },
-        new() { Keyword = "shutdown",   Type = "Shell",   Path = "shutdown /s /t 10",                      IsBuiltIn = true, IconPath = "⏻", RunHidden = true },
-        new() { Keyword = "restart",   Type = "Shell",   Path = "shutdown /r /t 10",                      IsBuiltIn = true, IconPath = "🔄", RunHidden = true },
-        new() { Keyword = "sleep",     Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", Description = "进入睡眠状态", IsBuiltIn = true, IconPath = "💤", RunHidden = true },
-        new() { Keyword = "emptybin",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", IsBuiltIn = true, IconPath = "🗑", RunHidden = true },
-        // ── 应用快捷命令 ──────────────────────────────────────────
-        new() { Keyword = "setting",   Type = "SystemAction", Path = "setting", IsBuiltIn = true, IconPath = "⚙" },
-        new() { Keyword = "exit",      Type = "SystemAction", Path = "exit", IsBuiltIn = true, IconPath = "✕" },
-        new() { Keyword = "about",     Type = "SystemAction", Path = "about", IsBuiltIn = true, IconPath = "ℹ" },
-        new() { Keyword = "english",   Type = "SystemAction", Path = "english", IsBuiltIn = true, IconPath = "EN" },
-        new() { Keyword = "chinese",   Type = "SystemAction", Path = "chinese", IsBuiltIn = true, IconPath = "中" },
-        new() { Keyword = "spanish",   Type = "SystemAction", Path = "spanish", IsBuiltIn = true, IconPath = "ES" },
-        new() { Keyword = "winrecord", Type = "SystemAction", Path = "winrecord", IsBuiltIn = true, IconPath = "🎤" },
+        // ── 常用系统工具（GroupCommand） ──────────────────────────
+        new() { Keyword = "cmd",       Type = "Program", Path = "cmd.exe",      Arguments = "/k {param}", IsBuiltIn = true, GroupKey = "GroupCommand" },
+        new() { Keyword = "powershell",Type = "Program", Path = "powershell.exe",Arguments = "-NoExit -Command \"{param}\"", IsBuiltIn = true, GroupKey = "GroupCommand" },
+        new() { Keyword = "notepad",   Type = "Program", Path = "notepad.exe",  Arguments = "{param}",    IsBuiltIn = true, GroupKey = "GroupApp" },
+        new() { Keyword = "calc",      Type = "Program", Path = "calc.exe",                               IsBuiltIn = true, GroupKey = "GroupApp" },
+        new() { Keyword = "mspaint",   Type = "Program", Path = "mspaint.exe",                            IsBuiltIn = true, GroupKey = "GroupApp" },
+        new() { Keyword = "explorer",  Type = "Program", Path = "explorer.exe", Arguments = "{param}",    IsBuiltIn = true, GroupKey = "GroupFile" },
+        new() { Keyword = "taskmgr",   Type = "Program", Path = "taskmgr.exe",                            IsBuiltIn = true, GroupKey = "GroupSystem" },
+        new() { Keyword = "devmgmt",   Type = "Program", Path = "devmgmt.msc",                            IsBuiltIn = true, GroupKey = "GroupSystem" },
+        new() { Keyword = "services",  Type = "Program", Path = "services.msc",                           IsBuiltIn = true, GroupKey = "GroupSystem" },
+        new() { Keyword = "regedit",   Type = "Program", Path = "regedit.exe",                            IsBuiltIn = true, GroupKey = "GroupSystem" },
+        new() { Keyword = "control",   Type = "Program", Path = "control.exe",                            IsBuiltIn = true, GroupKey = "GroupSystem" },
+        // ── 网络诊断（GroupNetwork） ──────────────────────────────
+        new() { Keyword = "ipconfig",  Type = "Shell",   Path = "ipconfig {param}",                       IsBuiltIn = true, GroupKey = "GroupNetwork" },
+        new() { Keyword = "ping",      Type = "Shell",   Path = "ping {param}",                           IsBuiltIn = true, GroupKey = "GroupNetwork" },
+        new() { Keyword = "tracert",   Type = "Shell",   Path = "tracert {param}",                        IsBuiltIn = true, GroupKey = "GroupNetwork" },
+        new() { Keyword = "nslookup",  Type = "Shell",   Path = "nslookup {param}",                       IsBuiltIn = true, GroupKey = "GroupNetwork" },
+        new() { Keyword = "netstat",   Type = "Shell",   Path = "netstat -an",                            IsBuiltIn = true, GroupKey = "GroupNetwork" },
+        // ── 系统控制（GroupPower） ────────────────────────────────
+        new() { Keyword = "lock",      Type = "Program", Path = "rundll32.exe", Arguments = "user32.dll,LockWorkStation", IsBuiltIn = true, IconPath = "🔒", RunHidden = true, GroupKey = "GroupPower" },
+        new() { Keyword = "shutdown",   Type = "Shell",   Path = "shutdown /s /t 10",                      IsBuiltIn = true, IconPath = "⏻", RunHidden = true, GroupKey = "GroupPower" },
+        new() { Keyword = "restart",   Type = "Shell",   Path = "shutdown /r /t 10",                      IsBuiltIn = true, IconPath = "🔄", RunHidden = true, GroupKey = "GroupPower" },
+        new() { Keyword = "sleep",     Type = "Shell",   Path = "rundll32.exe powrprof.dll,SetSuspendState 0,1,0", IsBuiltIn = true, IconPath = "💤", RunHidden = true, GroupKey = "GroupPower" },
+        new() { Keyword = "emptybin",  Type = "Shell",   Path = "PowerShell -Command \"Clear-RecycleBin -Force -ErrorAction SilentlyContinue\"", IsBuiltIn = true, IconPath = "🗑", RunHidden = true, GroupKey = "GroupSystem" },
+        // ── Quanta 应用功能（GroupQuanta） ───────────────────────
+        new() { Keyword = "setting",   Type = "SystemAction", Path = "setting",   IsBuiltIn = true, IconPath = "⚙",  GroupKey = "GroupQuanta" },
+        new() { Keyword = "exit",      Type = "SystemAction", Path = "exit",      IsBuiltIn = true, IconPath = "✕",  GroupKey = "GroupQuanta" },
+        new() { Keyword = "about",     Type = "SystemAction", Path = "about",     IsBuiltIn = true, IconPath = "ℹ",  GroupKey = "GroupQuanta" },
+        new() { Keyword = "english",   Type = "SystemAction", Path = "english",   IsBuiltIn = true, IconPath = "EN", GroupKey = "GroupQuanta" },
+        new() { Keyword = "chinese",   Type = "SystemAction", Path = "chinese",   IsBuiltIn = true, IconPath = "中", GroupKey = "GroupQuanta" },
+        new() { Keyword = "spanish",   Type = "SystemAction", Path = "spanish",   IsBuiltIn = true, IconPath = "ES", GroupKey = "GroupQuanta" },
+        new() { Keyword = "winrecord", Type = "SystemAction", Path = "winrecord", IsBuiltIn = true, IconPath = "🎤", GroupKey = "GroupApp" },
+        // ── Quanta 特色功能（GroupFeature）──────────────────────
+        // record/clip 加入模板仅用于模糊匹配发现；实际执行逻辑由 SearchAsync 短路处理
+        // clip 使用 SystemAction，点击无效果但不会报错；用户需输入 "clip" 进入剪贴板历史
+        new() { Keyword = "record",    Type = "RecordCommand", Path = "record",   IsBuiltIn = true, IconPath = "🎙", GroupKey = "GroupFeature" },
+        new() { Keyword = "clip",      Type = "SystemAction",  Path = "clip",     IsBuiltIn = true, IconPath = "📋", GroupKey = "GroupFeature" },
     };
 
     /// <summary>
@@ -167,12 +173,32 @@ public class SearchEngine
                 IconPath = cmd.IconPath,
                 RunHidden = cmd.RunHidden,
                 IsBuiltIn = true,
+                GroupKey = cmd.GroupKey,
                 Name = LocalizationService.Get($"BuiltinCmd_{cmd.Keyword}"),
                 Description = LocalizationService.Get($"BuiltinDesc_{cmd.Keyword}")
             };
             return localized;
         }).ToList();
     }
+
+    /// <summary>
+    /// 根据分组 key 返回分组排序权重
+    /// </summary>
+    private static int GetGroupOrder(string groupKey) => groupKey switch
+    {
+        "GroupCalc"    => 0,
+        "GroupQRCode"  => 0,
+        "GroupCommand" => 1,
+        "GroupApp"     => 2,
+        "GroupSystem"  => 3,
+        "GroupNetwork" => 4,
+        "GroupPower"   => 5,
+        "GroupFeature" => 6,
+        "GroupQuanta"  => 7,
+        "GroupFile"    => 8,
+        "GroupWindow"  => 9,
+        _              => 10,
+    };
 
     /// <summary>
     /// 搜索引擎构造函数，通过 DI 注入所有依赖
@@ -286,15 +312,27 @@ public class SearchEngine
                 r.Path?.Equals(commandResult.Subtitle, StringComparison.OrdinalIgnoreCase) == true);
             if (!alreadyExists)
             {
-                // 根据类型设置分组标签：计算器为 Calc，二维码为 QRCode，系统操作为 System，网页搜索为 Web
+                // 根据类型设置分组标签（全部使用国际化 key）
                 if (commandResult.Type == SearchResultType.Calculator)
-                    commandResult.GroupLabel = "Calc";
+                {
+                    commandResult.GroupLabel = LocalizationService.Get("GroupCalc");
+                    commandResult.GroupOrder = GetGroupOrder("GroupCalc");
+                }
                 else if (commandResult.Type == SearchResultType.QRCode)
-                    commandResult.GroupLabel = "QRCode";
+                {
+                    commandResult.GroupLabel = LocalizationService.Get("GroupQRCode");
+                    commandResult.GroupOrder = GetGroupOrder("GroupQRCode");
+                }
                 else if (commandResult.Type == SearchResultType.SystemAction)
-                    commandResult.GroupLabel = LocalizationService.Get("GroupQuickCommands");
+                {
+                    commandResult.GroupLabel = LocalizationService.Get("GroupQuanta");
+                    commandResult.GroupOrder = GetGroupOrder("GroupQuanta");
+                }
                 else if (commandResult.Type == SearchResultType.WebSearch)
-                    commandResult.GroupLabel = "Web";
+                {
+                    commandResult.GroupLabel = LocalizationService.Get("GroupNetwork");
+                    commandResult.GroupOrder = GetGroupOrder("GroupNetwork");
+                }
                 // Calculator 和 Web 结果应该排在最前面（GroupOrder=0），优先级高于 App/File/Window
                 commandResult.GroupOrder = 0;
                 // 如果没有设置 MatchScore，给一个默认高分确保显示
@@ -309,12 +347,12 @@ public class SearchEngine
         {
             var qrCodeResult = new SearchResult
             {
-                Title = "生成二维码",
+                Title = LocalizationService.Get("QRCodeGenerate"),
                 Subtitle = query.Length > 50 ? query.Substring(0, 50) + "..." : query,
                 Path = query,
                 Type = SearchResultType.QRCode,
-                GroupLabel = "QRCode",
-                GroupOrder = 0,
+                GroupLabel = LocalizationService.Get("GroupQRCode"),
+                GroupOrder = GetGroupOrder("GroupQRCode"),
                 MatchScore = 1.0,
                 IconText = "📱",
                 QueryMatch = query,
@@ -354,8 +392,8 @@ public class SearchEngine
                     var appResults = await _applicationSearchProvider.SearchAsync(query, cancellationToken);
                     foreach (var r in appResults)
                     {
-                        r.GroupLabel = "Application";
-                        r.GroupOrder = 1;
+                        r.GroupLabel = LocalizationService.Get("GroupApp");
+                        r.GroupOrder = GetGroupOrder("GroupApp");
                         r.QueryMatch = query;
                         results.Add(r);
                     }
@@ -371,8 +409,8 @@ public class SearchEngine
                     var fileResults = await _fileSearchProvider.SearchAsync(query, cancellationToken);
                     foreach (var r in fileResults)
                     {
-                        r.GroupLabel = "File";
-                        r.GroupOrder = 2;
+                        r.GroupLabel = LocalizationService.Get("GroupFile");
+                        r.GroupOrder = GetGroupOrder("GroupFile");
                         r.IconText = "📄";
                         r.QueryMatch = query;
                         results.Add(r);
@@ -404,8 +442,8 @@ public class SearchEngine
                                 : 0.8;
 
                             w.MatchScore = score;
-                            w.GroupLabel = "Window";
-                            w.GroupOrder = 3;
+                            w.GroupLabel = LocalizationService.Get("GroupWindow");
+                            w.GroupOrder = GetGroupOrder("GroupWindow");
                             w.IconText = "🪟";
                             w.QueryMatch = query;
                             results.Add(w);
@@ -419,10 +457,10 @@ public class SearchEngine
             await Task.WhenAll(providerTasks);
         }
 
-        // ── 4. 每个分组内部按匹配分数降序排列，分组间按 GroupOrder 升序 ──
+        // ── 4. 按匹配分数降序排列；同分时按 GroupOrder 升序（Calculator=2.0 始终置顶）──
         var finalList = results
-            .OrderBy(r => r.GroupOrder)
-            .ThenByDescending(r => r.MatchScore)
+            .OrderByDescending(r => r.MatchScore)
+            .ThenBy(r => r.GroupOrder)
             .ThenByDescending(r => _usageTracker.GetUsageCount(r.Id))
             .Take(_maxResults)
             .ToList();
@@ -438,9 +476,9 @@ public class SearchEngine
     }
 
     /// <summary>
-    /// 在自定义命令和内置命令中搜索匹配项
-    /// 匹配逻辑按优先级排序：完全匹配(1.0) > 前缀匹配(0.95) > 包含匹配(0.9) > 名称包含(0.85) > 描述包含(0.8)
-    /// 用户自定义命令优先级高于内置命令（排列在前）。
+    /// 在自定义命令和内置命令中搜索匹配项。
+    /// 评分优先级：完全匹配(1.0) > 关键词前缀(0.93) > 名称前缀(0.88) > 关键词包含(0.78) > 名称包含(0.72) > 描述包含(0.60)
+    /// 用户自定义命令优先于内置命令（排列在前）。
     /// </summary>
     /// <param name="query">用户输入的搜索关键词</param>
     /// <returns>匹配的命令搜索结果列表</returns>
@@ -454,9 +492,18 @@ public class SearchEngine
 
         foreach (var cmd in allCommands)
         {
-            // 系统操作命令使用独立的分组标签
-            bool isSystemAction = cmd.Type.Equals("SystemAction", StringComparison.OrdinalIgnoreCase);
-            string groupLabel = isSystemAction ? LocalizationService.Get("GroupQuickCommands") : "Command";
+            // 确定结果类型和分组
+            var resultType = cmd.Type.ToLowerInvariant() switch
+            {
+                "systemaction" => SearchResultType.SystemAction,
+                "recordcommand" => SearchResultType.RecordCommand,
+                _ => SearchResultType.CustomCommand
+            };
+
+            // 分组：内置命令优先使用 GroupKey；自定义命令用 GroupCommand
+            string groupKey = !string.IsNullOrEmpty(cmd.GroupKey) ? cmd.GroupKey : "GroupCommand";
+            string groupLabel = LocalizationService.Get(groupKey);
+            int groupOrder = GetGroupOrder(groupKey);
 
             if (string.IsNullOrEmpty(query))
             {
@@ -469,11 +516,11 @@ public class SearchEngine
                     Subtitle = cmd.Name,
                     Path = cmd.Path,
                     IconText = GetIconText(cmd),
-                    Type = isSystemAction ? SearchResultType.SystemAction : SearchResultType.CustomCommand,
+                    Type = resultType,
                     CommandConfig = cmd,
                     MatchScore = 1.0,
                     GroupLabel = groupLabel,
-                    GroupOrder = 0
+                    GroupOrder = groupOrder
                 });
             }
             else
@@ -482,32 +529,44 @@ public class SearchEngine
                 double score = 0;
 
                 if (query.Equals(cmd.Keyword, StringComparison.OrdinalIgnoreCase))
-                    score = 1.0;    // 关键词完全匹配
+                    score = 1.00;   // 关键词完全匹配
                 else if (cmd.Keyword.StartsWith(query, StringComparison.OrdinalIgnoreCase))
-                    score = 0.95;   // 关键词前缀匹配
+                    score = 0.93;   // 关键词前缀匹配（如 "rec" → "record"）
+                else if (!string.IsNullOrEmpty(cmd.Name) && cmd.Name.StartsWith(query, StringComparison.OrdinalIgnoreCase))
+                    score = 0.88;   // 名称前缀匹配
                 else if (cmd.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase))
-                    score = 0.9;    // 关键词包含匹配
+                    score = 0.78;   // 关键词包含匹配
                 else if (!string.IsNullOrEmpty(cmd.Name) && cmd.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                    score = 0.85;   // 命令名称包含匹配
+                    score = 0.72;   // 命令名称包含匹配
                 else if (!string.IsNullOrEmpty(cmd.Description) && cmd.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
-                    score = 0.8;    // 命令描述包含匹配
+                    score = 0.60;   // 命令描述包含匹配
 
                 if (score > 0)
                 {
-                    results.Add(new SearchResult
+                    // record/clip 通过模糊匹配发现后，需构建完整结果
+                    if (resultType == SearchResultType.RecordCommand)
                     {
-                        Index = index++,
-                        Id = $"cmd:{cmd.Keyword}",
-                        Title = cmd.Keyword,
-                        Subtitle = cmd.Name,
-                        Path = cmd.Path,
-                        IconText = GetIconText(cmd),
-                        Type = isSystemAction ? SearchResultType.SystemAction : SearchResultType.CustomCommand,
-                        CommandConfig = cmd,
-                        MatchScore = score,
-                        GroupLabel = groupLabel,
-                        GroupOrder = 0
-                    });
+                        var recordResult = BuildRecordCommandResult("");
+                        recordResult.MatchScore = score;
+                        results.Add(recordResult);
+                    }
+                    else
+                    {
+                        results.Add(new SearchResult
+                        {
+                            Index = index++,
+                            Id = $"cmd:{cmd.Keyword}",
+                            Title = cmd.Keyword,
+                            Subtitle = cmd.Name,
+                            Path = cmd.Path,
+                            IconText = GetIconText(cmd),
+                            Type = resultType,
+                            CommandConfig = cmd,
+                            MatchScore = score,
+                            GroupLabel = groupLabel,
+                            GroupOrder = groupOrder
+                        });
+                    }
                 }
             }
         }
@@ -677,7 +736,7 @@ public class SearchEngine
                             // 将 BitmapImage 转换为 BitmapSource 并复制到剪贴板
                             System.Windows.Clipboard.SetImage(result.QRCodeImage);
                         });
-                        ToastService.Instance.ShowSuccess("二维码已复制到剪贴板");
+                        ToastService.Instance.ShowSuccess(LocalizationService.Get("QRCodeCopied"));
                     }
                     catch (Exception ex)
                     {
@@ -737,8 +796,8 @@ public class SearchEngine
             IconText = "🎙",
             Type = SearchResultType.RecordCommand,
             MatchScore = 1.0,
-            GroupLabel = LocalizationService.Get("GroupQuickCommands"),
-            GroupOrder = 0,
+            GroupLabel = LocalizationService.Get("GroupFeature"),
+            GroupOrder = GetGroupOrder("GroupFeature"),
             QueryMatch = "record",
             RecordData = recordData
         };

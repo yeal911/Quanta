@@ -112,7 +112,7 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                 <TextBlock x:Name="LanguageLabel" FontSize="12" FontFamily="微软雅黑"
                                            Foreground="{DynamicResource SecondaryText}"
-                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                 <ComboBox x:Name="LanguageComboBox" Width="100" FontSize="11" VerticalAlignment="Center"
                                           SelectionChanged="LanguageComboBox_SelectionChanged">
                                 </ComboBox>
@@ -122,7 +122,7 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                 <TextBlock x:Name="HotkeyLabel" FontSize="12" FontFamily="微软雅黑"
                                            Foreground="{DynamicResource SecondaryText}"
-                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                 <TextBox x:Name="HotkeyTextBox" Text="Alt+Space" Width="140"
                                          IsReadOnly="True" VerticalAlignment="Center" Padding="8,4"
                                          BorderThickness="1" FontSize="12" FontFamily="Consolas"
@@ -148,7 +148,7 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                 <TextBlock x:Name="MaxResultsLabel" FontSize="12" FontFamily="微软雅黑"
                                            Foreground="{DynamicResource SecondaryText}"
-                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                 <TextBox x:Name="MaxResultsBox" Width="50" Padding="4,2"
                                          FontSize="12" FontFamily="Consolas" TextAlignment="Center"
                                          BorderThickness="1" VerticalAlignment="Center"
@@ -162,7 +162,7 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                 <TextBlock x:Name="QRCodeThresholdLabel" FontSize="12" FontFamily="微软雅黑"
                                            Foreground="{DynamicResource SecondaryText}"
-                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                 <TextBox x:Name="QRCodeThresholdBox" Width="50" Padding="4,2"
                                          FontSize="12" FontFamily="Consolas" TextAlignment="Center"
                                          BorderThickness="1" VerticalAlignment="Center"
@@ -193,7 +193,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                     <TextBlock x:Name="RecordSourceLabel" FontSize="12" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource SecondaryText}"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                     <ComboBox x:Name="RecordSourceCombo" Width="120" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordSourceCombo_SelectionChanged">
                                     </ComboBox>
@@ -203,7 +203,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                     <TextBlock x:Name="RecordFormatLabel" FontSize="12" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource SecondaryText}"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                     <ComboBox x:Name="RecordFormatCombo" Width="80" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordFormatCombo_SelectionChanged">
                                     </ComboBox>
@@ -213,7 +213,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                     <TextBlock x:Name="RecordBitrateLabel" FontSize="12" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource SecondaryText}"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                     <ComboBox x:Name="RecordBitrateCombo" Width="100" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordBitrateCombo_SelectionChanged">
                                     </ComboBox>
@@ -223,7 +223,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                     <TextBlock x:Name="RecordChannelsLabel" FontSize="12" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource SecondaryText}"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                     <ComboBox x:Name="RecordChannelsCombo" Width="100" FontSize="11" VerticalAlignment="Center"
                                               SelectionChanged="RecordChannelsCombo_SelectionChanged">
                                     </ComboBox>
@@ -233,7 +233,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                                     <TextBlock x:Name="RecordOutputPathLabel" FontSize="12" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource SecondaryText}"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="100"/>
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
                                     <TextBox x:Name="RecordOutputPathBox" Width="280" FontSize="11" FontFamily="Consolas"
                                              Padding="4,2" BorderThickness="1" VerticalAlignment="Center"
                                              LostFocus="RecordOutputPathBox_LostFocus"/>
@@ -247,7 +247,7 @@
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,6">
                                     <TextBlock x:Name="RecordEstimatedSizeLabel" FontSize="11" FontFamily="微软雅黑"
                                                Foreground="{DynamicResource TertiaryText}"
-                                               VerticalAlignment="Center" Width="120"/>
+                                               VerticalAlignment="Center" Width="160"/>
                                     <TextBlock x:Name="RecordEstimatedSizeValue" FontSize="11" FontFamily="Consolas"
                                                Foreground="#E67E22" VerticalAlignment="Center"/>
                                 </StackPanel>
@@ -276,6 +276,21 @@
                                      LostFocus="ExchangeRateApiKeyBox_LostFocus"/>
                             <TextBlock x:Name="ExchangeRateApiHint" FontSize="10"
                                        Foreground="{DynamicResource TertiaryText}" Margin="0,6,0,0"/>
+
+                            <!-- 缓存时长 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,4">
+                                <TextBlock x:Name="ExchangeRateCacheLabel" FontSize="11"
+                                           Foreground="{DynamicResource SecondaryText}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="ExchangeRateCacheHoursBox" Width="60" FontSize="11"
+                                         Padding="6,4" BorderThickness="1" HorizontalAlignment="Left"
+                                         LostFocus="ExchangeRateCacheHoursBox_LostFocus"/>
+                                <TextBlock x:Name="ExchangeRateCacheUnit" FontSize="11"
+                                           Foreground="{DynamicResource TertiaryText}"
+                                           VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock x:Name="ExchangeRateCacheHint" FontSize="10"
+                                       Foreground="{DynamicResource TertiaryText}" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Grid>
 
@@ -360,6 +375,7 @@
                                   HeadersVisibility="Column" GridLinesVisibility="None"
                                   RowHeight="28" FontSize="12" FontFamily="微软雅黑"
                                   BorderThickness="0" Background="Transparent"
+                                  Foreground="{DynamicResource PrimaryText}"
                                   AlternationCount="2"
                                   SelectedCellsChanged="CommandsGrid_SelectedCellsChanged"
                                   LoadingRow="CommandsGrid_LoadingRow"
@@ -439,18 +455,23 @@
                                 </Style>
                             </DataGrid.RowHeaderStyle>
 
-                            <!-- 行样式：触发器按优先级从低到高排列（后定义的 WPF Trigger 优先级更高）
-                                 顺序：① 交替行底色（最低优先级）
-                                       ② 悬浮色（中）
-                                       ③ 选中色（最高优先级，无论是否为交替行都生效）-->
+                            <!-- 行样式：触发器按优先级从低到高排列（后定义的 WPF Trigger/MultiTrigger 优先级更高）
+                                 ① 偶数行底色 → ② 奇数行底色 → ③ 悬浮色 → ④ 偶数行选中 → ⑤ 奇数行选中（MultiTrigger，最高）
+                                 注意：不使用 DataGrid.RowBackground/AlternatingRowBackground 属性，
+                                       因为它们通过 SetCurrentValue 施加，优先级高于 RowStyle 触发器，会阻止选中色生效 -->
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
                                     <Style.Triggers>
-                                        <!-- ① 交替行：偶数行透明，奇数行（AlternationIndex=1）显示交替色 -->
+                                        <!-- ① 偶数行底色（AlternationIndex=0）：通过触发器设置，避免用 RowBackground 属性
+                                             （RowBackground 由 DataGrid 内部 SetCurrentValue 施加，会干扰选中色触发器）-->
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                            <Setter Property="Background" Value="{DynamicResource WindowBackground}"/>
+                                        </Trigger>
+                                        <!-- ② 奇数行底色（AlternationIndex=1）-->
                                         <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                             <Setter Property="Background" Value="{DynamicResource AltRowBackground}"/>
                                         </Trigger>
-                                        <!-- ② 悬浮（非选中状态）-->
+                                        <!-- ③ 悬浮（非选中状态）-->
                                         <MultiTrigger>
                                             <MultiTrigger.Conditions>
                                                 <Condition Property="IsMouseOver" Value="True"/>
@@ -460,11 +481,28 @@
                                                 <Setter Property="Background" Value="{DynamicResource RowHoverBackground}"/>
                                             </MultiTrigger.Setters>
                                         </MultiTrigger>
-                                        <!-- ③ 选中：放最后，压过前两个触发器，交替行选中也显示选中色 -->
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource RowSelectedBackground}"/>
-                                            <Setter Property="Foreground" Value="{DynamicResource RowSelectedForeground}"/>
-                                        </Trigger>
+                                        <!-- ④ 偶数行选中 -->
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsSelected"                    Value="True"/>
+                                                <Condition Property="ItemsControl.AlternationIndex" Value="0"/>
+                                            </MultiTrigger.Conditions>
+                                            <MultiTrigger.Setters>
+                                                <Setter Property="Background" Value="{DynamicResource RowSelectedBackground}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource RowSelectedForeground}"/>
+                                            </MultiTrigger.Setters>
+                                        </MultiTrigger>
+                                        <!-- ⑤ 奇数行选中（定义最靠后，优先级最高，明确覆盖②的交替色）-->
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsSelected"                    Value="True"/>
+                                                <Condition Property="ItemsControl.AlternationIndex" Value="1"/>
+                                            </MultiTrigger.Conditions>
+                                            <MultiTrigger.Setters>
+                                                <Setter Property="Background" Value="{DynamicResource RowSelectedBackground}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource RowSelectedForeground}"/>
+                                            </MultiTrigger.Setters>
+                                        </MultiTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </DataGrid.RowStyle>

@@ -9,57 +9,221 @@
 </p>
 
 <p align="center">
-  Un lanzador ligero para Windows: actívalo con una tecla rápida, búsqueda difusa, ejecución instantánea.
+  Un lanzador rápido y ligero para Windows. Invócalo con un atajo global, búsqueda difusa, ejecución instantánea.
 </p>
 
 ---
 
 ## Características
 
-### Principales
+### Núcleo
 
-- **Tecla rápida global** — `Alt+R` por defecto, totalmente personalizable
-- **Búsqueda difusa** — coincide con palabra clave, nombre y descripción; ordenada por puntuación + uso
-- **Comandos personalizados** — soporta tipos Url, Program, Shell, Directory, Calculator
-- **Modo de parámetros** — presiona `Tab` para pasar argumentos (ej., `g > rust`)
-- **Ctrl+Número** — `Ctrl+1~9` para ejecutar instantáneamente por posición
-- **Ejecución con un clic** — haz clic en cualquier resultado para ejecutarlo
-- **Ocultar automático al perder foco** — al hacer clic en otra ventana se oculta Quanta
+- **Atajo global** - Por defecto `Alt+R`, personalizable en ajustes
+- **Búsqueda difusa** - Coincidencia inteligente en clave / nombre / descripción, con prefijo difuso (escribe `rec` para encontrar `record`)
+- **Resultados agrupados** - Organizados por categoría, ordenados por puntuación dentro de cada grupo
+- **Comandos personalizados** - Tipos Url, Program, Shell, Directory, Calculator
+- **Modo parámetro** - Pulsa `Tab` para introducir parámetros (p. ej. `g > rust` busca en Google)
+- **Ctrl+Número** - `Ctrl+1~9` para ejecutar directamente el enésimo resultado
+- **Ocultar al perder foco** - Se oculta automáticamente al hacer clic en otra ventana
 
-### Comandos Integrados
+---
 
-| Palabra Clave | Descripción | Palabra Clave | Descripción |
-|---------------|-------------|---------------|-------------|
-| `cmd` | Símbolo del sistema | `powershell` | PowerShell |
-| `notepad` | Bloc de notas | `calc` | Calculadora |
-| `explorer` | Explorador de archivos | `taskmgr` | Administrador de tareas |
-| `control` | Panel de control | `regedit` | Editor del registro |
-| `services` | Servicios | `devmgmt` | Administrador de dispositivos |
-| `ping` | Ping | `ipconfig` | Configuración IP |
-| `tracert` | Traza de ruta | `nslookup` | Búsqueda DNS |
-| `netstat` | Estado de red | `mspaint` | Paint |
-| `lock` | Bloquear pantalla | `shutdown` | Apagar |
-| `restart` | Reiniciar | `sleep` | Suspender |
-| `emptybin` | Vaciar papelera | `winrecord` | Grabadora de voz |
-| `b` | Búsqueda Baidu | `g` | Búsqueda Google |
-| `gh` | Búsqueda GitHub | | |
+## Comandos Integrados
 
-### Características Especiales
+Todos los comandos integrados admiten búsqueda difusa.
 
-- **Calculadora** — escribe expresiones matemáticas directamente (ej., `2+2`, `sqrt(16)*3`)
-- **Conversión de unidades** — soporta longitud, peso, temperatura, área, volumen (ej., `100 km to miles`, `100 c to f`, `1 kg to lbs`)
-- **Conversión de moneda** — consulta tipos de cambio (ej., `100 usd to cny`), requiere API Key
-- **Historial del portapapeles** — escribe `clip` para ver el historial con filtrado de búsqueda
-- **Grabación de pantalla** — escribe `record` para iniciar grabación (micrófono/altavoz), soporta m4a/mp3
-- **Generación de código QR** — texto de más de 20 caracteres genera automáticamente QR, copiado al portapapeles
+### Línea de Comandos
 
-### Interfaz y Experiencia
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `cmd` | Abrir símbolo del sistema |
+| `powershell` | Abrir PowerShell |
 
-- **Tema Claro / Oscuro** — cambia con el icono de arriba a la derecha, configuración guardada automáticamente
-- **Multilingüe** — 中文 / English / Español, cambio instantáneo
-- **Bandeja del sistema** — se ejecuta minimizado; clic derecho para menú
-- **Inicio automático** — configurar para ejecutar al iniciar Windows
-- **Notificaciones Toast** — retroalimentación de éxito/error
+### Aplicaciones
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `notepad` | Bloc de notas |
+| `calc` | Calculadora de Windows |
+| `mspaint` | Paint |
+| `explorer` | Explorador de archivos |
+| `winrecord` | Grabadora de voz integrada de Windows |
+
+### Gestión del Sistema
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `taskmgr` | Administrador de tareas |
+| `devmgmt` | Administrador de dispositivos |
+| `services` | Servicios |
+| `regedit` | Editor del registro |
+| `control` | Panel de control |
+| `emptybin` | Vaciar papelera de reciclaje |
+
+### Diagnóstico de Red
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `ipconfig` | Ver configuración IP |
+| `ping` | Ping (se ejecuta en PowerShell) |
+| `tracert` | Rastrear ruta |
+| `nslookup` | Consulta DNS |
+| `netstat` | Ver conexiones de red |
+
+### Gestión de Energía
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `lock` | Bloquear pantalla |
+| `shutdown` | Apagar en 10 segundos |
+| `restart` | Reiniciar en 10 segundos |
+| `sleep` | Entrar en suspensión |
+
+### Funciones Especiales
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `record` | Iniciar grabación Quanta |
+| `clip` | Buscar historial del portapapeles |
+
+### Comandos del Sistema Quanta
+
+| Palabra clave | Descripción |
+|---------------|-------------|
+| `setting` | Abrir ajustes |
+| `about` | Acerca de |
+| `exit` | Salir de Quanta |
+| `english` | Cambiar idioma a inglés |
+| `chinese` | Cambiar idioma a chino |
+| `spanish` | Cambiar idioma a español |
+
+---
+
+## Entrada Inteligente
+
+Escribe directamente en el cuadro de búsqueda — los resultados aparecen en tiempo real.
+
+### Calculadora Matemática
+
+Escribe cualquier expresión matemática:
+
+```
+2+2*3         → 8
+(100-32)/1.8  → 37.778
+2^10          → 1024
+15%4          → 3
+```
+
+Operadores admitidos: `+ - * / % ^`, paréntesis y decimales.
+
+### Conversión de Unidades
+
+Formato: `valor unidad_origen to unidad_destino`
+
+```
+100 km to miles    → 62.137 miles
+100 c to f         → 212 °F
+30 f to c          → -1.111 °C
+1 kg to lbs        → 2.205 lbs
+500 g to oz        → 17.637 oz
+1 gallon to l      → 3.785 l
+1 acre to m2       → 4046.856 m²
+```
+
+Categorías admitidas: longitud, peso, temperatura, área, volumen
+
+### Conversión de Divisas
+
+Formato: `valor divisa_origen to divisa_destino` (requiere API Key en ajustes)
+
+```
+100 usd to cny     → ¥736.50 CNY
+1000 cny to jpy    → ¥20,500 JPY
+50 eur to gbp      → £42.30 GBP
+```
+
+Admite 40+ divisas. Tasas en caché local (duración configurable, 1 hora por defecto).
+
+### Conversión de Colores
+
+Admite HEX, RGB, HSL — convierte automáticamente entre formatos con vista previa:
+
+```
+#E67E22            → rgb(230,126,34)  hsl(28,79%,52%)
+rgb(230,126,34)    → #E67E22  hsl(28,79%,52%)
+hsl(28,79%,52%)    → #E67E22  rgb(230,126,34)
+255,165,0          → #FFA500  hsl(38,100%,50%)
+```
+
+### Herramientas de Texto
+
+| Prefijo | Función | Ejemplo |
+|---------|---------|---------|
+| `base64 texto` | Codificar en Base64 | `base64 hello` → `aGVsbG8=` |
+| `base64d texto` | Decodificar Base64 | `base64d aGVsbG8=` → `hello` |
+| `md5 texto` | Hash MD5 | `md5 hello` → `5d41402a...` |
+| `sha256 texto` | Hash SHA-256 | `sha256 hello` → `2cf24dba...` |
+| `url texto` | Codificar URL / decodificar auto | `url hello world` → `hello%20world` |
+| `json JSON` | Formatear JSON | `json {"a":1}` → salida formateada |
+
+### Búsqueda en Google
+
+Formato: `g palabra_clave`
+
+```
+g rust programming  → Abre Google en el navegador
+```
+
+### Ejecución PowerShell
+
+Prefijo `>` para ejecutar un comando de PowerShell directamente:
+
+```
+> Get-Process      → Lista todos los procesos
+> dir C:\          → Lista la unidad C:
+```
+
+### Generación de Código QR
+
+Escribe texto más largo que el umbral (20 caracteres por defecto) para generar automáticamente un código QR copiado al portapapeles:
+
+```
+https://github.com/yeal911/Quanta   → Código QR generado automáticamente
+```
+
+---
+
+## Grabación
+
+Escribe `record` para abrir el panel de grabación:
+
+- **Fuente**: Micrófono / Altavoz (audio del sistema) / Micrófono + Altavoz
+- **Formato**: m4a (AAC) / mp3
+- **Tasa de bits**: 32 / 64 / 96 / 128 / 160 kbps
+- **Canales**: Mono / Estéreo
+- **Controles**: Iniciar → Pausar / Reanudar → Detener; guardado en el directorio configurado
+- **Clic derecho en los chips** para cambiar cualquier parámetro en cualquier momento
+
+---
+
+## Historial del Portapapeles
+
+Escribe `clip` o `clip palabra_clave` para buscar el historial:
+
+- Registra automáticamente el texto copiado, hasta 50 entradas
+- Filtrado por palabra clave, muestra las 20 más recientes
+- Haz clic en cualquier resultado para copiarlo al portapapeles
+- El historial persiste entre reinicios
+
+---
+
+## Interfaz y Experiencia
+
+- **Tema claro / oscuro** - Cambia en ajustes, guardado automático
+- **Multilenguaje** - Chino / Inglés / Español, efecto inmediato
+- **Bandeja del sistema** - Permanece en la bandeja, menú contextual
+- **Inicio con Windows** - Actívalo en ajustes
+- **Notificaciones Toast** - Feedback inmediato de éxito / error
 
 ---
 
@@ -76,7 +240,7 @@
 dotnet run
 ```
 
-### Publicar
+### Publicar Archivo Único
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained false
@@ -84,163 +248,56 @@ dotnet publish -c Release -r win-x64 --self-contained false
 
 ---
 
-## Uso
-
-### Flujo Básico
-
-1. Inicia Quanta — se oculta en la bandeja del sistema
-2. Presiona `Alt+R` para abrir la caja de búsqueda
-3. Escribe una palabra clave (ej., `g`, `notepad`, `clip`)
-4. Navega con teclas de dirección o `Ctrl+Número`
-5. Presiona `Enter` para ejecutar, `Esc` para ocultar
-
-### Modo de Parámetros
-
-Después de hacer coincidir un comando, presiona `Tab` para pasar argumentos:
-
-```
-Escribe: g          → coincide con "Búsqueda Google"
-Presiona Tab → g >     → entrar en modo de parámetros
-Escribe: g > rust   → ejecuta Búsqueda Google para "rust"
-```
-
-### Calculadora y Conversiones
-
-```
-Escribe: 2+2*3      → Resultado: 8
-Escribe: sqrt(16)   → Resultado: 4
-Escribe: 100 km to miles → Conversión de unidades
-Escribe: 100 c to f     → Temperatura: 212 °F
-Escribe: 1 kg to lbs    → Peso: 2.205 lbs
-Escribe: 100 usd to cny → Conversión de moneda
-```
-
-### Atajos de Teclado
+## Atajos de Teclado
 
 | Atajo | Acción |
 |-------|--------|
 | `Alt+R` | Mostrar / ocultar ventana principal |
 | `Enter` | Ejecutar comando seleccionado |
-| `Tab` | Entrar en modo de parámetros |
-| `Esc` | Salir del modo de parámetros / ocultar ventana |
-| `↑` / `↓` | Navegar resultados |
-| `Ctrl+1~9` | Ejecutar resultado en esa posición |
-| `Backspace` | En modo parámetros: volver a búsqueda normal |
-
-### Gestión de Comandos
-
-- **Clic derecho en icono de bandeja** → Abrir Configuración de Comandos
-- Editar palabra clave, nombre, tipo, ruta directamente en la tabla
-- Importar / Exportar como JSON para respaldo
-
-### Configuración
-
-| Ajuste | Descripción |
-|--------|-------------|
-| Tecla rápida | Tecla rápida global personalizada |
-| Tema | Claro / Oscuro |
-| Idioma | 中文 / English / Español |
-| Inicio automático | Ejecutar al iniciar Windows |
-| Máx. resultados | Límite de resultados de búsqueda |
-| Umbral QR | Caracteres para activar QR |
+| `Tab` | Entrar en modo parámetro |
+| `Esc` | Salir del modo parámetro / ocultar ventana |
+| `↑` / `↓` | Mover selección arriba / abajo |
+| `Ctrl+1~9` | Ejecutar directamente el enésimo resultado |
+| `Backspace` | Volver a búsqueda normal desde modo parámetro |
 
 ---
 
-## Configuración
+## Gestión de Comandos
 
-El archivo de configuración es `config.json` en el directorio de la aplicación.
+Abre ajustes (comando `setting` o clic derecho en bandeja) → pestaña **Comandos**:
 
-### Campos de Comando
-
-| Campo | Descripción |
-|-------|-------------|
-| `Keyword` | Palabra clave de búsqueda |
-| `Name` | Nombre a mostrar |
-| `Type` | Url / Program / Shell / Directory / Calculator |
-| `Path` | URL o ruta ejecutable; soporta `{param}` |
-| `Arguments` | Argumentos de lanzamiento |
-| `RunAsAdmin` | Ejecutar con privilegios elevados |
-| `RunHidden` | Ocultar consola/ventana |
+- Edita clave, nombre, tipo, ruta directamente en la tabla
+- Importa / exporta en JSON para copia de seguridad y migración
 
 ### Tipos de Comando
 
-| Tipo | Ejemplo | Resultado |
-|------|---------|-----------|
-| `Url` | `https://google.com/search?q={param}` | Abre en navegador |
-| `Program` | `notepad.exe` | Lanza ejecutable |
-| `Shell` | `ping {param}` | Ejecuta vía cmd |
-| `Directory` | `C:\Users\Public` | Abre en Explorador |
-| `Calculator` | `{param}` | Evalúa expresión |
-
-### Ejemplo de Configuración
-
-```json
-{
-  "Hotkey": {
-    "Modifier": "Alt",
-    "Key": "R"
-  },
-  "Theme": "Light",
-  "Language": "es-ES",
-  "Commands": [
-    {
-      "Keyword": "g",
-      "Name": "Búsqueda Google",
-      "Type": "Url",
-      "Path": "https://www.google.com/search?q={param}"
-    },
-    {
-      "Keyword": "code",
-      "Name": "VS Code",
-      "Type": "Program",
-      "Path": "C:\\Users\\TuNombre\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
-    }
-  ]
-}
-```
+| Tipo | Descripción | Ejemplo |
+|------|-------------|---------|
+| `Url` | Abrir URL en navegador (admite `{param}`) | `https://google.com/search?q={param}` |
+| `Program` | Lanzar programa | `notepad.exe` |
+| `Shell` | Ejecutar en cmd | `ping {param}` |
+| `Directory` | Abrir carpeta en Explorer | `C:\Users\Public` |
+| `Calculator` | Evaluar expresión | `{param}` |
 
 ---
 
-## Arquitectura
+## Referencia de Ajustes
 
-### Estructura del Proyecto
-
-```
-Quanta/
-├── App.xaml / App.xaml.cs     # Punto de entrada
-├── Quanta.csproj              # Config del proyecto
-├── config.json                # Configuración de usuario
-├── Views/                     # Capa de interfaz
-│   ├── MainWindow.xaml        # Ventana principal de búsqueda
-│   ├── SettingsWindow.xaml    # Ventana de configuración
-│   └── CommandSettingsWindow.xaml  # Gestión de comandos
-├── ViewModels/                # Modelos de vista
-├── Models/                    # Modelos de datos
-├── Services/                  # Capa de servicios
-├── Helpers/                   # Utilidades
-├── Infrastructure/            # Infraestructura
-│   ├── Storage/              # Almacenamiento de config
-│   ├── Logging/              # Servicio de logging
-│   └── System/               # Integración del sistema
-└── Resources/                 # Recursos
-    └── Themes/                # Archivos de tema
-```
-
-### Stack Tecnológico
-
-| Elemento | Tecnología |
-|----------|------------|
-| Framework | .NET 8.0 / WPF |
-| Arquitectura | MVVM |
-| Lenguaje | C# |
-| UI | WPF |
-
-### Dependencias
-
-| Paquete | Versión | Propósito |
-|---------|---------|-----------|
-| CommunityToolkit.Mvvm | 8.2.2 | Framework MVVM |
-| System.Drawing.Common | 8.0.0 | Procesamiento gráfico |
+| Ajuste | Descripción |
+|--------|-------------|
+| Atajo | Atajo global (por defecto `Alt+R`) |
+| Tema | Claro / Oscuro |
+| Idioma | Chino / Inglés / Español |
+| Inicio con Windows | Arranque automático |
+| Máx. resultados | Límite de resultados de búsqueda |
+| Umbral código QR | Caracteres para activar generación QR |
+| Clave API Tipo de Cambio | Clave API de exchangerate-api.com |
+| Caché Tipo de Cambio | Duración de caché en horas (1 hora por defecto) |
+| Fuente de grabación | Micrófono / Altavoz / Ambos |
+| Formato de grabación | m4a / mp3 |
+| Tasa de bits | 32 / 64 / 96 / 128 / 160 kbps |
+| Canales | Mono / Estéreo |
+| Ruta de salida | Directorio para las grabaciones |
 
 ---
 
