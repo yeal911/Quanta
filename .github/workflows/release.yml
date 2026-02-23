@@ -20,23 +20,34 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
+      # 1️⃣ Framework-dependent（不包含 .NET）
+      - name: Publish (framework-dependent)
         run: dotnet publish ./Quanta.csproj `
              -c Release `
              -r win-x64 `
              --self-contained false `
              /p:PublishSingleFile=true `
-             /p:IncludeNativeLibrariesForSelfExtract=true
+             /p:IncludeNativeLibrariesForSelfExtract=true `
+             -o ./publish/fd
 
-      - name: Zip package
+      # 2️⃣ Self-contained（包含 .NET runtime）
+      - name: Publish (self-contained)
+        run: dotnet publish ./Quanta.csproj `
+             -c Release `
+             -r win-x64 `
+             --self-contained true `
+             /p:PublishSingleFile=true `
+             /p:IncludeNativeLibrariesForSelfExtract=true `
+             -o ./publish/sc
+
+      - name: Zip packages
         run: |
-          Compress-Archive `
-          -Path ./bin/Release/net8.0-windows/win-x64/publish/* `
-          -DestinationPath Quanta-win-x64.zip
+          Compress-Archive -Path ./publish/fd/* -DestinationPath Quanta-win-x64.zip
+          Compress-Archive -Path ./publish/sc/* -DestinationPath Quanta-win-x64-selfcontained.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./bin/Release/net8.0-windows/win-x64/publish/*.exe
             Quanta-win-x64.zip
+            Quanta-win-x64-selfcontained.zip
