@@ -38,17 +38,6 @@ public interface ICommandHandler
 /// <list type="bullet">
 ///   <item><description><c>&gt; command</c> — 执行 PowerShell 命令</description></item>
 ///   <item><description><c>calc expression</c> — 计算数学表达式</description></item>
-///   <item><description><c>g keyword</c> — 在浏览器中进行 Google 搜索</description></item>
-/// </list>
-/// </summary>
-
-/// <summary>
-/// 命令路由器，负责解析用户输入的文本并路由到对应的命令处理逻辑。
-/// 支持以下命令格式：
-/// <list type="bullet">
-///   <item><description><c>&gt; command</c> — 执行 PowerShell 命令</description></item>
-///   <item><description><c>calc expression</c> — 计算数学表达式</description></item>
-///   <item><description><c>g keyword</c> — 在浏览器中进行 Google 搜索</description></item>
 /// </list>
 /// </summary>
 public class CommandRouter
@@ -77,8 +66,6 @@ public class CommandRouter
     /// <summary>
     /// 匹配 Google 搜索的正则表达式，格式为: g 关键字
     /// </summary>
-    private static readonly Regex GoogleSearchRegex = new(@"^g\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
     /// <summary>
     /// 匹配单位换算的正则表达式，格式为: {数字} {源单位} to/in {目标单位}
     /// 例如: 100 km to mile, 30 c to f
@@ -222,10 +209,6 @@ public class CommandRouter
         var jsonMatch = JsonToolRegex.Match(input);
         if (jsonMatch.Success) return TextJson(jsonMatch.Groups[1].Value);
 
-        // Google 搜索（g keyword）
-        var gMatch = GoogleSearchRegex.Match(input);
-        if (gMatch.Success) return await SearchInBrowserAsync(gMatch.Groups[1].Value);
-
         return null;
     }
 
@@ -284,25 +267,6 @@ public class CommandRouter
             result.Subtitle = $"Error: {ex.Message}";
             result.Data = new CommandResult { Success = false, Error = ex.Message };
         }
-        return result;
-    }
-
-    /// <summary>
-    /// 在默认浏览器中打开 Google 搜索页面。
-    /// 使用 <see cref="Uri.EscapeDataString"/> 对关键字进行 URL 编码。
-    /// </summary>
-    /// <param name="keyword">搜索关键字</param>
-    /// <returns>包含搜索操作结果的搜索结果对象</returns>
-    private async Task<SearchResult> SearchInBrowserAsync(string keyword)
-    {
-        var result = new SearchResult { Title = $"Search: {keyword}", Subtitle = "Open in browser", Type = SearchResultType.WebSearch, Path = keyword };
-        try
-        {
-            Process.Start(new ProcessStartInfo { FileName = $"https://www.google.com/search?q={Uri.EscapeDataString(keyword)}", UseShellExecute = true });
-            result.Data = new CommandResult { Success = true };
-            _usageTracker.RecordUsage($"search:{keyword}");
-        }
-        catch (Exception ex) { result.Data = new CommandResult { Success = false, Error = ex.Message }; }
         return result;
     }
 

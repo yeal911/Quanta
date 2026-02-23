@@ -82,11 +82,6 @@ public class SearchEngine
     private readonly FileSearchProvider _fileSearchProvider;
 
     /// <summary>
-    /// 应用程序搜索提供程序，搜索 Windows 开始菜单中的已安装应用程序
-    /// </summary>
-    private readonly ApplicationSearchProvider _applicationSearchProvider;
-
-    /// <summary>
     /// 用户自定义命令列表，从配置文件 config.json 中加载
     /// </summary>
     private List<CommandConfig> _customCommands = new();
@@ -212,7 +207,6 @@ public class SearchEngine
         _commandRouter = commandRouter;
         _windowManager = new WindowManager();
         _fileSearchProvider = fileSearchProvider;
-        _applicationSearchProvider = new ApplicationSearchProvider();
         _scorer = SearchResultScorer.Instance;
         _pathCache = ExecutablePathCache.Instance;
 
@@ -379,29 +373,12 @@ public class SearchEngine
             results.Add(hintResult);
         }
 
-        // ── 3. 查询长度 >= 2 时并发搜索应用程序、文件和窗口 ────────
+        // ── 3. 查询长度 >= 2 时并发搜索文件和窗口 ────────
         if (query.Length >= 2)
         {
             var providerTasks = new List<Task>();
 
-            // 3a. 搜索应用程序（开始菜单中的已安装应用）
-            providerTasks.Add(Task.Run(async () =>
-            {
-                try
-                {
-                    var appResults = await _applicationSearchProvider.SearchAsync(query, cancellationToken);
-                    foreach (var r in appResults)
-                    {
-                        r.GroupLabel = LocalizationService.Get("GroupApp");
-                        r.GroupOrder = GetGroupOrder("GroupApp");
-                        r.QueryMatch = query;
-                        results.Add(r);
-                    }
-                }
-                catch (Exception ex) { Logger.Warn($"Application search failed: {ex.Message}"); }
-            }, cancellationToken));
-
-            // 3b. 搜索文件（桌面+下载目录）
+            // 3a. 搜索文件（桌面+下载目录）
             providerTasks.Add(Task.Run(async () =>
             {
                 try

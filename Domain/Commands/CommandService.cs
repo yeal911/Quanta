@@ -207,7 +207,6 @@ public class CommandService
         {
             // 网页搜索命令（预置命令，不会被保存到配置文件）
             new() { Keyword = "gh", Name = "GitHub", Type = "Url", Path = "https://github.com/{param}", Description = "打开GitHub", IsBuiltIn = true },
-            new() { Keyword = "google", Name = "Google搜索", Type = "Url", Path = "https://www.google.com/search?q={param}", Description = "搜索Google", IsBuiltIn = true },
             new() { Keyword = "bing", Name = "Bing搜索", Type = "Url", Path = "https://www.bing.com/search?q={param}", Description = "搜索Bing", IsBuiltIn = true },
             new() { Keyword = "youtube", Name = "YouTube", Type = "Url", Path = "https://www.youtube.com/results?search_query={param}", Description = "搜索YouTube", IsBuiltIn = true },
             new() { Keyword = "baidu", Name = "百度", Type = "Url", Path = "https://www.baidu.com/s?wd={param}", Description = "搜索百度", IsBuiltIn = true },

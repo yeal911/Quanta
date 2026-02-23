@@ -138,15 +138,15 @@ public class ToastService : IToastService
         Brush messageForeground;
         if (_isDarkTheme)
         {
-            // 深色主题：白色背景，黑色文字
-            toastBackground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
-            messageForeground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+            // 深色主题：深色背景，浅色文字
+            toastBackground = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+            messageForeground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
         }
         else
         {
-            // 浅色主题：黑色背景，白色文字
-            toastBackground = new SolidColorBrush(Color.FromRgb(30, 30, 30));
-            messageForeground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+            // 浅色主题：浅色背景，深色文字
+            toastBackground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+            messageForeground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
         }
 
         var window = new Window
