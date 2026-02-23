@@ -1,7 +1,7 @@
 # Quanta - Lanzador Rápido para Windows
 
 <p align="center">
-  <a href="README.md">中文</a> | <a href="README_EN.md">English</a> | <b>Español</b>
+  <a href="README.md">中文</a> | <a href="README_EN.md">English</a> | <b>Español</b> | <a href="README_JA.md">日本語</a> | <a href="README_KO.md">한국어</a> | <a href="README_FR.md">Français</a> | <a href="README_DE.md">Deutsch</a> | <a href="README_PT.md">Português</a> | <a href="README_RU.md">Русский</a> | <a href="README_IT.md">Italiano</a> | <a href="README_AR.md">العربية</a>
 </p>
 
 <p align="center">

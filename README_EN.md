@@ -1,7 +1,7 @@
 # Quanta - Windows Quick Launcher
 
 <p align="center">
-  <a href="README.md">中文</a> | <b>English</b> | <a href="README_ES.md">Español</a>
+  <a href="README.md">中文</a> | <b>English</b> | <a href="README_ES.md">Español</a> | <a href="README_JA.md">日本語</a> | <a href="README_KO.md">한국어</a> | <a href="README_FR.md">Français</a> | <a href="README_DE.md">Deutsch</a> | <a href="README_PT.md">Português</a> | <a href="README_RU.md">Русский</a> | <a href="README_IT.md">Italiano</a> | <a href="README_AR.md">العربية</a>
 </p>
 
 <p align="center">

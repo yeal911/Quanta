@@ -128,7 +128,7 @@ public class TrayService : ITrayService
 
         foreach (var lang in LocalizationService.GetSupportedLanguages())
         {
-            var langItem = new ToolStripMenuItem(LocalizationService.Get(lang.Code));
+            var langItem = new ToolStripMenuItem(LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)));
             langItem.Click += (s, e) => SetLanguage(lang.Code);
             langItem.Checked = LocalizationService.CurrentLanguage == lang.Code;
             langMenu.DropDownItems.Add(langItem);

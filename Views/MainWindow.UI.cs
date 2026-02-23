@@ -71,7 +71,7 @@ public partial class MainWindow
         {
             var langMenuItem = new MenuItem
             {
-                Header = LocalizationService.Get(lang.Code),
+                Header = LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)),
                 IsChecked = LocalizationService.CurrentLanguage == lang.Code
             };
             langMenuItem.Click += (s, args) =>
@@ -173,7 +173,7 @@ public partial class MainWindow
         {
             var langMenuItem = new MenuItem
             {
-                Header = LocalizationService.Get(lang.Code),
+                Header = LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)),
                 IsChecked = LocalizationService.CurrentLanguage == lang.Code
             };
             langMenuItem.Click += (s, e) =>

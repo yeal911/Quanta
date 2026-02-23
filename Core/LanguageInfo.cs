@@ -35,7 +35,15 @@ public static class LanguageManager
     {
         new() { Code = "zh-CN", DisplayName = "简体中文", NativeName = "中文" },
         new() { Code = "en-US", DisplayName = "English", NativeName = "English" },
-        new() { Code = "es-ES", DisplayName = "Español", NativeName = "Español" }
+        new() { Code = "es-ES", DisplayName = "Español", NativeName = "Español" },
+        new() { Code = "ja-JP", DisplayName = "日本語", NativeName = "日本語" },
+        new() { Code = "ko-KR", DisplayName = "한국어", NativeName = "한국어" },
+        new() { Code = "fr-FR", DisplayName = "Français", NativeName = "Français" },
+        new() { Code = "de-DE", DisplayName = "Deutsch", NativeName = "Deutsch" },
+        new() { Code = "pt-BR", DisplayName = "Português", NativeName = "Português" },
+        new() { Code = "ru-RU", DisplayName = "Русский", NativeName = "Русский" },
+        new() { Code = "it-IT", DisplayName = "Italiano", NativeName = "Italiano" },
+        new() { Code = "ar-SA", DisplayName = "العربية", NativeName = "العربية" }
     }.AsReadOnly();
 
     /// <summary>

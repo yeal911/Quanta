@@ -336,6 +336,18 @@ public class SearchEngine
             }
         }
 
+        // ── 2.1. 文本命令建议（当用户输入部分命令时显示提示）───────
+        var textSuggestions = _commandRouter.GetTextCommandSuggestions(query);
+        foreach (var suggestion in textSuggestions)
+        {
+            // 检查是否已存在相同标题的建议
+            bool exists = results.Any(r => r.Title?.Equals(suggestion.Title, StringComparison.OrdinalIgnoreCase) == true);
+            if (!exists)
+            {
+                results.Add(suggestion);
+            }
+        }
+
         // ── 2.5. 如果查询长度超过阈值，自动生成二维码 ──────────────────
         if (query.Length > _qrCodeThreshold && QRCodeService.Instance.CanGenerateQRCode(query))
         {

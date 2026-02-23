@@ -4,6 +4,7 @@
 //       支持简体中文（zh-CN）、英文（en-US）、西班牙语（es-ES）等多种语言。
 //       语言设置会自动持久化到应用配置文件中。
 //       翻译文本存储在 Resources/Strings/*.json 文件中。
+//       支持外部语言包：exe 同目录下 Resources/Strings/xx-XX.json
 // ============================================================================
 
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace Quanta.Services;
 /// 本地化服务（静态类），提供应用程序的多语言翻译支持。
 /// 通过从嵌入的 JSON 文件加载翻译字典管理多语言文本，支持语言切换和从配置文件加载语言设置。
 /// 当找不到当前语言的翻译时，会自动回退到中文（zh-CN）。
+/// 支持外部语言包：exe 同目录下 Resources/Strings/xx-XX.json
 /// </summary>
 public static class LocalizationService
 {
@@ -31,7 +33,7 @@ public static class LocalizationService
     /// <summary>
     /// 已加载的语言代码列表
     /// </summary>
-    private static readonly string[] SupportedLanguageCodes = { "zh-CN", "en-US", "es-ES" };
+    private static readonly string[] SupportedLanguageCodes = { "zh-CN", "en-US", "es-ES", "ja-JP", "ko-KR", "fr-FR", "de-DE", "pt-BR", "ru-RU", "it-IT", "ar-SA" };
 
     /// <summary>
     /// 静态构造函数 - 启动时加载所有语言文件
@@ -43,6 +45,7 @@ public static class LocalizationService
 
     /// <summary>
     /// 从嵌入的 JSON 资源中加载所有语言
+    /// 优先级：外部文件 > 嵌入式资源
     /// </summary>
     private static void LoadAllLanguages()
     {
@@ -52,7 +55,7 @@ public static class LocalizationService
         {
             try
             {
-                var dict = LoadLanguageFromEmbeddedResource(langCode);
+                var dict = LoadLanguage(langCode);
                 if (dict != null)
                 {
                     _translations[langCode] = dict;
@@ -75,9 +78,36 @@ public static class LocalizationService
     }
 
     /// <summary>
-    /// 从嵌入的 JSON 资源加载指定语言的翻译字典
+    /// 加载指定语言的翻译字典（外部文件优先）
     /// </summary>
-    private static Dictionary<string, string>? LoadLanguageFromEmbeddedResource(string languageCode)
+    private static Dictionary<string, string>? LoadLanguage(string languageCode)
+    {
+        // 1. 优先尝试从外部文件加载
+        var externalPath = GetExternalLanguageFilePath(languageCode);
+        if (File.Exists(externalPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(externalPath);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json, options);
+                Logger.Debug($"[LocalizationService] Loaded external: {externalPath}");
+                return dict;
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Warn($"[LocalizationService] Failed load external {externalPath}: {ex.Message}");
+            }
+        }
+
+        // 2. 回退到嵌入式资源
+        return LoadFromEmbeddedResource(languageCode);
+    }
+
+    /// <summary>
+    /// 从嵌入的 JSON 资源加载指定语言
+    /// </summary>
+    private static Dictionary<string, string>? LoadFromEmbeddedResource(string languageCode)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = $"Quanta.Resources.Strings.{languageCode}.json";
@@ -97,8 +127,24 @@ public static class LocalizationService
             PropertyNameCaseInsensitive = true
         };
 
-        var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json, options);
-        return dict;
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(json, options);
+    }
+
+    /// <summary>
+    /// 获取外部语言文件路径
+    /// 格式：exe目录/Resources/Strings/xx-XX.json
+    /// </summary>
+    private static string GetExternalLanguageFilePath(string languageCode)
+    {
+        return Path.Combine(AppContext.BaseDirectory, "Resources", "Strings", $"{languageCode}.json");
+    }
+
+    /// <summary>
+    /// 重新加载所有语言（用于刷新外部语言包）
+    /// </summary>
+    public static void ReloadAllLanguages()
+    {
+        LoadAllLanguages();
     }
 
     /// <summary>
@@ -202,6 +248,14 @@ public static class LocalizationService
             "zh-CN" => "TrayChinese",
             "en-US" => "TrayEnglish",
             "es-ES" => "TraySpanish",
+            "ja-JP" => "TrayJapanese",
+            "ko-KR" => "TrayKorean",
+            "fr-FR" => "TrayFrench",
+            "de-DE" => "TrayGerman",
+            "pt-BR" => "TrayPortuguese",
+            "ru-RU" => "TrayRussian",
+            "it-IT" => "TrayItalian",
+            "ar-SA" => "TrayArabic",
             _ => "TrayLanguage"
         };
     }

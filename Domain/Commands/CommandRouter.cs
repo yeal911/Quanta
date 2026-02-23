@@ -111,6 +111,17 @@ public class CommandRouter
     private static readonly Regex UrlToolRegex = new(@"^url\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     private static readonly Regex JsonToolRegex = new(@"^json\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
+    // 文本命令建议列表
+    private static readonly (string Keyword, string Description, string Icon)[] TextCommandSuggestions =
+    {
+        ("base64", "Base64 编码", "B"),
+        ("base64d", "Base64 解码", "B"),
+        ("md5", "MD5 哈希", "M"),
+        ("sha256", "SHA-256 哈希", "S"),
+        ("url", "URL 编码/解码", "U"),
+        ("json", "JSON 格式化", "J")
+    };
+
     /// <summary>
     /// 初始化命令路由器
     /// </summary>
@@ -210,6 +221,40 @@ public class CommandRouter
         if (jsonMatch.Success) return TextJson(jsonMatch.Groups[1].Value);
 
         return null;
+    }
+
+    /// <summary>
+    /// 获取文本命令的建议列表，用于模糊匹配提示。
+    /// 当用户输入部分命令时，返回匹配的命令建议。
+    /// </summary>
+    /// <param name="input">用户输入的部分命令</param>
+    /// <returns>匹配的搜索结果列表</returns>
+    public List<SearchResult> GetTextCommandSuggestions(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return new List<SearchResult>();
+
+        var suggestions = new List<SearchResult>();
+        var lowerInput = input.ToLowerInvariant();
+
+        foreach (var cmd in TextCommandSuggestions)
+        {
+            // 前缀匹配：用户输入是命令的开头
+            if (cmd.Keyword.StartsWith(lowerInput, StringComparison.OrdinalIgnoreCase))
+            {
+                suggestions.Add(new SearchResult
+                {
+                    Title = cmd.Keyword,
+                    Subtitle = cmd.Description + " - " + LocalizationService.Get("TextToolHint"),
+                    Type = SearchResultType.Command,
+                    IconText = cmd.Icon,
+                    GroupLabel = LocalizationService.Get("GroupText"),
+                    GroupOrder = 6,
+                    MatchScore = 0.9 // 高分确保显示
+                });
+            }
+        }
+
+        return suggestions;
     }
 
     /// <summary>
