@@ -286,8 +286,12 @@
                                     <TextBox x:Name="FileSearchDirectoriesBox" Width="280" Height="90" FontSize="11" FontFamily="Consolas"
                                              Padding="4,2" BorderThickness="1" VerticalScrollBarVisibility="Auto"
                                              AcceptsReturn="True" TextWrapping="Wrap"
-                                             LostFocus="FileSearchDirectoriesBox_LostFocus"/>
+                                             LostFocus="FileSearchDirectoriesBox_LostFocus"
+                                             GotFocus="FileSearchDirectoriesBox_GotFocus"/>
                                 </StackPanel>
+                                <TextBlock x:Name="FileSearchDirectoriesError" FontSize="10" FontFamily="微软雅黑"
+                                           Foreground="#E74C3C" Margin="168,0,0,4" TextWrapping="Wrap" MaxWidth="280"
+                                           Visibility="Collapsed"/>
                                 <TextBlock x:Name="FileSearchDirectoriesHint" FontSize="10"
                                            Foreground="{DynamicResource TertiaryText}" Margin="168,0,0,12"/>
 

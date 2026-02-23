@@ -248,14 +248,20 @@ public partial class CommandSettingsWindow
             }
         }
 
-            // 如果有无效目录，显示错误 Toast
+        // 如果有无效目录，显示错误提示并阻止保存
         if (invalidLines.Count > 0)
         {
-            var errorLines = string.Join("\n", invalidLines);
-            var errorMsg = LocalizationService.Get("FileSearchInvalidDirs") + "\n" + errorLines;
-            ToastService.Instance.ShowError(errorMsg, 5.0);
+            FileSearchDirectoriesError.Text = LocalizationService.Get("FileSearchInvalidDirs") + "\n" + string.Join("\n", invalidLines);
+            FileSearchDirectoriesError.Visibility = Visibility.Visible;
+            FileSearchDirectoriesBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E74C3C"));
             return; // 不保存配置
         }
+
+        // 验证通过，清除错误提示
+        FileSearchDirectoriesError.Visibility = Visibility.Collapsed;
+        FileSearchDirectoriesBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
+            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#CCCCCC"));
 
         config.FileSearchSettings.Directories = dirs;
 
@@ -281,6 +287,13 @@ public partial class CommandSettingsWindow
     private void FileSearchDirectoriesBox_LostFocus(object sender, RoutedEventArgs e)
     {
         SaveFileSearchSettings();
+    }
+
+    /// <summary>搜索目录 TextBox 获得焦点时清除错误提示</summary>
+    private void FileSearchDirectoriesBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        FileSearchDirectoriesError.Visibility = Visibility.Collapsed;
+        FileSearchDirectoriesBox.ClearValue(System.Windows.Controls.Border.BorderBrushProperty);
     }
 
     /// <summary>每个目录最多扫描文件数 - 只允许数字</summary>
