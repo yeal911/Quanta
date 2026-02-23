@@ -290,7 +290,7 @@ Type `record` to open the recording panel (displayed as a floating bar at the to
 1. Click **Start** to begin recording — the panel shows elapsed time
 2. Click **Pause** to pause, click **Resume** to continue
 3. Click **Stop** to end — the file saves automatically to the configured output directory
-4. **Right-click any chip** (Source, Format, Bitrate, Channels) to change that parameter at any time, even during recording
+4. **Right-click any parameter** (Source, Format, Bitrate, Channels) to change that parameter at any time, even during recording
 
 ### Output Files
 

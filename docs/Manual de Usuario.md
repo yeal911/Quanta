@@ -290,7 +290,7 @@ Escribe `record` para abrir el panel de grabación (se muestra como una barra fl
 1. Haz clic en **Iniciar** para comenzar — el panel muestra el tiempo transcurrido
 2. Haz clic en **Pausar** para pausar; haz clic en **Reanudar** para continuar
 3. Haz clic en **Detener** para finalizar — el archivo se guarda automáticamente en el directorio configurado
-4. **Haz clic derecho en cualquier chip** (Fuente, Formato, Tasa de bits, Canales) para cambiar ese parámetro en cualquier momento, incluso durante la grabación
+4. **Haz clic derecho en cualquier parámetro** (Fuente, Formato, Tasa de bits, Canales) para cambiar ese parámetro en cualquier momento, incluso durante la grabación
 
 ### Archivos de Salida
 

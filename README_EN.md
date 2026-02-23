@@ -202,7 +202,7 @@ Type `record` to open the recording panel:
 - **Bitrate**: 32 / 64 / 96 / 128 / 160 kbps
 - **Channels**: Mono / Stereo
 - **Controls**: Start → Pause / Resume → Stop; output saved to configured directory
-- **Right-click chips** to switch any parameter at any time
+- **Right-click parameters** to switch any parameter at any time
 
 ---
 

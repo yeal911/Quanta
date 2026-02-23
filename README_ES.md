@@ -202,7 +202,7 @@ Escribe `record` para abrir el panel de grabación:
 - **Tasa de bits**: 32 / 64 / 96 / 128 / 160 kbps
 - **Canales**: Mono / Estéreo
 - **Controles**: Iniciar → Pausar / Reanudar → Detener; guardado en el directorio configurado
-- **Clic derecho en los chips** para cambiar cualquier parámetro en cualquier momento
+- **Clic derecho en los parámetros** para cambiar cualquier parámetro en cualquier momento
 
 ---
 
