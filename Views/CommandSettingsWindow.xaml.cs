@@ -5,6 +5,7 @@
 //          各功能面板的具体逻辑分别位于同名 partial 文件中。
 // ============================================================================
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -138,6 +139,7 @@ public partial class CommandSettingsWindow : Window
         MenuFileSearch.Tag = null;
         MenuExchangeRate.Tag = null;
         MenuCommands.Tag = null;
+        MenuBuiltInCommands.Tag = null;
 
         FrameworkElement? currentPanel = null;
         if (PanelGeneral.Visibility == Visibility.Visible) currentPanel = PanelGeneral;
@@ -145,12 +147,14 @@ public partial class CommandSettingsWindow : Window
         else if (PanelFileSearch.Visibility == Visibility.Visible) currentPanel = PanelFileSearch;
         else if (PanelExchangeRate.Visibility == Visibility.Visible) currentPanel = PanelExchangeRate;
         else if (PanelCommands.Visibility == Visibility.Visible) currentPanel = PanelCommands;
+        else if (PanelBuiltInCommands.Visibility == Visibility.Visible) currentPanel = PanelBuiltInCommands;
 
         PanelGeneral.Visibility = Visibility.Collapsed;
         PanelRecording.Visibility = Visibility.Collapsed;
         PanelFileSearch.Visibility = Visibility.Collapsed;
         PanelExchangeRate.Visibility = Visibility.Collapsed;
         PanelCommands.Visibility = Visibility.Collapsed;
+        PanelBuiltInCommands.Visibility = Visibility.Collapsed;
 
         Grid? targetPanel = null;
         switch (menuName)
@@ -175,6 +179,11 @@ public partial class CommandSettingsWindow : Window
             case "MenuCommands":
                 MenuCommands.Tag = "Selected";
                 targetPanel = PanelCommands;
+                break;
+            case "MenuBuiltInCommands":
+                MenuBuiltInCommands.Tag = "Selected";
+                targetPanel = PanelBuiltInCommands;
+                PopulateBuiltInCommandsGrid();
                 break;
         }
 
@@ -214,6 +223,14 @@ public partial class CommandSettingsWindow : Window
         MenuFileSearch.Content = LocalizationService.Get("MenuFileSearch");
         MenuExchangeRate.Content = LocalizationService.Get("MenuExchangeRate");
         MenuCommands.Content = LocalizationService.Get("MenuCommands");
+        MenuBuiltInCommands.Content = LocalizationService.Get("MenuBuiltInCommands");
+
+        // Built-in Commands Panel
+        BuiltInCommandsSectionLabel.Text = LocalizationService.Get("BuiltInCommandsSettings");
+        BuiltInCommandGroupColumn.Header = LocalizationService.Get("BuiltInCommandGroup");
+        BuiltInCommandColumn.Header = LocalizationService.Get("BuiltInCommand");
+        BuiltInFunctionColumn.Header = LocalizationService.Get("BuiltInCommandFunction");
+        BuiltInUsageColumn.Header = LocalizationService.Get("BuiltInCommandUsage");
 
         GeneralSectionLabel.Text = LocalizationService.Get("GeneralSettings");
         CommandsSectionLabel.Text = LocalizationService.Get("CommandManagement");
@@ -317,5 +334,76 @@ public partial class CommandSettingsWindow : Window
             _autoSaveTimer.Stop();
         };
         _autoSaveTimer.Start();
+    }
+
+    // ── 内置命令一览 ─────────────────────────────────────────────────
+
+    /// <summary>填充内置命令表格数据（每次调用时重新填充以支持语言切换）</summary>
+    private void PopulateBuiltInCommandsGrid()
+    {
+        var commands = new List<BuiltInCommandItem>();
+
+        // Command Line Tools
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupCommand"), "cmd", LocalizationService.Get("BuiltinCmd_cmd"), LocalizationService.Get("BuiltinDesc_cmd")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupCommand"), "powershell", LocalizationService.Get("BuiltinCmd_powershell"), LocalizationService.Get("BuiltinDesc_powershell")));
+
+        // Applications
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupApp"), "notepad", LocalizationService.Get("BuiltinCmd_notepad"), LocalizationService.Get("BuiltinDesc_notepad")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupApp"), "calc", LocalizationService.Get("BuiltinCmd_calc"), LocalizationService.Get("BuiltinDesc_calc")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupApp"), "mspaint", LocalizationService.Get("BuiltinCmd_mspaint"), LocalizationService.Get("BuiltinDesc_mspaint")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupApp"), "explorer", LocalizationService.Get("BuiltinCmd_explorer"), LocalizationService.Get("BuiltinDesc_explorer")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupApp"), "winrecord", LocalizationService.Get("BuiltinCmd_winrecord"), LocalizationService.Get("BuiltinDesc_winrecord")));
+
+        // System Management
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "taskmgr", LocalizationService.Get("BuiltinCmd_taskmgr"), LocalizationService.Get("BuiltinDesc_taskmgr")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "devmgmt", LocalizationService.Get("BuiltinCmd_devmgmt"), LocalizationService.Get("BuiltinDesc_devmgmt")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "services", LocalizationService.Get("BuiltinCmd_services"), LocalizationService.Get("BuiltinDesc_services")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "regedit", LocalizationService.Get("BuiltinCmd_regedit"), LocalizationService.Get("BuiltinDesc_regedit")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "control", LocalizationService.Get("BuiltinCmd_control"), LocalizationService.Get("BuiltinDesc_control")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupSystem"), "emptybin", LocalizationService.Get("BuiltinCmd_emptybin"), LocalizationService.Get("BuiltinDesc_emptybin")));
+
+        // Network Diagnostics
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupNetwork"), "ipconfig", LocalizationService.Get("BuiltinCmd_ipconfig"), LocalizationService.Get("BuiltinDesc_ipconfig")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupNetwork"), "ping", LocalizationService.Get("BuiltinCmd_ping"), LocalizationService.Get("BuiltinDesc_ping")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupNetwork"), "tracert", LocalizationService.Get("BuiltinCmd_tracert"), LocalizationService.Get("BuiltinDesc_tracert")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupNetwork"), "nslookup", LocalizationService.Get("BuiltinCmd_nslookup"), LocalizationService.Get("BuiltinDesc_nslookup")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupNetwork"), "netstat", LocalizationService.Get("BuiltinCmd_netstat"), LocalizationService.Get("BuiltinDesc_netstat")));
+
+        // Power Management
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupPower"), "lock", LocalizationService.Get("BuiltinCmd_lock"), LocalizationService.Get("BuiltinDesc_lock")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupPower"), "shutdown", LocalizationService.Get("BuiltinCmd_shutdown"), LocalizationService.Get("BuiltinDesc_shutdown")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupPower"), "restart", LocalizationService.Get("BuiltinCmd_restart"), LocalizationService.Get("BuiltinDesc_restart")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupPower"), "sleep", LocalizationService.Get("BuiltinCmd_sleep"), LocalizationService.Get("BuiltinDesc_sleep")));
+
+        // Feature Commands
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupFeature"), "record", LocalizationService.Get("BuiltinCmd_record"), LocalizationService.Get("BuiltinDesc_record")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupFeature"), "clip", LocalizationService.Get("BuiltinCmd_clip"), LocalizationService.Get("BuiltinDesc_clip")));
+
+        // Quanta System Commands
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "setting", LocalizationService.Get("BuiltinCmd_setting"), LocalizationService.Get("BuiltinDesc_setting")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "about", LocalizationService.Get("BuiltinCmd_about"), LocalizationService.Get("BuiltinDesc_about")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "exit", LocalizationService.Get("BuiltinCmd_exit"), LocalizationService.Get("BuiltinDesc_exit")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "english", LocalizationService.Get("BuiltinCmd_english"), LocalizationService.Get("BuiltinDesc_english")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "chinese", LocalizationService.Get("BuiltinCmd_chinese"), LocalizationService.Get("BuiltinDesc_chinese")));
+        commands.Add(new BuiltInCommandItem(LocalizationService.Get("GroupQuanta"), "spanish", LocalizationService.Get("BuiltinCmd_spanish"), LocalizationService.Get("BuiltinDesc_spanish")));
+
+        BuiltInCommandsGrid.ItemsSource = commands;
+    }
+}
+
+/// <summary>内置命令项数据模型</summary>
+public class BuiltInCommandItem
+{
+    public string Group { get; set; }
+    public string Command { get; set; }
+    public string Function { get; set; }
+    public string Usage { get; set; }
+
+    public BuiltInCommandItem(string group, string command, string function, string usage)
+    {
+        Group = group;
+        Command = command;
+        Function = function;
+        Usage = usage;
     }
 }

@@ -89,6 +89,7 @@
                     <Button x:Name="MenuFileSearch"   Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                     <Button x:Name="MenuExchangeRate" Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                     <Button x:Name="MenuCommands"     Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
+                    <Button x:Name="MenuBuiltInCommands" Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                 </StackPanel>
 
                 <!-- Right Content Panels -->
@@ -640,6 +641,138 @@
                         <TextBlock x:Name="CommandHintText" Grid.Row="3"
                                    Foreground="{DynamicResource TertiaryText}"
                                    FontSize="10" FontFamily="微软雅黑" Margin="0,6,0,0"/>
+                    </Grid>
+                    <!-- 内置命令一览 Panel -->
+                    <Grid x:Name="PanelBuiltInCommands" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,4,0,10">
+                            <TextBlock x:Name="BuiltInCommandsSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- DataGrid for built-in commands - read only -->
+                        <DataGrid Grid.Row="1" x:Name="BuiltInCommandsGrid"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  HeadersVisibility="Column" GridLinesVisibility="None"
+                                  RowHeight="26" FontSize="11" FontFamily="微软雅黑"
+                                  BorderThickness="0" Background="Transparent"
+                                  Foreground="{DynamicResource PrimaryText}"
+                                  IsReadOnly="True" CanUserSortColumns="True"
+                                  VerticalGridLinesBrush="Transparent"
+                                  HorizontalGridLinesBrush="Transparent">
+
+                            <DataGrid.Resources>
+                                <Style TargetType="ScrollBar">
+                                    <Setter Property="Width" Value="6"/>
+                                    <Setter Property="MinWidth" Value="6"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ScrollBar">
+                                                <Grid>
+                                                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                                        <Track.Thumb>
+                                                            <Thumb>
+                                                                <Thumb.Template>
+                                                                    <ControlTemplate TargetType="Thumb">
+                                                                        <Border x:Name="thumbBorder" Background="#30888888" CornerRadius="3"/>
+                                                                    </ControlTemplate>
+                                                                </Thumb.Template>
+                                                            </Thumb>
+                                                        </Track.Thumb>
+                                                    </Track>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background"       Value="Transparent"/>
+                                    <Setter Property="Foreground"       Value="{DynamicResource DataGridHeaderText}"/>
+                                    <Setter Property="FontSize"         Value="11"/>
+                                    <Setter Property="FontWeight"       Value="SemiBold"/>
+                                    <Setter Property="Padding"          Value="8,4"/>
+                                    <Setter Property="BorderThickness"  Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush"      Value="{DynamicResource DataGridHeaderBorder}"/>
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="{DynamicResource WindowBackground}"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource RowHoverBackground}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness"   Value="0"/>
+                                    <Setter Property="Padding"          Value="8,2"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridCell">
+                                                <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background"  Value="{DynamicResource RowSelectedBackground}"/>
+                                            <Setter Property="Foreground"  Value="{DynamicResource RowSelectedForeground}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn x:Name="BuiltInCommandGroupColumn" Binding="{Binding Group}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn x:Name="BuiltInCommandColumn" Binding="{Binding Command}" Width="90">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn x:Name="BuiltInFunctionColumn" Binding="{Binding Function}" Width="140">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn x:Name="BuiltInUsageColumn" Binding="{Binding Usage}" Width="*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            <Setter Property="ToolTip" Value="{Binding Usage}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </Grid>
             </Grid>

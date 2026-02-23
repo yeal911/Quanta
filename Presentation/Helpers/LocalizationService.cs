@@ -71,9 +71,14 @@ public static class LocalizationService
             ["CommandSearchPlaceholder"] = "输入关键字搜索命令",
             ["Admin"] = "管理员",
             ["CopiedToClipboard"] = "结果已复制到剪贴板",
+            ["CopyFailed"] = "复制失败",
+            ["ColorCopied"] = "已复制: {0}",
             ["TestCommand"] = "测试",
+            ["TestSelectFirst"] = "请先选中要测试的命令",
+            ["TestUnavailable"] = "测试功能不可用",
             ["TestExecuted"] = "命令已执行",
             ["TestFailed"] = "命令执行失败",
+            ["StartupSettingFailed"] = "开机启动设置失败: {0}",
             ["GroupCommand"] = "命令",
             ["GroupApp"] = "应用",
             ["GroupFile"] = "文件",
@@ -97,6 +102,12 @@ public static class LocalizationService
             ["MenuRecording"] = "录音配置",
             ["MenuExchangeRate"] = "汇率接口",
             ["MenuCommands"] = "命令管理",
+            ["MenuBuiltInCommands"] = "内置命令",
+            ["BuiltInCommandsSettings"] = "内置命令一览",
+            ["BuiltInCommandGroup"] = "命令分组",
+            ["BuiltInCommand"] = "命令",
+            ["BuiltInCommandFunction"] = "命令功能",
+            ["BuiltInCommandUsage"] = "使用说明",
             ["CommandManagement"] = "命令管理",
             ["Hotkey"] = "快捷键：",
             ["Import"] = "导入",
@@ -173,6 +184,8 @@ public static class LocalizationService
             ["RecordRightClickBitrate"] = "右键点击切换码率",
             ["RecordRightClickChannels"] = "右键点击切换声道",
             ["RecordStarting"] = "启动录音中...",
+            ["RecordingInProgress"] = "录音中...",
+            ["WinRecordNotInstalled"] = "Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载",
             // 汇率换算
             ["ExchangeRateFetching"] = "正在获取汇率...",
             ["ExchangeRateNoApiKey"] = "请在设置中配置 Exchangerate-API Key",
@@ -297,7 +310,14 @@ public static class LocalizationService
             ["FileSearchMaxResults"] = "最多显示：",
             ["FileSearchMaxResultsSuffix"] = " 条结果",
             ["FileSearchRecursive"] = "递归搜索子目录",
-            ["FileSearchBrowse"] = "浏览"
+            ["FileSearchBrowse"] = "浏览",
+            // ── 内置命令一览 ───────────────────────────────────────────
+            ["MenuBuiltInCommands"] = "内置命令",
+            ["BuiltInCommandsSettings"] = "内置命令一览",
+            ["BuiltInCommandGroup"] = "命令分组",
+            ["BuiltInCommand"] = "命令",
+            ["BuiltInCommandFunction"] = "功能说明",
+            ["BuiltInCommandUsage"] = "使用说明"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -345,9 +365,14 @@ public static class LocalizationService
             ["CommandSearchPlaceholder"] = "Search commands by keyword",
             ["Admin"] = "Admin",
             ["CopiedToClipboard"] = "Result copied to clipboard",
+            ["CopyFailed"] = "Copy Failed",
+            ["ColorCopied"] = "Copied: {0}",
             ["TestCommand"] = "Test",
+            ["TestSelectFirst"] = "Please select a command to test",
+            ["TestUnavailable"] = "Test function unavailable",
             ["TestExecuted"] = "Command executed",
             ["TestFailed"] = "Command execution failed",
+            ["StartupSettingFailed"] = "Startup setting failed: {0}",
             ["GroupCommand"] = "Commands",
             ["GroupApp"] = "Apps",
             ["GroupFile"] = "Files",
@@ -447,6 +472,8 @@ public static class LocalizationService
             ["RecordRightClickBitrate"] = "Right-click to switch bitrate",
             ["RecordRightClickChannels"] = "Right-click to switch channels",
             ["RecordStarting"] = "Starting recording...",
+            ["RecordingInProgress"] = "Recording...",
+            ["WinRecordNotInstalled"] = "Windows Voice Recorder is not installed. Search for \"Voice Recorder\" on Microsoft Store",
             // 汇率换算
             ["ExchangeRateFetching"] = "Fetching exchange rate...",
             ["ExchangeRateNoApiKey"] = "Please configure Exchangerate-API Key in settings",
@@ -571,7 +598,14 @@ public static class LocalizationService
             ["FileSearchMaxResults"] = "Max results:",
             ["FileSearchMaxResultsSuffix"] = " results",
             ["FileSearchRecursive"] = "Search subdirectories recursively",
-            ["FileSearchBrowse"] = "Browse"
+            ["FileSearchBrowse"] = "Browse",
+            // ── Built-in Commands List ───────────────────────────────────────
+            ["MenuBuiltInCommands"] = "Built-in Commands",
+            ["BuiltInCommandsSettings"] = "Built-in Commands List",
+            ["BuiltInCommandGroup"] = "Group",
+            ["BuiltInCommand"] = "Command",
+            ["BuiltInCommandFunction"] = "Function",
+            ["BuiltInCommandUsage"] = "Usage"
         },
         ["es-ES"] = new Dictionary<string, string>
         {
@@ -638,9 +672,14 @@ public static class LocalizationService
             ["CommandSearchPlaceholder"] = "Buscar comandos...",
             ["Admin"] = "Administrador",
             ["CopiedToClipboard"] = "Resultado copiado al portapapeles",
+            ["CopyFailed"] = "Error al Copiar",
+            ["ColorCopied"] = "Copiado: {0}",
             ["TestCommand"] = "Probar",
+            ["TestSelectFirst"] = "Seleccione un comando para probar",
+            ["TestUnavailable"] = "Función de prueba no disponible",
             ["TestExecuted"] = "Comando ejecutado",
             ["TestFailed"] = "Error al ejecutar el comando",
+            ["StartupSettingFailed"] = "Error al configurar el inicio automático: {0}",
             ["QRCodeTooLong"] = "El texto supera los 2000 caracteres, no se puede generar código QR",
             ["GeneralSettings"] = "General",
             ["MenuGeneral"] = "General",
@@ -721,6 +760,8 @@ public static class LocalizationService
             ["RecordRightClickBitrate"] = "Clic derecho para cambiar tasa de bits",
             ["RecordRightClickChannels"] = "Clic derecho para cambiar canales",
             ["RecordStarting"] = "Iniciando grabación...",
+            ["RecordingInProgress"] = "Grabando...",
+            ["WinRecordNotInstalled"] = "La Grabadora de Voz de Windows no está instalada. Búscala en Microsoft Store",
             // 汇率换算
             ["ExchangeRateFetching"] = "Obteniendo tipo de cambio...",
             ["ExchangeRateNoApiKey"] = "Configure la clave API en ajustes",
@@ -845,7 +886,14 @@ public static class LocalizationService
             ["FileSearchMaxResults"] = "Máx. resultados:",
             ["FileSearchMaxResultsSuffix"] = " resultados",
             ["FileSearchRecursive"] = "Buscar subdirectorios recursivamente",
-            ["FileSearchBrowse"] = "Examinar"
+            ["FileSearchBrowse"] = "Examinar",
+            // ── Lista de Comandos Integrados ───────────────────────────────
+            ["MenuBuiltInCommands"] = "Comandos Integrados",
+            ["BuiltInCommandsSettings"] = "Lista de Comandos Integrados",
+            ["BuiltInCommandGroup"] = "Grupo",
+            ["BuiltInCommand"] = "Comando",
+            ["BuiltInCommandFunction"] = "Función",
+            ["BuiltInCommandUsage"] = "Uso"
         }
     };
 
