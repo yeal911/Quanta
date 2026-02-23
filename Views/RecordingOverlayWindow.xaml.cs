@@ -23,6 +23,7 @@ using WpfMouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using WpfMouseButtonState = System.Windows.Input.MouseButtonState;
 using Quanta.Services;
 using Quanta.Core.Interfaces;
+using Quanta.Helpers;
 using GdiImage = System.Drawing.Image;
 using GdiPixelFormat = System.Drawing.Imaging.PixelFormat;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
@@ -604,7 +605,7 @@ public partial class RecordingOverlayWindow : Window
             _notifyIcon = new NotifyIcon
             {
                 Icon = new Icon(iconPath),
-                Text = "录音中...",
+                Text = LocalizationService.Get("RecordingInProgress"),
                 Visible = false
             };
             _notifyIcon.DoubleClick += NotifyIcon_DoubleClick;

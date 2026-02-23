@@ -95,7 +95,7 @@ public class TrayService : ITrayService
         {
             Icon = icon,
             Visible = true,
-            Text = "Quanta",
+            Text = LocalizationService.Get("TrayTooltip"),
         };
 
         // 构建右键上下文菜单

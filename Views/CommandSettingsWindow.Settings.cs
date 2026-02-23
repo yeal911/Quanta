@@ -226,15 +226,37 @@ public partial class CommandSettingsWindow
 
         config.FileSearchSettings.Enabled = FileSearchEnabledCheck.IsChecked == true;
 
-        // 解析目录列表
+        // 解析目录列表并验证
         var dirs = new List<string>();
-        var lines = FileSearchDirectoriesBox.Text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        foreach (var line in lines)
+        var invalidLines = new List<string>();
+        var lines = FileSearchDirectoriesBox.Text.Split('\n', StringSplitOptions.None);
+        for (int i = 0; i < lines.Length; i++)
         {
-            var dir = line.Trim();
-            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
-                dirs.Add(dir);
+            var line = lines[i].Trim();
+            // 跳过空行
+            if (string.IsNullOrEmpty(line))
+                continue;
+            
+            // 验证目录是否存在
+            if (!Directory.Exists(line))
+            {
+                invalidLines.Add($"第 {i + 1} 行: {line}");
+            }
+            else
+            {
+                dirs.Add(line);
+            }
         }
+
+            // 如果有无效目录，显示错误 Toast
+        if (invalidLines.Count > 0)
+        {
+            var errorLines = string.Join("\n", invalidLines);
+            var errorMsg = LocalizationService.Get("FileSearchInvalidDirs") + "\n" + errorLines;
+            ToastService.Instance.ShowError(errorMsg, 5.0);
+            return; // 不保存配置
+        }
+
         config.FileSearchSettings.Directories = dirs;
 
         if (int.TryParse(FileSearchMaxFilesBox.Text, out int maxFiles) && maxFiles > 0)

@@ -227,7 +227,7 @@ public partial class MainWindow
             if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
             {
                 System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
-                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hex);
+                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hex));
             }
         }
     }
@@ -240,7 +240,7 @@ public partial class MainWindow
             if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
             {
                 System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
-                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Rgb);
+                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Rgb));
             }
         }
     }
@@ -253,7 +253,7 @@ public partial class MainWindow
             if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
             {
                 System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
-                ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hsl);
+                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hsl));
             }
         }
     }
@@ -263,7 +263,7 @@ public partial class MainWindow
         if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
         {
             System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
-            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hex);
+            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hex));
         }
     }
 
@@ -272,7 +272,7 @@ public partial class MainWindow
         if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
         {
             System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
-            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Rgb);
+            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Rgb));
         }
     }
 
@@ -281,7 +281,7 @@ public partial class MainWindow
         if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
         {
             System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
-            ToastService.Instance.ShowInfo("已复制: " + result.ColorInfo.Hsl);
+            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hsl));
         }
     }
 }

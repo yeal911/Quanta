@@ -496,7 +496,7 @@ public class TextToolHandler : ICommandHandler
     private static SearchResult TextBase64Encode(string input)
     {
         string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(input));
-        return MakeTextResult(encoded, "Base64 编码", "B");
+        return MakeTextResult(encoded, LocalizationService.Get("TextBase64EncodeResult"), "B");
     }
 
     private static SearchResult TextBase64Decode(string input)
@@ -506,14 +506,14 @@ public class TextToolHandler : ICommandHandler
         {
             byte[] bytes = Convert.FromBase64String(trimmed);
             string decoded = new UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
-            return MakeTextResult(decoded, "Base64 解码", "B");
+            return MakeTextResult(decoded, LocalizationService.Get("TextBase64DecodeResult"), "B");
         }
         catch
         {
             return new SearchResult
             {
-                Title = "Base64 解码失败",
-                Subtitle = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
+                Title = LocalizationService.Get("TextBase64DecodeFail"),
+                Subtitle = LocalizationService.Get("TextBase64DecodeFailHint"),
                 Type = SearchResultType.Calculator,
                 IconText = "B",
                 GroupLabel = LocalizationService.Get("GroupText"),
@@ -537,10 +537,10 @@ public class TextToolHandler : ICommandHandler
         if (Regex.IsMatch(input, @"%[0-9A-Fa-f]{2}"))
         {
             string decoded = Uri.UnescapeDataString(input);
-            return MakeTextResult(decoded, "URL 解码", "U");
+            return MakeTextResult(decoded, LocalizationService.Get("TextUrlDecodeResult"), "U");
         }
         string encoded = Uri.EscapeDataString(input);
-        return MakeTextResult(encoded, "URL 编码", "U");
+        return MakeTextResult(encoded, LocalizationService.Get("TextUrlEncodeResult"), "U");
     }
 
     private static SearchResult TextJson(string input)
@@ -554,7 +554,7 @@ public class TextToolHandler : ICommandHandler
             if (preview.Length > 120) preview = preview[..120] + "…";
             return new SearchResult
             {
-                Title = $"JSON ({lines} 行)",
+                Title = LocalizationService.Get("TextJsonResult", lines),
                 Subtitle = preview,
                 Type = SearchResultType.Calculator,
                 IconText = "{",
@@ -568,7 +568,7 @@ public class TextToolHandler : ICommandHandler
         {
             return new SearchResult
             {
-                Title = "JSON 格式错误",
+                Title = LocalizationService.Get("TextJsonError"),
                 Subtitle = ex.Message,
                 Type = SearchResultType.Calculator,
                 IconText = "{",

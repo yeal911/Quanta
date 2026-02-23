@@ -111,63 +111,69 @@ public class ExchangeRateService : IExchangeRateService
     /// <summary>
     /// 获取支持的货币代码列表
     /// </summary>
-    public Dictionary<string, string> SupportedCurrencies => _supportedCurrencies;
+    public Dictionary<string, string> SupportedCurrencies => GetSupportedCurrencies();
 
-    private static readonly Dictionary<string, string> _supportedCurrencies = new()
+    /// <summary>
+    /// 获取本地化的货币名称字典
+    /// </summary>
+    private static Dictionary<string, string> GetSupportedCurrencies()
     {
-        // 主要货币
-        ["USD"] = "美元",
-        ["CNY"] = "人民币",
-        ["EUR"] = "欧元",
-        ["GBP"] = "英镑",
-        ["JPY"] = "日元",
-        ["KRW"] = "韩元",
-        ["HKD"] = "港币",
-        ["TWD"] = "新台币",
-        ["SGD"] = "新加坡元",
-        ["AUD"] = "澳大利亚元",
-        ["CAD"] = "加拿大元",
-        ["CHF"] = "瑞士法郎",
-        ["INR"] = "印度卢比",
-        ["MXN"] = "墨西哥比索",
-        ["BRL"] = "巴西雷亚尔",
-        ["RUB"] = "俄罗斯卢布",
-        ["ZAR"] = "南非兰特",
-        ["SEK"] = "瑞典克朗",
-        ["NOK"] = "挪威克朗",
-        ["DKK"] = "丹麦克朗",
-        ["NZD"] = "新西兰元",
-        ["THB"] = "泰铢",
-        ["MYR"] = "马来西亚林吉特",
-        ["IDR"] = "印尼盾",
-        ["PHP"] = "菲律宾比索",
-        ["VND"] = "越南盾",
-        ["AED"] = "阿联酋迪拉姆",
-        ["SAR"] = "沙特里亚尔",
-        ["TRY"] = "土耳其里拉",
-        ["PLN"] = "波兰兹罗提",
-        ["ILS"] = "以色列谢克尔",
-        ["CZK"] = "捷克克朗",
-        ["HUF"] = "匈牙利福林",
-        ["CLP"] = "智利比索",
-        ["COP"] = "哥伦比亚比索",
-        ["PEN"] = "秘鲁索尔",
-        ["ARS"] = "阿根廷比索",
-        ["NGN"] = "尼日利亚奈拉",
-        ["EGP"] = "埃及镑",
-        ["PKR"] = "巴基斯坦卢比",
-        ["BDT"] = "孟加拉塔卡",
-        ["UAH"] = "乌克兰格里夫纳",
-        ["RON"] = "罗马尼亚列伊",
-        ["BGN"] = "保加利亚列弗",
-        ["HRK"] = "克罗地亚库纳",
-        ["ISK"] = "冰岛克朗"
-    };
+        return new Dictionary<string, string>
+        {
+            // 主要货币
+            ["USD"] = LocalizationService.Get("Currency_USD"),
+            ["CNY"] = LocalizationService.Get("Currency_CNY"),
+            ["EUR"] = LocalizationService.Get("Currency_EUR"),
+            ["GBP"] = LocalizationService.Get("Currency_GBP"),
+            ["JPY"] = LocalizationService.Get("Currency_JPY"),
+            ["KRW"] = LocalizationService.Get("Currency_KRW"),
+            ["HKD"] = LocalizationService.Get("Currency_HKD"),
+            ["TWD"] = LocalizationService.Get("Currency_TWD"),
+            ["SGD"] = LocalizationService.Get("Currency_SGD"),
+            ["AUD"] = LocalizationService.Get("Currency_AUD"),
+            ["CAD"] = LocalizationService.Get("Currency_CAD"),
+            ["CHF"] = LocalizationService.Get("Currency_CHF"),
+            ["INR"] = LocalizationService.Get("Currency_INR"),
+            ["MXN"] = LocalizationService.Get("Currency_MXN"),
+            ["BRL"] = LocalizationService.Get("Currency_BRL"),
+            ["RUB"] = LocalizationService.Get("Currency_RUB"),
+            ["ZAR"] = LocalizationService.Get("Currency_ZAR"),
+            ["SEK"] = LocalizationService.Get("Currency_SEK"),
+            ["NOK"] = LocalizationService.Get("Currency_NOK"),
+            ["DKK"] = LocalizationService.Get("Currency_DKK"),
+            ["NZD"] = LocalizationService.Get("Currency_NZD"),
+            ["THB"] = LocalizationService.Get("Currency_THB"),
+            ["MYR"] = LocalizationService.Get("Currency_MYR"),
+            ["IDR"] = LocalizationService.Get("Currency_IDR"),
+            ["PHP"] = LocalizationService.Get("Currency_PHP"),
+            ["VND"] = LocalizationService.Get("Currency_VND"),
+            ["AED"] = LocalizationService.Get("Currency_AED"),
+            ["SAR"] = LocalizationService.Get("Currency_SAR"),
+            ["TRY"] = LocalizationService.Get("Currency_TRY"),
+            ["PLN"] = LocalizationService.Get("Currency_PLN"),
+            ["ILS"] = LocalizationService.Get("Currency_ILS"),
+            ["CZK"] = LocalizationService.Get("Currency_CZK"),
+            ["HUF"] = LocalizationService.Get("Currency_HUF"),
+            ["CLP"] = LocalizationService.Get("Currency_CLP"),
+            ["COP"] = LocalizationService.Get("Currency_COP"),
+            ["PEN"] = LocalizationService.Get("Currency_PEN"),
+            ["ARS"] = LocalizationService.Get("Currency_ARS"),
+            ["NGN"] = LocalizationService.Get("Currency_NGN"),
+            ["EGP"] = LocalizationService.Get("Currency_EGP"),
+            ["PKR"] = LocalizationService.Get("Currency_PKR"),
+            ["BDT"] = LocalizationService.Get("Currency_BDT"),
+            ["UAH"] = LocalizationService.Get("Currency_UAH"),
+            ["RON"] = LocalizationService.Get("Currency_RON"),
+            ["BGN"] = LocalizationService.Get("Currency_BGN"),
+            ["HRK"] = LocalizationService.Get("Currency_HRK"),
+            ["ISK"] = LocalizationService.Get("Currency_ISK")
+        };
+    }
 
     /// <summary>
     /// 获取支持的货币代码列表（静态属性，用于向后兼容）
     /// </summary>
-    public static readonly Dictionary<string, string> SupportedCurrenciesStatic = _supportedCurrencies;
+    public static Dictionary<string, string> SupportedCurrenciesStatic => GetSupportedCurrencies();
 
 
     /// <summary>

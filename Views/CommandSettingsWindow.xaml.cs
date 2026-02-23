@@ -83,7 +83,7 @@ public partial class CommandSettingsWindow : Window
     {
         LoadExchangeRateSettings();
         LoadFileSearchSettings();
-        SelectMenu("MenuGeneral");
+        SelectMenu("MenuCommands");
 
         RootBorder.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
         var scaleTransform = new System.Windows.Media.ScaleTransform(1, 1);
