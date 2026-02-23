@@ -52,6 +52,9 @@ public class AppConfig
 
     /// <summary>汇率API设置</summary>
     [JsonPropertyName("ExchangeRateSettings")] public ExchangeRateSettings ExchangeRateSettings { get; set; } = new();
+
+    /// <summary>文件搜索设置</summary>
+    [JsonPropertyName("FileSearchSettings")] public FileSearchSettings FileSearchSettings { get; set; } = new();
 }
 
 /// <summary>
@@ -224,4 +227,25 @@ public class AppSettings
 
     /// <summary>界面语言，默认为简体中文</summary>
     [JsonPropertyName("Language")] public string Language { get; set; } = "zh-CN";
+}
+
+/// <summary>
+/// 文件搜索设置类，控制文件搜索功能的启用状态、搜索目录和行为。
+/// </summary>
+public class FileSearchSettings
+{
+    /// <summary>是否启用文件搜索</summary>
+    [JsonPropertyName("Enabled")] public bool Enabled { get; set; } = true;
+
+    /// <summary>搜索目录列表，空列表表示使用默认目录（桌面+下载）</summary>
+    [JsonPropertyName("Directories")] public List<string> Directories { get; set; } = new();
+
+    /// <summary>每个目录最多扫描文件数</summary>
+    [JsonPropertyName("MaxFiles")] public int MaxFiles { get; set; } = 300;
+
+    /// <summary>最多返回结果数</summary>
+    [JsonPropertyName("MaxResults")] public int MaxResults { get; set; } = 8;
+
+    /// <summary>是否递归搜索子目录</summary>
+    [JsonPropertyName("Recursive")] public bool Recursive { get; set; } = false;
 }

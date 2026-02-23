@@ -82,6 +82,14 @@ public static class LocalizationService
             ["GroupWeb"] = "网络",
             ["GroupText"] = "文本工具",
             ["GroupClip"] = "剪贴板历史",
+            ["TextBase64Encode"] = "Base64 编码",
+            ["TextBase64Decode"] = "Base64 解码",
+            ["TextBase64DecodeFail"] = "Base64 解码失败",
+            ["TextBase64DecodeFailHint"] = "输入不是有效的 Base64 或无法解码为 UTF-8 文本",
+            ["TextUrlEncode"] = "URL 编码",
+            ["TextUrlDecode"] = "URL 解码",
+            ["TextJsonLines"] = "JSON ({0} 行)",
+            ["TextJsonError"] = "JSON 格式错误",
             ["QRCodeTooLong"] = "文本超过2000字符，无法生成二维码",
             ["SettingsTitle"] = "设置",
             ["GeneralSettings"] = "通用设置",
@@ -277,7 +285,19 @@ public static class LocalizationService
             ["BuiltinCmd_record"] = "录音",
             ["BuiltinDesc_record"] = "开始一段新录音",
             ["BuiltinCmd_clip"] = "剪贴板历史",
-            ["BuiltinDesc_clip"] = "搜索剪贴板历史记录"
+            ["BuiltinDesc_clip"] = "搜索剪贴板历史记录",
+            // ── 文件搜索设置 ───────────────────────────────────────────
+            ["MenuFileSearch"] = "文件搜索",
+            ["FileSearchSettings"] = "文件搜索设置",
+            ["FileSearchEnabled"] = "启用文件搜索",
+            ["FileSearchDirectories"] = "搜索目录：",
+            ["FileSearchDirectoriesHint"] = "每行一个目录，留空使用默认（桌面+下载）",
+            ["FileSearchMaxFiles"] = "每个目录最多扫描：",
+            ["FileSearchMaxFilesSuffix"] = " 个文件",
+            ["FileSearchMaxResults"] = "最多显示：",
+            ["FileSearchMaxResultsSuffix"] = " 条结果",
+            ["FileSearchRecursive"] = "递归搜索子目录",
+            ["FileSearchBrowse"] = "浏览"
         },
         ["en-US"] = new Dictionary<string, string>
         {
@@ -336,6 +356,14 @@ public static class LocalizationService
             ["GroupWeb"] = "Web",
             ["GroupText"] = "Text Tools",
             ["GroupClip"] = "Clipboard History",
+            ["TextBase64Encode"] = "Base64 Encode",
+            ["TextBase64Decode"] = "Base64 Decode",
+            ["TextBase64DecodeFail"] = "Base64 Decode Failed",
+            ["TextBase64DecodeFailHint"] = "Invalid Base64 input or cannot decode as UTF-8",
+            ["TextUrlEncode"] = "URL Encode",
+            ["TextUrlDecode"] = "URL Decode",
+            ["TextJsonLines"] = "JSON ({0} lines)",
+            ["TextJsonError"] = "JSON Format Error",
             ["QRCodeTooLong"] = "Text exceeds 2000 characters, cannot generate QR code",
             ["SettingsTitle"] = "Settings",
             ["GeneralSettings"] = "General",
@@ -531,7 +559,19 @@ public static class LocalizationService
             ["BuiltinCmd_record"] = "Recording",
             ["BuiltinDesc_record"] = "Start a new recording",
             ["BuiltinCmd_clip"] = "Clipboard History",
-            ["BuiltinDesc_clip"] = "Search clipboard history"
+            ["BuiltinDesc_clip"] = "Search clipboard history",
+            // ── File Search Settings ─────────────────────────────────────────
+            ["MenuFileSearch"] = "File Search",
+            ["FileSearchSettings"] = "File Search Settings",
+            ["FileSearchEnabled"] = "Enable File Search",
+            ["FileSearchDirectories"] = "Search Directories:",
+            ["FileSearchDirectoriesHint"] = "One path per line, leave empty to use default (Desktop+Downloads)",
+            ["FileSearchMaxFiles"] = "Max files per directory:",
+            ["FileSearchMaxFilesSuffix"] = " files",
+            ["FileSearchMaxResults"] = "Max results:",
+            ["FileSearchMaxResultsSuffix"] = " results",
+            ["FileSearchRecursive"] = "Search subdirectories recursively",
+            ["FileSearchBrowse"] = "Browse"
         },
         ["es-ES"] = new Dictionary<string, string>
         {
@@ -554,6 +594,14 @@ public static class LocalizationService
             ["GroupWeb"] = "Web",
             ["GroupText"] = "Herramientas de Texto",
             ["GroupClip"] = "Historial del Portapapeles",
+            ["TextBase64Encode"] = "Codificar Base64",
+            ["TextBase64Decode"] = "Decodificar Base64",
+            ["TextBase64DecodeFail"] = "Error al Decodificar Base64",
+            ["TextBase64DecodeFailHint"] = "Entrada Base64 inválida o no se puede decodificar como UTF-8",
+            ["TextUrlEncode"] = "Codificar URL",
+            ["TextUrlDecode"] = "Decodificar URL",
+            ["TextJsonLines"] = "JSON ({0} líneas)",
+            ["TextJsonError"] = "Error de Formato JSON",
             // 搜索
             ["SearchPlaceholder"] = "Ingrese palabra clave | Esc para ocultar",
             // 设置界面
@@ -785,7 +833,19 @@ public static class LocalizationService
             ["BuiltinCmd_record"] = "Grabación",
             ["BuiltinDesc_record"] = "Iniciar una nueva grabación",
             ["BuiltinCmd_clip"] = "Historial del portapapeles",
-            ["BuiltinDesc_clip"] = "Buscar historial del portapapeles"
+            ["BuiltinDesc_clip"] = "Buscar historial del portapapeles",
+            // ── Configuración de Búsqueda de Archivos ─────────────────────────────
+            ["MenuFileSearch"] = "Búsqueda de Archivos",
+            ["FileSearchSettings"] = "Configuración de Búsqueda de Archivos",
+            ["FileSearchEnabled"] = "Habilitar búsqueda de archivos",
+            ["FileSearchDirectories"] = "Directorios de búsqueda:",
+            ["FileSearchDirectoriesHint"] = "Una ruta por línea, leave vacío para usar predeterminado (Escritorio+Descargas)",
+            ["FileSearchMaxFiles"] = "Máx. archivos por directorio:",
+            ["FileSearchMaxFilesSuffix"] = " archivos",
+            ["FileSearchMaxResults"] = "Máx. resultados:",
+            ["FileSearchMaxResultsSuffix"] = " resultados",
+            ["FileSearchRecursive"] = "Buscar subdirectorios recursivamente",
+            ["FileSearchBrowse"] = "Examinar"
         }
     };
 

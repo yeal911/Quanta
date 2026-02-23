@@ -81,6 +81,7 @@ public partial class CommandSettingsWindow : Window
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         LoadExchangeRateSettings();
+        LoadFileSearchSettings();
         SelectMenu("MenuGeneral");
 
         RootBorder.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
@@ -134,17 +135,20 @@ public partial class CommandSettingsWindow : Window
 
         MenuGeneral.Tag = null;
         MenuRecording.Tag = null;
+        MenuFileSearch.Tag = null;
         MenuExchangeRate.Tag = null;
         MenuCommands.Tag = null;
 
         FrameworkElement? currentPanel = null;
         if (PanelGeneral.Visibility == Visibility.Visible) currentPanel = PanelGeneral;
         else if (PanelRecording.Visibility == Visibility.Visible) currentPanel = PanelRecording;
+        else if (PanelFileSearch.Visibility == Visibility.Visible) currentPanel = PanelFileSearch;
         else if (PanelExchangeRate.Visibility == Visibility.Visible) currentPanel = PanelExchangeRate;
         else if (PanelCommands.Visibility == Visibility.Visible) currentPanel = PanelCommands;
 
         PanelGeneral.Visibility = Visibility.Collapsed;
         PanelRecording.Visibility = Visibility.Collapsed;
+        PanelFileSearch.Visibility = Visibility.Collapsed;
         PanelExchangeRate.Visibility = Visibility.Collapsed;
         PanelCommands.Visibility = Visibility.Collapsed;
 
@@ -159,6 +163,10 @@ public partial class CommandSettingsWindow : Window
                 MenuRecording.Tag = "Selected";
                 targetPanel = PanelRecording;
                 UpdateEstimatedSize();
+                break;
+            case "MenuFileSearch":
+                MenuFileSearch.Tag = "Selected";
+                targetPanel = PanelFileSearch;
                 break;
             case "MenuExchangeRate":
                 MenuExchangeRate.Tag = "Selected";
@@ -203,6 +211,7 @@ public partial class CommandSettingsWindow : Window
 
         MenuGeneral.Content = LocalizationService.Get("MenuGeneral");
         MenuRecording.Content = LocalizationService.Get("MenuRecording");
+        MenuFileSearch.Content = LocalizationService.Get("MenuFileSearch");
         MenuExchangeRate.Content = LocalizationService.Get("MenuExchangeRate");
         MenuCommands.Content = LocalizationService.Get("MenuCommands");
 
@@ -233,6 +242,17 @@ public partial class CommandSettingsWindow : Window
         RecordOutputPathLabel.Text = LocalizationService.Get("RecordOutputPath") + "：";
         RecordBrowseButton.Content = LocalizationService.Get("RecordBrowse");
         RecordEstimatedSizeLabel.Text = LocalizationService.Get("RecordEstimatedSize") + "：";
+
+        // File Search
+        FileSearchSectionLabel.Text = LocalizationService.Get("FileSearchSettings");
+        FileSearchEnabledCheck.Content = LocalizationService.Get("FileSearchEnabled");
+        FileSearchDirectoriesLabel.Text = LocalizationService.Get("FileSearchDirectories");
+        FileSearchDirectoriesHint.Text = LocalizationService.Get("FileSearchDirectoriesHint");
+        FileSearchMaxFilesLabel.Text = LocalizationService.Get("FileSearchMaxFiles");
+        FileSearchMaxFilesSuffix.Text = LocalizationService.Get("FileSearchMaxFilesSuffix");
+        FileSearchMaxResultsLabel.Text = LocalizationService.Get("FileSearchMaxResults");
+        FileSearchMaxResultsSuffix.Text = LocalizationService.Get("FileSearchMaxResultsSuffix");
+        FileSearchRecursiveCheck.Content = LocalizationService.Get("FileSearchRecursive");
 
         PopulateLanguageComboBox();
         PopulateRecordSourceCombo();

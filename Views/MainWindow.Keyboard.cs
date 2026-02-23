@@ -216,7 +216,7 @@ public partial class MainWindow
     private async Task ExecuteSelectedAsync()
     {
         // 剪贴板历史项：执行后自动粘贴到前台窗口
-        if (_viewModel.SelectedResult?.GroupLabel == "Clip")
+        if (_viewModel.SelectedResult?.GroupLabel == LocalizationService.Get("GroupClip"))
             _pendingPaste = true;
 
         await _viewModel.ExecuteSelectedCommand.ExecuteAsync(null);

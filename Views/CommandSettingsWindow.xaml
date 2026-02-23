@@ -86,6 +86,7 @@
                 <StackPanel Grid.Column="0" Margin="4,0,8,0">
                     <Button x:Name="MenuGeneral"      Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                     <Button x:Name="MenuRecording"    Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
+                    <Button x:Name="MenuFileSearch"   Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                     <Button x:Name="MenuExchangeRate" Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                     <Button x:Name="MenuCommands"     Style="{StaticResource MenuButtonStyle}" Click="MenuItem_Click"/>
                 </StackPanel>
@@ -251,6 +252,76 @@
                                     <TextBlock x:Name="RecordEstimatedSizeValue" FontSize="11" FontFamily="Consolas"
                                                Foreground="#E67E22" VerticalAlignment="Center"/>
                                 </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- 文件搜索配置 Panel -->
+                    <Grid x:Name="PanelFileSearch" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,4,0,10">
+                            <TextBlock x:Name="FileSearchSectionLabel" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SectionHeaderText}"
+                                       FontFamily="微软雅黑" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!-- 启用文件搜索 -->
+                                <CheckBox x:Name="FileSearchEnabledCheck" FontSize="12" FontFamily="微软雅黑"
+                                          VerticalAlignment="Center" Margin="0,0,0,12"
+                                          Checked="FileSearchEnabledCheck_Changed"
+                                          Unchecked="FileSearchEnabledCheck_Changed"/>
+
+                                <!-- 搜索目录 -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                    <TextBlock x:Name="FileSearchDirectoriesLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
+                                    <TextBox x:Name="FileSearchDirectoriesBox" Width="280" FontSize="11" FontFamily="Consolas"
+                                             Padding="4,2" BorderThickness="1" VerticalAlignment="Center"
+                                             LostFocus="FileSearchDirectoriesBox_LostFocus"/>
+                                </StackPanel>
+                                <TextBlock x:Name="FileSearchDirectoriesHint" FontSize="10"
+                                           Foreground="{DynamicResource TertiaryText}" Margin="168,0,0,12"/>
+
+                                <!-- 每个目录最多扫描文件数 -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock x:Name="FileSearchMaxFilesLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
+                                    <TextBox x:Name="FileSearchMaxFilesBox" Width="50" Padding="4,2"
+                                             FontSize="12" FontFamily="Consolas" TextAlignment="Center"
+                                             BorderThickness="1" VerticalAlignment="Center"
+                                             PreviewTextInput="FileSearchMaxFilesBox_PreviewTextInput"
+                                             LostFocus="FileSearchMaxFilesBox_LostFocus"/>
+                                    <TextBlock x:Name="FileSearchMaxFilesSuffix" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- 最多显示结果数 -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock x:Name="FileSearchMaxResultsLabel" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" Width="160"/>
+                                    <TextBox x:Name="FileSearchMaxResultsBox" Width="50" Padding="4,2"
+                                             FontSize="12" FontFamily="Consolas" TextAlignment="Center"
+                                             BorderThickness="1" VerticalAlignment="Center"
+                                             PreviewTextInput="FileSearchMaxResultsBox_PreviewTextInput"
+                                             LostFocus="FileSearchMaxResultsBox_LostFocus"/>
+                                    <TextBlock x:Name="FileSearchMaxResultsSuffix" FontSize="12" FontFamily="微软雅黑"
+                                               Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- 递归搜索子目录 -->
+                                <CheckBox x:Name="FileSearchRecursiveCheck" FontSize="12" FontFamily="微软雅黑"
+                                          VerticalAlignment="Center" Margin="168,0,0,0"
+                                          Checked="FileSearchRecursiveCheck_Changed"
+                                          Unchecked="FileSearchRecursiveCheck_Changed"/>
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>

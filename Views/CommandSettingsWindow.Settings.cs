@@ -4,6 +4,7 @@
 // ============================================================================
 
 using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -188,4 +189,107 @@ public partial class CommandSettingsWindow
             QRCodeThresholdBox.Text = config.AppSettings.QRCodeThreshold.ToString();
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 文件搜索设置
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>加载文件搜索设置到控件</summary>
+    private void LoadFileSearchSettings()
+    {
+        var config = ConfigLoader.Load();
+        var fs = config.FileSearchSettings;
+
+        FileSearchEnabledCheck.IsChecked = fs.Enabled;
+
+        // 如果没有自定义目录，使用默认值显示
+        if (fs.Directories == null || fs.Directories.Count == 0)
+        {
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var downloads = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
+            FileSearchDirectoriesBox.Text = $"{desktop}\n{downloads}";
+        }
+        else
+        {
+            FileSearchDirectoriesBox.Text = string.Join("\n", fs.Directories);
+        }
+
+        FileSearchMaxFilesBox.Text = fs.MaxFiles.ToString();
+        FileSearchMaxResultsBox.Text = fs.MaxResults.ToString();
+        FileSearchRecursiveCheck.IsChecked = fs.Recursive;
+    }
+
+    /// <summary>保存文件搜索设置到配置</summary>
+    private void SaveFileSearchSettings()
+    {
+        var config = ConfigLoader.Load();
+
+        config.FileSearchSettings.Enabled = FileSearchEnabledCheck.IsChecked == true;
+
+        // 解析目录列表
+        var dirs = new List<string>();
+        var lines = FileSearchDirectoriesBox.Text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            var dir = line.Trim();
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                dirs.Add(dir);
+        }
+        config.FileSearchSettings.Directories = dirs;
+
+        if (int.TryParse(FileSearchMaxFilesBox.Text, out int maxFiles) && maxFiles > 0)
+            config.FileSearchSettings.MaxFiles = maxFiles;
+
+        if (int.TryParse(FileSearchMaxResultsBox.Text, out int maxResults) && maxResults > 0)
+            config.FileSearchSettings.MaxResults = maxResults;
+
+        config.FileSearchSettings.Recursive = FileSearchRecursiveCheck.IsChecked == true;
+
+        ConfigLoader.Save(config);
+        ShowAutoSaveToast();
+    }
+
+    /// <summary>启用文件搜索 CheckBox 变更</summary>
+    private void FileSearchEnabledCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        SaveFileSearchSettings();
+    }
+
+    /// <summary>搜索目录 TextBox 失焦保存</summary>
+    private void FileSearchDirectoriesBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        SaveFileSearchSettings();
+    }
+
+    /// <summary>每个目录最多扫描文件数 - 只允许数字</summary>
+    private void FileSearchMaxFilesBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = !e.Text.All(char.IsDigit);
+    }
+
+    /// <summary>每个目录最多扫描文件数 - 失焦保存</summary>
+    private void FileSearchMaxFilesBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        SaveFileSearchSettings();
+    }
+
+    /// <summary>最多显示结果数 - 只允许数字</summary>
+    private void FileSearchMaxResultsBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = !e.Text.All(char.IsDigit);
+    }
+
+    /// <summary>最多显示结果数 - 失焦保存</summary>
+    private void FileSearchMaxResultsBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        SaveFileSearchSettings();
+    }
+
+    /// <summary>递归搜索 CheckBox 变更</summary>
+    private void FileSearchRecursiveCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        SaveFileSearchSettings();
+    }
+
+
 }

@@ -216,9 +216,9 @@ public class ExchangeRateService : IExchangeRateService
 
         if (rates == null)
         {
-            // 缓存没有或过期，尝试从文件缓存获取（1小时内）
+            // 缓存没有或过期，尝试从文件缓存获取
             Logger.Warn("[ExchangeRate] Memory cache expired/missed, trying file cache...");
-            var fileData = LoadFromFileCache(fromCurrency);
+            var fileData = LoadFromFileCache(fromCurrency, cacheMinutes);
             if (fileData != null && fileData.Currencies.TryGetValue(fromCurrency.ToUpper(), out var currencyData))
             {
                 rates = currencyData.Rates;
@@ -272,10 +272,7 @@ public class ExchangeRateService : IExchangeRateService
 
         string formattedResult = FormatCurrency(result, toCurrency);
         string unitRate = FormatUnitRate(1, fromCurrency, rate, toCurrency, reverseRate);
-        // 转换为本地时区时间并格式化
-        string fetchTimeStr = apiUpdateTime != DateTime.MinValue
-            ? apiUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
-            : "";
+        string fetchTimeStr = FormatFetchTime(apiUpdateTime);
 
         Logger.Debug($"[ExchangeRate] Result: {formattedResult}, Unit: {unitRate}, Time: {fetchTimeStr}");
 
@@ -291,18 +288,17 @@ public class ExchangeRateService : IExchangeRateService
 
     /// <summary>
     /// 异步获取汇率（仅检查内存缓存，不调用API）
+    /// 仅在缓存有效期内才返回数据；过期时返回 null，让上层走文件缓存或 API。
     /// </summary>
     private Task<(Dictionary<string, double>? Rates, DateTime FetchTime, string? FetchTimeUtc, bool IsFromCache)> GetRatesAsync(string baseCurrency, string apiKey, int cacheMinutes)
     {
         var cacheKey = baseCurrency.ToUpper();
         var now = DateTime.Now;
 
-        // 检查内存缓存（任意时间内的都返回，不过期判断交给上层）
         lock (_cacheLock)
         {
             if (_memoryCache.TryGetValue(cacheKey, out var entry))
             {
-                // 如果在缓存有效期内
                 if (entry.Expiry > now)
                 {
                     Logger.Debug($"[ExchangeRate] Memory cache HIT (valid) for {cacheKey}, expires at {entry.Expiry}");
@@ -310,9 +306,9 @@ public class ExchangeRateService : IExchangeRateService
                 }
                 else
                 {
-                    // 过期但还有数据，返回过期标记
-                    Logger.Debug($"[ExchangeRate] Memory cache HIT (expired) for {cacheKey}, expired at {entry.Expiry}");
-                    return Task.FromResult<(Dictionary<string, double>?, DateTime, string?, bool)>((entry.Rates, entry.ApiUpdateTime, entry.ApiUpdateTimeUtc, true));
+                    // 缓存已过期，移除后返回 null，让上层重新获取
+                    Logger.Debug($"[ExchangeRate] Memory cache EXPIRED for {cacheKey}, expired at {entry.Expiry}, removing...");
+                    _memoryCache.Remove(cacheKey);
                 }
             }
         }
@@ -461,12 +457,10 @@ public class ExchangeRateService : IExchangeRateService
     }
 
     /// <summary>
-    /// 从文件加载汇率数据（1小时内可用）
+    /// 从文件加载汇率数据（在 cacheMinutes 内可用）
     /// </summary>
-    private FileCacheData? LoadFromFileCache(string baseCode)
+    private FileCacheData? LoadFromFileCache(string baseCode, int cacheMinutes)
     {
-        const int cacheThresholdMinutes = 60; // 1小时内认为是有效的
-
         try
         {
             if (!File.Exists(_ratesFilePath))
@@ -492,11 +486,11 @@ public class ExchangeRateService : IExchangeRateService
                 return null;
             }
 
-            // 检查是否在1小时内
+            // 使用配置的缓存时长（分钟）检查文件缓存是否过期
             var age = DateTime.Now - currencyData.ApiUpdateTime;
-            if (age.TotalMinutes > cacheThresholdMinutes)
+            if (age.TotalMinutes > cacheMinutes)
             {
-                Logger.Debug($"[ExchangeRate] File cache for {upperCode} too old: {age.TotalMinutes:F1} minutes");
+                Logger.Debug($"[ExchangeRate] File cache for {upperCode} too old: {age.TotalMinutes:F1} min (threshold: {cacheMinutes} min)");
                 return null;
             }
 
