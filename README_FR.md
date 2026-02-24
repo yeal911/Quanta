@@ -112,9 +112,14 @@ Entrez directement des expressions mathématiques :
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
 ```
 
-Opérateurs supportés : `+ - * / % ^`, support des parenthèses et décimales.
+Opérateurs pris en charge : `+ - * / % ^`, avec parenthèses, décimales et signes unaires (comme `-5`, `+3`).
+
+Priorité : `^` (puissance) > `* / %` > `+ -` ; la puissance est associative à droite (ex. `2^3^2 = 2^(3^2)`).
 
 ### Conversion d'Unités
 
