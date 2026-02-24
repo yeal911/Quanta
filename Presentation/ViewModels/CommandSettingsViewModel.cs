@@ -11,9 +11,8 @@ using System.Linq;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Quanta.Helpers;
+using Quanta.Core.Interfaces;
 using Quanta.Models;
-using Quanta.Services;
 
 namespace Quanta.ViewModels;
 
@@ -25,6 +24,10 @@ public partial class CommandSettingsViewModel : ObservableObject
 {
     /// <summary>搜索引擎实例，用于执行"测试命令"功能</summary>
     private readonly SearchEngine? _searchEngine;
+    private readonly IConfigRepository _configRepository;
+    private readonly ILocalizationProvider _localizationProvider;
+    private readonly IThemeController _themeController;
+    private readonly IToastNotifier _toastNotifier;
 
     /// <summary>命令配置的可观察集合，绑定到 DataGrid 控件</summary>
     [ObservableProperty]
@@ -77,8 +80,17 @@ public partial class CommandSettingsViewModel : ObservableObject
     /// 构造函数
     /// </summary>
     /// <param name="searchEngine">搜索引擎实例（可选），用于测试命令执行</param>
-    public CommandSettingsViewModel(SearchEngine? searchEngine = null)
+    public CommandSettingsViewModel(
+        IConfigRepository configRepository,
+        ILocalizationProvider localizationProvider,
+        IThemeController themeController,
+        IToastNotifier toastNotifier,
+        SearchEngine? searchEngine = null)
     {
+        _configRepository = configRepository;
+        _localizationProvider = localizationProvider;
+        _themeController = themeController;
+        _toastNotifier = toastNotifier;
         _searchEngine = searchEngine;
         LoadConfig();
         LoadSupportedLanguages();
@@ -89,7 +101,7 @@ public partial class CommandSettingsViewModel : ObservableObject
     /// </summary>
     private void LoadConfig()
     {
-        Config = ConfigLoader.Load();
+        Config = _configRepository.GetSnapshot();
 
         if (Config?.Commands != null)
         {
@@ -118,12 +130,12 @@ public partial class CommandSettingsViewModel : ObservableObject
         if (Config?.Hotkey != null)
         {
             HotkeyText = string.IsNullOrEmpty(Config.Hotkey.Modifier)
-                ? LocalizationService.Get("HotkeyPress")
+                ? _localizationProvider.Get("HotkeyPress")
                 : $"{Config.Hotkey.Modifier}+{Config.Hotkey.Key}";
         }
         else
         {
-            HotkeyText = LocalizationService.Get("HotkeyPress");
+            HotkeyText = _localizationProvider.Get("HotkeyPress");
         }
     }
 
@@ -132,7 +144,7 @@ public partial class CommandSettingsViewModel : ObservableObject
     /// </summary>
     private void LoadSupportedLanguages()
     {
-        var languages = LocalizationService.GetSupportedLanguages();
+        var languages = _localizationProvider.GetSupportedLanguages();
         SupportedLanguages = new ObservableCollection<LanguageInfo>(languages);
     }
 
@@ -176,7 +188,7 @@ public partial class CommandSettingsViewModel : ObservableObject
             ModifiedAt = DateTime.Now
         };
         Commands.Insert(0, cmd);
-        ToastService.Instance.ShowSuccess(LocalizationService.Get("Added"));
+        _toastNotifier.ShowSuccess(_localizationProvider.Get("Added"));
     }
 
     /// <summary>
@@ -188,7 +200,7 @@ public partial class CommandSettingsViewModel : ObservableObject
         if (command != null)
         {
             Commands.Remove(command);
-            ToastService.Instance.ShowSuccess(LocalizationService.Get("Deleted"));
+            _toastNotifier.ShowSuccess(_localizationProvider.Get("Deleted"));
         }
     }
 
@@ -198,10 +210,12 @@ public partial class CommandSettingsViewModel : ObservableObject
     [RelayCommand]
     private void SaveCommand()
     {
-        var config = ConfigLoader.Load();
-        config.Commands = Commands.Where(c => !c.IsBuiltIn).ToList();
-        ConfigLoader.Save(config);
-        ToastService.Instance.ShowSuccess(LocalizationService.Get("Saved"));
+        _configRepository.Update(config =>
+        {
+            config.Commands = Commands.Where(c => !c.IsBuiltIn).ToList();
+            return config;
+        });
+        _toastNotifier.ShowSuccess(_localizationProvider.Get("Saved"));
     }
 
     /// <summary>
@@ -211,14 +225,14 @@ public partial class CommandSettingsViewModel : ObservableObject
     private void ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
-        ThemeService.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
+        _themeController.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
 
         // 持久化配置
-        var config = ConfigLoader.Load();
-        if (config == null) config = new AppConfig();
-        if (config.AppSettings == null) config.AppSettings = new AppSettings();
-        config.Theme = IsDarkTheme ? "Dark" : "Light";
-        ConfigLoader.Save(config);
+        _configRepository.Update(config =>
+        {
+            config.Theme = IsDarkTheme ? "Dark" : "Light";
+            return config;
+        });
     }
 
     /// <summary>
@@ -230,13 +244,15 @@ public partial class CommandSettingsViewModel : ObservableObject
         if (!string.IsNullOrEmpty(languageCode))
         {
             CurrentLanguage = languageCode;
-            LocalizationService.CurrentLanguage = languageCode;
+            _localizationProvider.CurrentLanguage = languageCode;
 
             // 持久化配置
-            var config = ConfigLoader.Load();
-            if (config.AppSettings == null) config.AppSettings = new AppSettings();
-            config.AppSettings.Language = languageCode;
-            ConfigLoader.Save(config);
+            _configRepository.Update(config =>
+            {
+                if (config.AppSettings == null) config.AppSettings = new AppSettings();
+                config.AppSettings.Language = languageCode;
+                return config;
+            });
         }
     }
 

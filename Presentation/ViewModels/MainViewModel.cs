@@ -11,9 +11,9 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Quanta.Core.Interfaces;
 using Quanta.Helpers;
 using Quanta.Models;
-using Quanta.Services;
 
 namespace Quanta.ViewModels;
 
@@ -28,6 +28,9 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>使用频率追踪器，用于记录命令使用统计</summary>
     private readonly UsageTracker _usageTracker;
+    private readonly IThemeController _themeController;
+    private readonly IToastNotifier _toastNotifier;
+    private readonly IConfigRepository _configRepository;
 
     /// <summary>搜索防抖取消令牌源，用于取消上一次未完成的搜索</summary>
     private CancellationTokenSource? _searchCts;
@@ -87,10 +90,18 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     /// <param name="searchEngine">搜索引擎实例</param>
     /// <param name="usageTracker">使用频率追踪器</param>
-    public MainViewModel(SearchEngine searchEngine, UsageTracker usageTracker)
+    public MainViewModel(
+        SearchEngine searchEngine,
+        UsageTracker usageTracker,
+        IThemeController themeController,
+        IToastNotifier toastNotifier,
+        IConfigRepository configRepository)
     {
         _searchEngine = searchEngine;
         _usageTracker = usageTracker;
+        _themeController = themeController;
+        _toastNotifier = toastNotifier;
+        _configRepository = configRepository;
 
         // 构建带分组描述的结果视图（按 GroupLabel 分组，空 GroupLabel 归为同一组不显示标题）
         ResultsView = CollectionViewSource.GetDefaultView(Results);
@@ -291,13 +302,15 @@ public partial class MainViewModel : ObservableObject
         IsDarkTheme = !IsDarkTheme;
 
         // 应用主题
-        ThemeService.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
-        ToastService.Instance.SetTheme(IsDarkTheme);
+        _themeController.ApplyTheme(IsDarkTheme ? "Dark" : "Light");
+        _toastNotifier.SetTheme(IsDarkTheme);
 
         // 持久化配置
-        var config = ConfigLoader.Load();
-        config.Theme = IsDarkTheme ? "Dark" : "Light";
-        ConfigLoader.Save(config);
+        _configRepository.Update(config =>
+        {
+            config.Theme = IsDarkTheme ? "Dark" : "Light";
+            return config;
+        });
 
         // 触发事件通知视图层更新（如图标）
         ThemeChanged?.Invoke(this, IsDarkTheme);
