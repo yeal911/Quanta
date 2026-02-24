@@ -52,7 +52,7 @@ public class PowerShellHandler : ICommandHandler
 public class CalcHandler : ICommandHandler
 {
     private static readonly Regex CalcPattern = new(@"^calc\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private static readonly Regex PureMathPattern = new(@"^[\d\s\+\-\*\/%\^\(\)\.]+$", RegexOptions.Compiled);
+    private static readonly Regex PureMathPattern = new(@"^[A-Za-z_\d\s\+\-\*\/%\^\(\)\.,]+$", RegexOptions.Compiled);
     public string Name => "Calculator";
 
     public Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
@@ -67,7 +67,7 @@ public class CalcHandler : ICommandHandler
         else
         {
             var pureMatch = PureMathPattern.Match(input);
-            if (pureMatch.Success && input.Trim().Length > 0)
+            if (pureMatch.Success && input.Trim().Length > 0 && LooksLikeMathExpression(input.Trim()))
             {
                 result = Calculate(input.Trim());
             }
@@ -81,12 +81,28 @@ public class CalcHandler : ICommandHandler
         return Task.FromResult(result);
     }
 
+    private static bool LooksLikeMathExpression(string input)
+    {
+        if (string.Equals(input, "pi", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(input, "e", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (input.IndexOfAny(new[] { '+', '-', '*', '/', '%', '^' }) >= 0)
+            return true;
+
+        if (Regex.IsMatch(input, @"^(?:abs|sign|floor|ceil|round|min|max|sqrt|log10?|sin|cos|tan|asin|acos|atan|rad|deg)\s*\(", RegexOptions.IgnoreCase))
+            return true;
+
+        // 纯数字/小数/科学计数法，避免影响单位、颜色、汇率等其它输入类型
+        return Regex.IsMatch(input, @"^[\d\s\.eE+\-]+$") && Regex.IsMatch(input, @"\d");
+    }
+
     private static SearchResult Calculate(string expression)
     {
         var result = new SearchResult { Title = expression, Type = SearchResultType.Calculator, Path = expression };
         try
         {
-            string sanitized = Regex.Replace(expression, @"[^0-9+\-*/().%^]", "");
+            string sanitized = expression;
             double computed = MathParser.Evaluate(sanitized);
             string computedStr = double.IsPositiveInfinity(computed) ? "∞"
                                : double.IsNegativeInfinity(computed) ? "-∞"

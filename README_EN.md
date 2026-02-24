@@ -112,9 +112,23 @@ Type any math expression:
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
+abs(-3.5)     → 3.5
+sqrt(81)      → 9
+sin(rad(30))  → 0.5
 ```
 
-Supported operators: `+ - * / % ^`, parentheses and decimals supported.
+Supported features:
+- Basic operators: `+ - * / % ^` (with parentheses, decimals, unary signs)
+- P1 functions: `abs` `sign` `floor` `ceil` `round` `min` `max`
+- P2 functions: `sqrt` `log` `log10` `sin` `cos` `tan` `asin` `acos` `atan`
+- Angle conversion: `rad(x)` (degree → radian), `deg(x)` (radian → degree)
+- Constants: `pi`, `e`
+- Scientific notation: e.g. `1e-3`
+
+Precedence: `^` (power) > `* / %` > `+ -`; exponentiation is right-associative (for example `2^3^2 = 2^(3^2)`).
 
 ### Unit Conversion
 
