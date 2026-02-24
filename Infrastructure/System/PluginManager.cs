@@ -199,7 +199,7 @@ public class PluginManager
             if (!Directory.Exists(_pluginDirectory))
             {
                 Directory.CreateDirectory(_pluginDirectory);
-                Logger.Log($"Created plugin directory: {_pluginDirectory}");
+                Logger.Debug($"Created plugin directory: {_pluginDirectory}");
             }
 
             // 加载内置插件
@@ -209,7 +209,7 @@ public class PluginManager
             await LoadExternalPluginsAsync();
 
             IsInitialized = true;
-            Logger.Log($"Plugin manager initialized with {_loadedPlugins.Count} plugins");
+            Logger.Debug($"Plugin manager initialized with {_loadedPlugins.Count} plugins");
             return true;
         }
         catch (Exception ex)
@@ -259,7 +259,7 @@ public class PluginManager
                         if (plugin.Initialize(_context!))
                         {
                             _loadedPlugins.Add(plugin);
-                            Logger.Log($"Loaded plugin: {plugin.Name} v{plugin.Version}");
+                            Logger.Debug($"Loaded plugin: {plugin.Name} v{plugin.Version}");
                         }
                         else
                         {
@@ -354,7 +354,7 @@ public class PluginManager
         {
             plugin.Cleanup();
             _loadedPlugins.Remove(plugin);
-            Logger.Log($"Unloaded plugin: {plugin.Name}");
+            Logger.Debug($"Unloaded plugin: {plugin.Name}");
             return true;
         }
         catch (Exception ex)
@@ -411,7 +411,7 @@ public class PluginManager
 
         _loadedPlugins.Clear();
         IsInitialized = false;
-        Logger.Log("Plugin manager cleaned up");
+        Logger.Debug("Plugin manager cleaned up");
     }
 }
 

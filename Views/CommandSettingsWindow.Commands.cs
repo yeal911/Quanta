@@ -74,7 +74,7 @@ public partial class CommandSettingsWindow
         {
             Commands = new ObservableCollection<CommandConfig>(
                 _config.Commands.OrderByDescending(c => c.ModifiedAt));
-            Logger.Log($"Loaded {Commands.Count} commands into ObservableCollection");
+            Logger.Debug($"Loaded {Commands.Count} commands into ObservableCollection");
             if (Commands.Count > 0)
             {
                 var commandList = string.Join(", ", Commands.Select(c => $"{c.Keyword}({c.Name})"));
@@ -83,7 +83,7 @@ public partial class CommandSettingsWindow
         }
         else
         {
-            Logger.Log("No commands found in config");
+            Logger.Debug("No commands found in config");
             Commands = new ObservableCollection<CommandConfig>();
         }
 
