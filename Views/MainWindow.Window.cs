@@ -7,6 +7,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Quanta.Services;
@@ -113,6 +114,20 @@ public partial class MainWindow
     private void ResultsList_Loaded(object sender, RoutedEventArgs e)
     {
         // 图标颜色现在通过 XAML DataTrigger 自动处理
+    }
+
+    /// <summary>
+    /// 将结果列表上的鼠标滚轮事件转发给外层 ScrollViewer，避免 ListBox 内部滚动宿主吞掉滚轮。
+    /// </summary>
+    private void ResultsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (ResultsScrollViewer == null)
+            return;
+
+        var nextOffset = ResultsScrollViewer.VerticalOffset - e.Delta;
+        nextOffset = Math.Max(0, Math.Min(nextOffset, ResultsScrollViewer.ScrollableHeight));
+        ResultsScrollViewer.ScrollToVerticalOffset(nextOffset);
+        e.Handled = true;
     }
 
     /// <summary>

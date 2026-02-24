@@ -165,6 +165,7 @@ Type any math expression:
 | `-5+2` | `-3` |
 | `2^-3` | `0.125` |
 | `2^3^2` | `512` |
+<<<<<<< codex/update-readme-and-user-manuals-for-new-math-ops-y833sg
 | `abs(-3.5)` | `3.5` |
 | `sqrt(81)` | `9` |
 | `sin(rad(30))` | `0.5` |
@@ -176,6 +177,10 @@ Supported features:
 - Angle conversion: `rad(x)` (degree → radian), `deg(x)` (radian → degree)
 - Constants: `pi`, `e`
 - Scientific notation: e.g. `1e-3`
+=======
+
+Supported operators: `+`, `-`, `*`, `/`, `%` (modulo), and `^` (power), with parentheses, decimals, and unary signs (like `-5`, `+3`).
+>>>>>>> master
 
 Precedence: `^` (power) > `* / %` > `+ -`; exponentiation is right-associative (e.g. `2^3^2 = 2^(3^2)`).
 

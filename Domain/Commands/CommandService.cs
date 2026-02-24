@@ -43,7 +43,7 @@ public class CommandService
 
             var json = JsonSerializer.Serialize(exportData, JsonOptions);
             await File.WriteAllTextAsync(filePath, json);
-            Logger.Log($"Commands exported to: {filePath}");
+            Logger.Debug($"Commands exported to: {filePath}");
             return true;
         }
         catch (Exception ex)
@@ -78,7 +78,7 @@ public class CommandService
                 cmd.Id = Guid.NewGuid().ToString();
             }
 
-            Logger.Log($"Imported {exportData.Commands.Count} commands from: {filePath}");
+            Logger.Debug($"Imported {exportData.Commands.Count} commands from: {filePath}");
             return (true, exportData.Commands, null);
         }
         catch (Exception ex)
@@ -100,7 +100,7 @@ public class CommandService
         {
             var json = JsonSerializer.Serialize(groups, JsonOptions);
             await File.WriteAllTextAsync(filePath, json);
-            Logger.Log($"Groups exported to: {filePath}");
+            Logger.Debug($"Groups exported to: {filePath}");
             return true;
         }
         catch (Exception ex)
@@ -135,7 +135,7 @@ public class CommandService
                 group.Id = Guid.NewGuid().ToString();
             }
 
-            Logger.Log($"Imported {groups.Count} groups from: {filePath}");
+            Logger.Debug($"Imported {groups.Count} groups from: {filePath}");
             return (true, groups, null);
         }
         catch (Exception ex)
@@ -157,7 +157,7 @@ public class CommandService
         {
             var json = JsonSerializer.Serialize(config, JsonOptions);
             await File.WriteAllTextAsync(filePath, json);
-            Logger.Log($"All configuration exported to: {filePath}");
+            Logger.Debug($"All configuration exported to: {filePath}");
             return true;
         }
         catch (Exception ex)
@@ -185,7 +185,7 @@ public class CommandService
             if (config == null)
                 return (false, null, "Invalid file format");
 
-            Logger.Log($"Configuration imported from: {filePath}");
+            Logger.Debug($"Configuration imported from: {filePath}");
             return (true, config, null);
         }
         catch (Exception ex)

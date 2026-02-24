@@ -851,7 +851,7 @@ public class SearchEngine
 
             case "winrecord":
                 // 打开 Windows 内置录音机
-                Logger.Log("[winrecord] 开始尝试打开 Windows 录音机...");
+                Logger.Debug("[winrecord] 开始尝试打开 Windows 录音机...");
 
                 bool started = false;
 
@@ -859,7 +859,7 @@ public class SearchEngine
                 // 这是最可靠的方法，兼容性最好
                 try
                 {
-                    Logger.Log("[winrecord] 方法1: explorer.exe shell:AppsFolder...");
+                    Logger.Debug("[winrecord] 方法1: explorer.exe shell:AppsFolder...");
                     var psi1 = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "explorer.exe",
@@ -867,12 +867,12 @@ public class SearchEngine
                         UseShellExecute = false
                     };
                     System.Diagnostics.Process.Start(psi1);
-                    Logger.Log("[winrecord] 方法1 启动成功!");
+                    Logger.Debug("[winrecord] 方法1 启动成功!");
                     started = true;
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log($"[winrecord] 方法1 失败: {ex.Message}");
+                    Logger.Debug($"[winrecord] 方法1 失败: {ex.Message}");
                 }
 
                 // 方法2: 尝试 ms-voicesRecorder: URI
@@ -880,19 +880,19 @@ public class SearchEngine
                 {
                     try
                     {
-                        Logger.Log("[winrecord] 方法2: ms-voicesRecorder:");
+                        Logger.Debug("[winrecord] 方法2: ms-voicesRecorder:");
                         var psi2 = new System.Diagnostics.ProcessStartInfo
                         {
                             FileName = "ms-voicesRecorder:",
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(psi2);
-                        Logger.Log("[winrecord] 方法2 启动成功!");
+                        Logger.Debug("[winrecord] 方法2 启动成功!");
                         started = true;
                     }
                     catch (Exception ex)
                     {
-                        Logger.Log($"[winrecord] 方法2 失败: {ex.Message}");
+                        Logger.Debug($"[winrecord] 方法2 失败: {ex.Message}");
                     }
                 }
 
@@ -901,19 +901,19 @@ public class SearchEngine
                 {
                     try
                     {
-                        Logger.Log("[winrecord] 方法3: ms-soundrecorder:");
+                        Logger.Debug("[winrecord] 方法3: ms-soundrecorder:");
                         var psi3 = new System.Diagnostics.ProcessStartInfo
                         {
                             FileName = "ms-soundrecorder:",
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(psi3);
-                        Logger.Log("[winrecord] 方法3 启动成功!");
+                        Logger.Debug("[winrecord] 方法3 启动成功!");
                         started = true;
                     }
                     catch (Exception ex)
                     {
-                        Logger.Log($"[winrecord] 方法3 失败: {ex.Message}");
+                        Logger.Debug($"[winrecord] 方法3 失败: {ex.Message}");
                     }
                 }
 
@@ -922,7 +922,7 @@ public class SearchEngine
                 {
                     try
                     {
-                        Logger.Log("[winrecord] 方法4: cmd /c start shell:AppsFolder\\...");
+                        Logger.Debug("[winrecord] 方法4: cmd /c start shell:AppsFolder...");
                         var psi4 = new System.Diagnostics.ProcessStartInfo
                         {
                             FileName = "cmd.exe",
@@ -931,18 +931,18 @@ public class SearchEngine
                             CreateNoWindow = true
                         };
                         System.Diagnostics.Process.Start(psi4);
-                        Logger.Log("[winrecord] 方法4 启动成功!");
+                        Logger.Debug("[winrecord] 方法4 启动成功!");
                         started = true;
                     }
                     catch (Exception ex)
                     {
-                        Logger.Log($"[winrecord] 方法4 失败: {ex.Message}");
+                        Logger.Debug($"[winrecord] 方法4 失败: {ex.Message}");
                     }
                 }
 
                 if (!started)
                 {
-                    Logger.Log("[winrecord] 所有方法都失败，显示提示");
+                    Logger.Debug("[winrecord] 所有方法都失败，显示提示");
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                         ToastService.Instance.ShowWarning("Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载"));
                 }

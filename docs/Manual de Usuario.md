@@ -165,6 +165,7 @@ Escribe cualquier expresión matemática:
 | `-5+2` | `-3` |
 | `2^-3` | `0.125` |
 | `2^3^2` | `512` |
+<<<<<<< codex/update-readme-and-user-manuals-for-new-math-ops-y833sg
 | `abs(-3.5)` | `3.5` |
 | `sqrt(81)` | `9` |
 | `sin(rad(30))` | `0.5` |
@@ -176,6 +177,10 @@ Funciones admitidas:
 - Conversión angular: `rad(x)` (grado → radián), `deg(x)` (radián → grado)
 - Constantes: `pi`, `e`
 - Notación científica: por ejemplo `1e-3`
+=======
+
+Operadores admitidos: `+`, `-`, `*`, `/`, `%` (módulo) y `^` (potencia), con paréntesis, decimales y signos unarios (como `-5`, `+3`).
+>>>>>>> master
 
 Precedencia: `^` (potencia) > `* / %` > `+ -`; la potencia es asociativa por la derecha (por ejemplo, `2^3^2 = 2^(3^2)`).
 

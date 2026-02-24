@@ -101,14 +101,14 @@ public partial class App : System.Windows.Application
             if (startWithWindows)
             {
                 key.SetValue(appName, $"\"{exePath}\"");
-                Logger.Log("[App] StartWithWindows enabled - registry key set");
+                Logger.Debug("[App] StartWithWindows enabled - registry key set");
             }
             else
             {
                 if (key.GetValue(appName) != null)
                 {
                     key.DeleteValue(appName, false);
-                    Logger.Log("[App] StartWithWindows disabled - registry key removed");
+                    Logger.Debug("[App] StartWithWindows disabled - registry key removed");
                 }
             }
         }

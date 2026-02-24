@@ -104,13 +104,13 @@ public class HotkeyManager : IHotkeyManager
 
         uint vk = ParseVirtualKey(config.Key);
 
-        Logger.Log($"[Hotkey] Registering: Modifier={config.Modifier}({modifiers}), Key={config.Key}({vk})");
+        Logger.Debug($"[Hotkey] Registering: Modifier={config.Modifier}({modifiers}), Key={config.Key}({vk})");
 
         _isRegistered = RegisterHotKey(_windowHandle, HOTKEY_ID, modifiers, vk);
 
         if (!_isRegistered)
         {
-            Logger.Log($"[Hotkey] Failed to register hotkey!");
+            Logger.Debug($"[Hotkey] Failed to register hotkey!");
         }
 
         return _isRegistered;

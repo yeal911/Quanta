@@ -192,7 +192,7 @@ public class TrayService : ITrayService
             {
                 if (File.Exists(icoPath))
                 {
-                    Logger.Log($"[TrayService] Loading icon from: {icoPath}");
+                    Logger.Debug($"[TrayService] Loading icon from: {icoPath}");
                     return new Icon(icoPath);
                 }
             }

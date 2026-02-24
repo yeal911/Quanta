@@ -177,7 +177,7 @@ public partial class MainWindow : Window, IMainWindowService
         _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
 
         // 日志输出当前快捷键配置
-        Logger.Log($"[Hotkey] Config loaded: Modifier={config.Hotkey?.Modifier}, Key={config.Hotkey?.Key}");
+        Logger.Debug($"[Hotkey] Config loaded: Modifier={config.Hotkey?.Modifier}, Key={config.Hotkey?.Key}");
 
         if (!registered)
         {

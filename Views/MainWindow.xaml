@@ -208,8 +208,9 @@
                     </Button>
                 </Grid>
 
-                <ScrollViewer Grid.Row="2" 
-                             VerticalScrollBarVisibility="Auto" 
+                <ScrollViewer x:Name="ResultsScrollViewer"
+                             Grid.Row="2"
+                             VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Disabled"
                              Background="Transparent">
                     <ScrollViewer.Resources>
@@ -224,7 +225,9 @@
                              ItemContainerStyle="{StaticResource ResultItemStyle}"
                              SelectionChanged="ResultsList_SelectionChanged"
                              PreviewMouseLeftButtonUp="ResultsList_MouseClick"
+                             PreviewMouseWheel="ResultsList_PreviewMouseWheel"
                              Loaded="ResultsList_Loaded">
+
 
                     <!-- 分组标题样式：仅当有多种结果类型时才显示分组标题 -->
                     <ListBox.GroupStyle>

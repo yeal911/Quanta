@@ -80,15 +80,15 @@ public static class ConfigLoader
 
                 if (_cachedConfig != null)
                 {
-                    Logger.Log($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
+                    Logger.Debug($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
                     if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
                     {
                         var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                        Logger.Log($"Commands from file: {commandKeywords}");
+                        Logger.Debug($"Commands from file: {commandKeywords}");
                     }
                     else
                     {
-                        Logger.Log("No commands found in file");
+                        Logger.Debug("No commands found in file");
                     }
 
                     // Migrate if needed
@@ -96,13 +96,13 @@ public static class ConfigLoader
                 }
                 else
                 {
-                    Logger.Log("Failed to deserialize config, creating default");
+                    Logger.Debug("Failed to deserialize config, creating default");
                     _cachedConfig = CreateDefaultConfig();
                 }
             }
             else
             {
-                Logger.Log("Config file not found, creating default config");
+                Logger.Debug("Config file not found, creating default config");
                 _cachedConfig = CreateDefaultConfig();
             }
         }
@@ -150,7 +150,7 @@ public static class ConfigLoader
                 if ((now - _lastChanged).TotalMilliseconds < 500) return;
                 _lastChanged = now;
 
-                Logger.Log("[ConfigLoader] Config file changed, reloading...");
+                Logger.Debug("[ConfigLoader] Config file changed, reloading...");
 
                 // 延迟一点再读取，确保文件写入完成
                 Task.Delay(100).ContinueWith(_ =>
@@ -160,7 +160,7 @@ public static class ConfigLoader
                         Reload();
                         var newConfig = Load();
                         ConfigChanged?.Invoke(null, newConfig);
-                        Logger.Log("[ConfigLoader] Config reloaded successfully");
+                        Logger.Debug("[ConfigLoader] Config reloaded successfully");
                     }
                     catch (Exception ex)
                     {
@@ -169,7 +169,7 @@ public static class ConfigLoader
                 });
             };
 
-            Logger.Log("[ConfigLoader] FileSystemWatcher started");
+            Logger.Debug("[ConfigLoader] FileSystemWatcher started");
         }
         catch (Exception ex)
         {
@@ -187,7 +187,7 @@ public static class ConfigLoader
             _configWatcher.EnableRaisingEvents = false;
             _configWatcher.Dispose();
             _configWatcher = null;
-            Logger.Log("[ConfigLoader] FileSystemWatcher stopped");
+            Logger.Debug("[ConfigLoader] FileSystemWatcher stopped");
         }
     }
 
@@ -212,7 +212,7 @@ public static class ConfigLoader
             // 恢复监视器
             if (_configWatcher != null) _configWatcher.EnableRaisingEvents = wasEnabled;
 
-            Logger.Log($"Config saved to: {ConfigPath}");
+            Logger.Debug($"Config saved to: {ConfigPath}");
         }
         catch (Exception ex)
         {
@@ -231,7 +231,7 @@ public static class ConfigLoader
         {
             var json = JsonSerializer.Serialize(config, JsonOptions);
             File.WriteAllText(path, json);
-            Logger.Log($"Config exported to: {path}");
+            Logger.Debug($"Config exported to: {path}");
         }
         catch (Exception ex)
         {
@@ -299,7 +299,7 @@ public static class ConfigLoader
         if (string.IsNullOrEmpty(config.Version))
         {
             // Migrate from v0.x to v1.0
-            Logger.Log("Migrating config to v1.0...");
+            Logger.Debug("Migrating config to v1.0...");
 
             // Add sample commands if empty
             if (config.Commands == null || config.Commands.Count == 0)
@@ -359,7 +359,7 @@ public static class ConfigLoader
         // v1.0 → v1.1：录音参数优化为会议录音默认值（≤0.24MB/min）
         if (config.Version == "1.0")
         {
-            Logger.Log("Migrating config to v1.1: updating recording defaults...");
+            Logger.Debug("Migrating config to v1.1: updating recording defaults...");
 
             if (config.RecordingSettings == null)
             {
@@ -385,7 +385,7 @@ public static class ConfigLoader
         // 旧版本 UI 不显示采样率，用户无法主动设置，故 44100 均为遗留默认值可安全覆盖。
         if (config.Version == "1.1")
         {
-            Logger.Log("Migrating config to v1.2: normalizing SampleRate...");
+            Logger.Debug("Migrating config to v1.2: normalizing SampleRate...");
 
             if (config.RecordingSettings == null)
             {
@@ -394,7 +394,7 @@ public static class ConfigLoader
             else if (config.RecordingSettings.SampleRate == 44100)
             {
                 config.RecordingSettings.SampleRate = 16000;
-                Logger.Log("RecordingSettings.SampleRate: 44100 → 16000");
+                Logger.Debug("RecordingSettings.SampleRate: 44100 → 16000");
             }
 
             config.Version = "1.2";
@@ -404,7 +404,7 @@ public static class ConfigLoader
         // v1.2 → v1.3：添加汇率 API 设置
         if (config.Version == "1.2")
         {
-            Logger.Log("Migrating config to v1.3: adding exchange rate settings...");
+            Logger.Debug("Migrating config to v1.3: adding exchange rate settings...");
 
             if (config.ExchangeRateSettings == null)
             {
