@@ -115,9 +115,24 @@ Type any math expression:
 -5+2          → -3
 2^-3          → 0.125
 2^3^2         → 512
+<<<<<<< codex/update-readme-and-user-manuals-for-new-math-ops-y833sg
+abs(-3.5)     → 3.5
+sqrt(81)      → 9
+sin(rad(30))  → 0.5
+```
+
+Supported features:
+- Basic operators: `+ - * / % ^` (with parentheses, decimals, unary signs)
+- P1 functions: `abs` `sign` `floor` `ceil` `round` `min` `max`
+- P2 functions: `sqrt` `log` `log10` `sin` `cos` `tan` `asin` `acos` `atan`
+- Angle conversion: `rad(x)` (degree → radian), `deg(x)` (radian → degree)
+- Constants: `pi`, `e`
+- Scientific notation: e.g. `1e-3`
+=======
 ```
 
 Supported operators: `+ - * / % ^`, plus parentheses, decimals, and unary signs (such as `-5`, `+3`).
+>>>>>>> master
 
 Precedence: `^` (power) > `* / %` > `+ -`; exponentiation is right-associative (for example `2^3^2 = 2^(3^2)`).
 

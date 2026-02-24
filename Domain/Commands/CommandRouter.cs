@@ -61,7 +61,7 @@ public class CommandRouter
     /// 匹配纯数学表达式的正则表达式（无 calc 前缀）。
     /// 例如: 2+2, 100*5, 2^3, 10%3 等
     /// </summary>
-    private static readonly Regex PureMathRegex = new(@"^[\d\s\+\-\*\/%\^\(\)\.]+$", RegexOptions.Compiled);
+    private static readonly Regex PureMathRegex = new(@"^[A-Za-z_\d\s\+\-\*\/%\^\(\)\.,]+$", RegexOptions.Compiled);
 
     /// <summary>
     /// 匹配 Google 搜索的正则表达式，格式为: g 关键字
@@ -156,7 +156,7 @@ public class CommandRouter
         if (pureMathMatch.Success)
         {
             var trimmed = input.Trim();
-            if (trimmed.Length > 0) return Calculate(trimmed);
+            if (trimmed.Length > 0 && LooksLikeMathExpression(trimmed)) return Calculate(trimmed);
         }
 
         // 货币换算（优先于单位换算，例如 100 USD to CNY）
@@ -283,9 +283,24 @@ public class CommandRouter
         return result;
     }
 
+    private static bool LooksLikeMathExpression(string input)
+    {
+        if (string.Equals(input, "pi", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(input, "e", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (input.IndexOfAny(new[] { '+', '-', '*', '/', '%', '^' }) >= 0)
+            return true;
+
+        if (Regex.IsMatch(input, @"^(?:abs|sign|floor|ceil|round|min|max|sqrt|log10?|sin|cos|tan|asin|acos|atan|rad|deg)\s*\(", RegexOptions.IgnoreCase))
+            return true;
+
+        // 纯数字/小数/科学计数法，避免影响单位、颜色、汇率等其它输入类型
+        return Regex.IsMatch(input, @"^[\d\s\.eE+\-]+$") && Regex.IsMatch(input, @"\d");
+    }
+
     /// <summary>
     /// 计算数学表达式并返回计算结果。
-    /// 会先对表达式进行安全过滤，仅保留数字和基本运算符。
     /// </summary>
     /// <param name="expression">要计算的数学表达式字符串</param>
     /// <returns>包含计算结果的搜索结果对象</returns>
@@ -294,7 +309,7 @@ public class CommandRouter
         var result = new SearchResult { Title = expression, Type = SearchResultType.Calculator, Path = expression };
         try
         {
-            string sanitized = Regex.Replace(expression, @"[^0-9+\-*/().%^]", "");
+            string sanitized = expression;
             double computed = MathParser.Evaluate(sanitized);
             string computedStr = double.IsPositiveInfinity(computed) ? "∞"
                                : double.IsNegativeInfinity(computed) ? "-∞"
