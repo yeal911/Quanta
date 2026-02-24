@@ -8,6 +8,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
@@ -28,6 +29,7 @@ namespace Quanta;
 public partial class App : System.Windows.Application
 {
     private IServiceProvider? _serviceProvider;
+    private Mutex? _singleInstanceMutex;
 
     /// <summary>
     /// 应用启动事件处理。检查单实例约束，建立 DI 组合根，创建主窗口。
@@ -127,7 +129,7 @@ public partial class App : System.Windows.Application
     private bool EnsureSingleInstance()
     {
         string mutexName = "Quanta_SingleInstance_Mutex";
-        var mutex = new System.Threading.Mutex(true, mutexName, out bool createdNew);
+        _singleInstanceMutex = new Mutex(true, mutexName, out bool createdNew);
         if (!createdNew)
         {
             var currentProcess = Process.GetCurrentProcess();
@@ -143,6 +145,25 @@ public partial class App : System.Windows.Application
             return false;
         }
         return true;
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            _singleInstanceMutex?.ReleaseMutex();
+        }
+        catch
+        {
+            // 非拥有线程/已释放时忽略
+        }
+        finally
+        {
+            _singleInstanceMutex?.Dispose();
+            _singleInstanceMutex = null;
+        }
+
+        base.OnExit(e);
     }
 
     /// <summary>Win32 API：将指定窗口设置为前台窗口</summary>

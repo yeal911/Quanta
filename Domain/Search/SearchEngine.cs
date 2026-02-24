@@ -211,6 +211,7 @@ public class SearchEngine
         _pathCache = ExecutablePathCache.Instance;
 
         LoadCustomCommands();
+        ConfigLoader.ConfigChanged += OnConfigChanged;
     }
 
 
@@ -233,6 +234,17 @@ public class SearchEngine
     public void ReloadCommands()
     {
         var config = ConfigLoader.Reload();
+        _customCommands = config.Commands ?? new List<CommandConfig>();
+        _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
+        _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 20;
+    }
+
+
+    /// <summary>
+    /// 配置变更时同步刷新内存中的命令与搜索参数。
+    /// </summary>
+    private void OnConfigChanged(object? sender, AppConfig config)
+    {
         _customCommands = config.Commands ?? new List<CommandConfig>();
         _maxResults = config.AppSettings?.MaxResults > 0 ? config.AppSettings.MaxResults : 10;
         _qrCodeThreshold = config.AppSettings?.QRCodeThreshold > 0 ? config.AppSettings.QRCodeThreshold : 20;

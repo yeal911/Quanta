@@ -20,13 +20,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
-                        <Border Background="#20000000" CornerRadius="4"/>
+                        <Border Background="{DynamicResource ScrollBarThumbBackground}" CornerRadius="4"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#40000000"/>
+                    <Setter Property="Background" Value="{DynamicResource ScrollBarThumbHoverBackground}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -46,7 +46,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
                         <Grid>
-                            <Border Background="#10000000" CornerRadius="4" Opacity="0"/>
+                            <Border Background="{DynamicResource ScrollBarTrackBackground}" CornerRadius="4" Opacity="0"/>
                             <Track x:Name="PART_Track" IsDirectionReversed="True">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="ScrollBar.PageUpCommand" Template="{StaticResource ScrollBarPageButton}"/>
