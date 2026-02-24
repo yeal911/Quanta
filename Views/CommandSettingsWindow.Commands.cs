@@ -149,6 +149,7 @@ public partial class CommandSettingsWindow
         if (CommandsGrid?.SelectedItem is CommandConfig selected)
         {
             Commands.Remove(selected);
+            SaveCommandsToConfigAndRefresh();
             ToastService.Instance.ShowSuccess(LocalizationService.Get("Deleted"));
         }
     }
@@ -159,10 +160,20 @@ public partial class CommandSettingsWindow
     /// </summary>
     private void SaveCommand_Click(object sender, RoutedEventArgs e)
     {
+        SaveCommandsToConfigAndRefresh();
+        ShowAutoSaveToast();
+    }
+
+
+    /// <summary>
+    /// 持久化命令并刷新搜索引擎内存缓存，确保主窗口即时可搜索。
+    /// </summary>
+    private void SaveCommandsToConfigAndRefresh()
+    {
         var config = ConfigLoader.Load();
         config.Commands = Commands.Where(c => !c.IsBuiltIn).ToList();
         ConfigLoader.Save(config);
-        ShowAutoSaveToast();
+        _searchEngine?.ReloadCommands();
     }
 
     // ── 导入/导出 ─────────────────────────────────────────────────────
@@ -233,6 +244,7 @@ public partial class CommandSettingsWindow
                 }
             }
 
+            SaveCommandsToConfigAndRefresh();
             ToastService.Instance.ShowSuccess(LocalizationService.Get("ImportResult", added, skipped));
         }
     }

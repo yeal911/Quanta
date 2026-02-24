@@ -186,6 +186,7 @@ public partial class MainWindow
     protected override void OnClosed(EventArgs e)
     {
         _clipboardMonitor.Stop();
+        _hotkeyManager.Dispose();
         if (_recordingService.State != RecordingState.Idle)
         {
             _ = _recordingService.StopAsync();

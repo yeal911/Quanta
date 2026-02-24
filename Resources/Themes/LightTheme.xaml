@@ -32,6 +32,9 @@
     <SolidColorBrush x:Key="SeparatorBorder"            Color="#EEEEEE"/>
     <SolidColorBrush x:Key="DataGridHeaderBorder"       Color="#E8E8E8"/>
     <SolidColorBrush x:Key="GroupHeaderBorder"          Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBackground"    Color="#20000000"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBackground" Color="#40000000"/>
+    <SolidColorBrush x:Key="ScrollBarTrackBackground"    Color="#10000000"/>
 
     <!-- ========================================================== -->
     <!-- 隐式控件样式 — 同类控件自动应用，无需在每个控件上单独设置       -->
