@@ -112,9 +112,14 @@ Digite expressões matemáticas diretamente:
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
 ```
 
-Operadores suportados: `+ - * / % ^`, suporta parênteses e decimais.
+Operadores suportados: `+ - * / % ^`, com parênteses, decimais e sinais unários (como `-5`, `+3`).
+
+Precedência: `^` (potência) > `* / %` > `+ -`; potência é associativa à direita (ex.: `2^3^2 = 2^(3^2)`).
 
 ### Conversão de Unidades
 

@@ -112,9 +112,14 @@ Type any math expression:
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
 ```
 
-Supported operators: `+ - * / % ^`, parentheses and decimals supported.
+Supported operators: `+ - * / % ^`, plus parentheses, decimals, and unary signs (such as `-5`, `+3`).
+
+Precedence: `^` (power) > `* / %` > `+ -`; exponentiation is right-associative (for example `2^3^2 = 2^(3^2)`).
 
 ### Unit Conversion
 

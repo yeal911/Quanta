@@ -1,7 +1,7 @@
 # Quanta User Manual
 
 <p align="center">
-  <a href="用户手册.md">中文</a> | <b>English</b> | <a href="Manual de Usuario.md">Español</a>
+  <a href="用户手册.md">中文</a> | <a href="User Manual.md">English</a> | <a href="Manual de Usuario.md">Español</a> | <a href="Benutzerhandbuch.md">Deutsch</a> | <a href="Manuel Utilisateur.md">Français</a> | <a href="Manuale Utente.md">Italiano</a> | <a href="ユーザーマニュアル.md">日本語</a> | <a href="사용자 매뉴얼.md">한국어</a> | <a href="Manual do Usuário.md">Português</a> | <a href="Руководство пользователя.md">Русский</a> | <a href="دليل المستخدم.md">العربية</a>
 </p>
 
 ---
@@ -162,8 +162,13 @@ Type any math expression:
 | `2^10` | `1024` |
 | `15%4` | `3` |
 | `3.14*5*5` | `78.5` |
+| `-5+2` | `-3` |
+| `2^-3` | `0.125` |
+| `2^3^2` | `512` |
 
-Supported operators: `+`, `-`, `*`, `/`, `%` (modulo), `^` (power), with parentheses and decimals.
+Supported operators: `+`, `-`, `*`, `/`, `%` (modulo), and `^` (power), with parentheses, decimals, and unary signs (like `-5`, `+3`).
+
+Precedence: `^` (power) > `* / %` > `+ -`; exponentiation is right-associative (e.g. `2^3^2 = 2^(3^2)`).
 
 Press `Enter` to copy the result to the clipboard automatically.
 

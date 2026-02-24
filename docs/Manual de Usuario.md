@@ -1,7 +1,7 @@
 # Manual de Usuario de Quanta
 
 <p align="center">
-  <a href="用户手册.md">中文</a> | <a href="User Manual.md">English</a> | <b>Español</b>
+  <a href="用户手册.md">中文</a> | <a href="User Manual.md">English</a> | <a href="Manual de Usuario.md">Español</a> | <a href="Benutzerhandbuch.md">Deutsch</a> | <a href="Manuel Utilisateur.md">Français</a> | <a href="Manuale Utente.md">Italiano</a> | <a href="ユーザーマニュアル.md">日本語</a> | <a href="사용자 매뉴얼.md">한국어</a> | <a href="Manual do Usuário.md">Português</a> | <a href="Руководство пользователя.md">Русский</a> | <a href="دليل المستخدم.md">العربية</a>
 </p>
 
 ---
@@ -162,8 +162,13 @@ Escribe cualquier expresión matemática:
 | `2^10` | `1024` |
 | `15%4` | `3` |
 | `3.14*5*5` | `78.5` |
+| `-5+2` | `-3` |
+| `2^-3` | `0.125` |
+| `2^3^2` | `512` |
 
-Operadores admitidos: `+`, `-`, `*`, `/`, `%` (módulo), `^` (potencia), con paréntesis y decimales.
+Operadores admitidos: `+`, `-`, `*`, `/`, `%` (módulo) y `^` (potencia), con paréntesis, decimales y signos unarios (como `-5`, `+3`).
+
+Precedencia: `^` (potencia) > `* / %` > `+ -`; la potencia es asociativa por la derecha (por ejemplo, `2^3^2 = 2^(3^2)`).
 
 Pulsa `Enter` para copiar el resultado al portapapeles automáticamente.
 
