@@ -16,6 +16,7 @@ using Quanta.Interfaces;
 using Quanta.Core.Interfaces;
 using Quanta.Services;
 using Quanta.Helpers;
+using Quanta.Infrastructure.System;
 using Quanta.ViewModels;
 using Quanta.Views;
 
@@ -39,9 +40,9 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         if (!EnsureSingleInstance()) { Current.Shutdown(); return; }
-        ApplyStartWithWindows();
 
         _serviceProvider = BuildServiceProvider();
+        ApplyStartWithWindows();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
     }
@@ -56,9 +57,10 @@ public partial class App : System.Windows.Application
 
         // ── 基础设施（接口 → 包装实现，保留原静态类向后兼容） ──
         services.AddSingleton<IAppLogger, LoggerService>();
-        services.AddSingleton<IConfigLoader, ConfigLoaderService>();
-        services.AddSingleton<ILocalizationService, LocalizationServiceWrapper>();
-        services.AddSingleton<IThemeService, ThemeServiceWrapper>();
+        services.AddSingleton<IConfigRepository, ConfigRepository>();
+        services.AddSingleton<ILocalizationProvider, LocalizationProvider>();
+        services.AddSingleton<IThemeController, ThemeController>();
+        services.AddSingleton<IToastNotifier, ToastNotifier>();
 
         // ── 搜索提供者 ──
         services.AddSingleton<FileSearchProvider>();
@@ -91,7 +93,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            var config = ConfigLoader.Load();
+            var config = _serviceProvider?.GetRequiredService<IConfigRepository>().GetSnapshot() ?? new Models.AppConfig();
             var startWithWindows = config.AppSettings?.StartWithWindows ?? false;
             const string appName = "Quanta";
             var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;

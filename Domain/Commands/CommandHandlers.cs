@@ -22,6 +22,7 @@ public class PowerShellHandler : ICommandHandler
 {
     private static readonly Regex Pattern = new(@"^>\s*(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public string Name => "PowerShell";
+    public int Priority => 40;
 
     public async Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -54,6 +55,7 @@ public class CalcHandler : ICommandHandler
     private static readonly Regex CalcPattern = new(@"^calc\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex PureMathPattern = new(@"^[A-Za-z_\d\s\+\-\*\/%\^\(\)\.,]+$", RegexOptions.Compiled);
     public string Name => "Calculator";
+    public int Priority => 50;
 
     public Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -127,6 +129,7 @@ public class GoogleSearchHandler : ICommandHandler
 {
     private static readonly Regex Pattern = new(@"^g\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public string Name => "GoogleSearch";
+    public int Priority => 80;
 
     public async Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -153,6 +156,7 @@ public class UnitConvertHandler : ICommandHandler
         @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+|[\u4e00-\u9fff]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public string Name => "UnitConvert";
+    public int Priority => 30;
 
     public Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -209,6 +213,7 @@ public class CurrencyConvertHandler : ICommandHandler
         @"^(-?\d+\.?\d*)\s*([A-Za-z]{3})\s+(?:to|in|转|换)\s+([A-Za-z]{3})$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public string Name => "CurrencyConvert";
+    public int Priority => 10;
 
     public async Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -293,6 +298,7 @@ public class ColorConvertHandler : ICommandHandler
     private static readonly Regex RgbPattern = new(@"^(?:rgb\s*\(\s*)?(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex HslPattern = new(@"^(?:hsl\s*\(\s*)?(\d{1,3})\s*,\s*(\d{1,3})%?\s*,\s*(\d{1,3})%?\s*\)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public string Name => "ColorConvert";
+    public int Priority => 20;
 
     public Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
@@ -473,6 +479,7 @@ public class TextToolHandler : ICommandHandler
     private static readonly Regex UrlToolRegex = new(@"^url\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     private static readonly Regex JsonToolRegex = new(@"^json\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
     public string Name => "TextTool";
+    public int Priority => 70;
 
     public Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker)
     {
