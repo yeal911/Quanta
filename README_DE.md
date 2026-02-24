@@ -112,9 +112,14 @@ Geben Sie direkt mathematische Ausdrücke ein:
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
 ```
 
-Unterstützte Operatoren: `+ - * / % ^`, Klammern und Dezimalzahlen unterstützt.
+Unterstützte Operatoren: `+ - * / % ^`, inklusive Klammern, Dezimalzahlen und unären Vorzeichen (z. B. `-5`, `+3`).
+
+Priorität: `^` (Potenz) > `* / %` > `+ -`; Potenzen sind rechtsassoziativ (z. B. `2^3^2 = 2^(3^2)`).
 
 ### Einheitenumrechnung
 

@@ -112,9 +112,14 @@ Escribe cualquier expresión matemática:
 (100-32)/1.8  → 37.778
 2^10          → 1024
 15%4          → 3
+-5+2          → -3
+2^-3          → 0.125
+2^3^2         → 512
 ```
 
-Operadores admitidos: `+ - * / % ^`, paréntesis y decimales.
+Operadores admitidos: `+ - * / % ^`, con paréntesis, decimales y signos unarios (como `-5`, `+3`).
+
+Precedencia: `^` (potencia) > `* / %` > `+ -`; la potencia es asociativa por la derecha (ejemplo: `2^3^2 = 2^(3^2)`).
 
 ### Conversión de Unidades
 
