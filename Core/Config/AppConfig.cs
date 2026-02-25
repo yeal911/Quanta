@@ -227,6 +227,9 @@ public class AppSettings
 
     /// <summary>界面语言，默认为简体中文</summary>
     [JsonPropertyName("Language")] public string Language { get; set; } = "zh-CN";
+
+    /// <summary>UI 模式：WPF（默认）或 WinFormsLite（轻量低内存界面）</summary>
+    [JsonPropertyName("UIMode")] public string UIMode { get; set; } = "WPF";
 }
 
 /// <summary>

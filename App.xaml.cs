@@ -16,6 +16,7 @@ using Quanta.Interfaces;
 using Quanta.Core.Interfaces;
 using Quanta.Services;
 using Quanta.Helpers;
+using Quanta.Models;
 using Quanta.ViewModels;
 using Quanta.Views;
 
@@ -39,9 +40,19 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         if (!EnsureSingleInstance()) { Current.Shutdown(); return; }
-        ApplyStartWithWindows();
+        var config = ConfigLoader.Load();
+        ApplyStartWithWindows(config);
 
         _serviceProvider = BuildServiceProvider();
+
+        var uiMode = config.AppSettings?.UIMode?.Trim();
+        if (string.Equals(uiMode, "WinFormsLite", StringComparison.OrdinalIgnoreCase))
+        {
+            var liteForm = _serviceProvider.GetRequiredService<LightweightLauncherForm>();
+            liteForm.Show();
+            return;
+        }
+
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
     }
@@ -79,6 +90,7 @@ public partial class App : System.Windows.Application
         // ── UI 层 ──
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<LightweightLauncherForm>();
 
         return services.BuildServiceProvider();
     }
@@ -87,11 +99,10 @@ public partial class App : System.Windows.Application
     /// 根据配置同步开机自启注册表项。
     /// StartWithWindows=true 时写入 Run 注册表键；=false 时移除。
     /// </summary>
-    private void ApplyStartWithWindows()
+    private void ApplyStartWithWindows(AppConfig config)
     {
         try
         {
-            var config = ConfigLoader.Load();
             var startWithWindows = config.AppSettings?.StartWithWindows ?? false;
             const string appName = "Quanta";
             var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;

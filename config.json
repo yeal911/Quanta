@@ -23,5 +23,15 @@
       "Type": "Url",
       "Path": "https://github.com/search?q={param}"
     }
-  ]
+  ],
+  "AppSettings": {
+    "StartWithWindows": false,
+    "MinimizeToTray": true,
+    "CloseToTray": true,
+    "ShowInTaskbar": false,
+    "MaxResults": 10,
+    "AutoUpdate": true,
+    "CheckForUpdatesOnStartup": true,
+    "UIMode": "WinFormsLite"
+  }
 }
