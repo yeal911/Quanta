@@ -63,8 +63,6 @@ public partial class CommandSettingsWindow
         SelectComboByTag(RecordChannelsCombo, currentChannels);
     }
 
-    // ── 加载 / 保存 ────────────────────────────────────────────────────
-
     /// <summary>
     /// 从配置文件加载录音设置到界面控件。
     /// </summary>
@@ -73,16 +71,60 @@ public partial class CommandSettingsWindow
         var config = ConfigLoader.Load();
         var rec = config.RecordingSettings;
 
-        SelectComboByTag(RecordSourceCombo, rec.Source);
-        SelectComboByTag(RecordFormatCombo, rec.Format);
-        SelectComboByTag(RecordBitrateCombo, rec.Bitrate.ToString());
-        SelectComboByTag(RecordChannelsCombo, rec.Channels.ToString());
+        // 先填充 ComboBox，传入配置中的值
+        PopulateRecordSourceCombo(rec.Source);
+        PopulateRecordFormatCombo(rec.Format);
+        PopulateRecordBitrateCombo(rec.Bitrate.ToString());
+        PopulateRecordChannelsCombo(rec.Channels.ToString());
 
         RecordOutputPathBox.Text = string.IsNullOrEmpty(rec.OutputPath)
             ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
             : rec.OutputPath;
 
         UpdateEstimatedSize();
+    }
+
+    /// <summary>
+    /// 带参数的 Populate 方法，用于初始化时传入配置值
+    /// </summary>
+    private void PopulateRecordSourceCombo(string? selectedValue)
+    {
+        var currentSource = selectedValue ?? GetComboTag(RecordSourceCombo) ?? "Mic";
+        RecordSourceCombo.Items.Clear();
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMic"), Tag = "Mic" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceSpeaker"), Tag = "Speaker" });
+        RecordSourceCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordSourceMicSpeaker"), Tag = "Mic&Speaker" });
+        SelectComboByTag(RecordSourceCombo, currentSource);
+    }
+
+    private void PopulateRecordFormatCombo(string? selectedValue)
+    {
+        var currentFormat = selectedValue ?? GetComboTag(RecordFormatCombo) ?? "m4a";
+        RecordFormatCombo.Items.Clear();
+        RecordFormatCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordFormatM4a"), Tag = "m4a" });
+        RecordFormatCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordFormatMp3"), Tag = "mp3" });
+        SelectComboByTag(RecordFormatCombo, currentFormat);
+    }
+
+    private void PopulateRecordBitrateCombo(string? selectedValue)
+    {
+        var currentBitrate = selectedValue ?? GetComboTag(RecordBitrateCombo) ?? "128";
+        RecordBitrateCombo.Items.Clear();
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate32"), Tag = "32" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate64"), Tag = "64" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate96"), Tag = "96" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate128"), Tag = "128" });
+        RecordBitrateCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordBitrate160"), Tag = "160" });
+        SelectComboByTag(RecordBitrateCombo, currentBitrate);
+    }
+
+    private void PopulateRecordChannelsCombo(string? selectedValue)
+    {
+        var currentChannels = selectedValue ?? GetComboTag(RecordChannelsCombo) ?? "2";
+        RecordChannelsCombo.Items.Clear();
+        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsStereo"), Tag = "2" });
+        RecordChannelsCombo.Items.Add(new ComboBoxItem { Content = LocalizationService.Get("RecordChannelsMono"), Tag = "1" });
+        SelectComboByTag(RecordChannelsCombo, currentChannels);
     }
 
     private void SaveRecordingSettings(bool showToast = false)
