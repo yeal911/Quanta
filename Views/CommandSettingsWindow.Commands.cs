@@ -259,13 +259,13 @@ public partial class CommandSettingsWindow
     {
         if (CommandsGrid.SelectedItem is not CommandConfig cmd)
         {
-            ToastService.Instance.ShowWarning("请先选中要测试的命令");
+            ToastService.Instance.ShowWarning(LocalizationService.Get("TestSelectFirst"));
             return;
         }
 
         if (_searchEngine == null)
         {
-            ToastService.Instance.ShowWarning("测试功能不可用");
+            ToastService.Instance.ShowWarning(LocalizationService.Get("TestUnavailable"));
             return;
         }
 

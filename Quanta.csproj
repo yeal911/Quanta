@@ -13,7 +13,6 @@
     <Authors>Quanta Team</Authors>
     <Description>A fast Windows 11 launcher with global hotkey support</Description>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <!-- 单文件发布：native DLL（libmp3lame 等）需打包，资源文件保持旁置 -->
     <PublishSingleFile>true</PublishSingleFile>
@@ -40,6 +39,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="NAudio.Lame" Version="2.1.0" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="QRCoder" Version="1.7.0" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>

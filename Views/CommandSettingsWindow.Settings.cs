@@ -96,7 +96,7 @@ public partial class CommandSettingsWindow
         }
         catch (Exception ex)
         {
-            ToastService.Instance.ShowError($"开机启动设置失败: {ex.Message}");
+            ToastService.Instance.ShowError(LocalizationService.Get("StartupSettingFailed", ex.Message));
         }
     }
 

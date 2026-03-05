@@ -10,7 +10,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Controls;
+using Hardcodet.Wpf.TaskbarNotification;
 using Quanta.Core.Interfaces;
 using Quanta.Helpers;
 using Quanta.Interfaces;
@@ -36,9 +37,9 @@ public class TrayService : ITrayService
     private readonly IMainWindowService _mainWindowService;
 
     /// <summary>
-    /// 系统托盘通知图标实例，为 null 表示尚未初始化或已释放。
+    /// 系统托盘图标实例，为 null 表示尚未初始化或已释放。
     /// </summary>
-    private NotifyIcon? _notifyIcon;
+    private TaskbarIcon? _taskbarIcon;
 
     /// <summary>
     /// 标记当前对象是否已被释放，防止重复释放资源。
@@ -77,12 +78,11 @@ public class TrayService : ITrayService
     public void Initialize()
     {
         // 如果托盘图标已存在，先销毁再重建（用于语言切换等场景）
-        if (_notifyIcon != null)
+        if (_taskbarIcon != null)
         {
-            _notifyIcon.ContextMenuStrip?.Dispose();
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-            _notifyIcon = null;
+            _taskbarIcon.Visibility = Visibility.Collapsed;
+            _taskbarIcon.Dispose();
+            _taskbarIcon = null;
         }
 
         // 从配置加载当前语言设置
@@ -91,18 +91,18 @@ public class TrayService : ITrayService
         // 加载应用程序图标（优先从程序目录加载 quanta.ico）
         Icon icon = LoadAppIcon();
 
-        _notifyIcon = new NotifyIcon
+        _taskbarIcon = new TaskbarIcon
         {
             Icon = icon,
-            Visible = true,
-            Text = LocalizationService.Get("TrayTooltip"),
+            ToolTipText = LocalizationService.Get("TrayTooltip"),
+            Visibility = Visibility.Visible
         };
 
         // 构建右键上下文菜单
         BuildContextMenu();
 
         // 双击托盘图标时显示主窗口
-        _notifyIcon.DoubleClick += (s, e) => ShowMainWindow();
+        _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowMainWindow();
 
         Logger.Debug("TrayService initialized");
     }
@@ -114,42 +114,46 @@ public class TrayService : ITrayService
     /// </summary>
     private void BuildContextMenu()
     {
-        if (_notifyIcon == null) return;
+        if (_taskbarIcon == null) return;
 
-        var menu = new ContextMenuStrip();
+        var menu = new ContextMenu();
 
         // "设置"菜单项 - 点击后触发设置事件
-        var settingsItem = new ToolStripMenuItem(LocalizationService.Get("TraySettings"));
+        var settingsItem = new MenuItem { Header = LocalizationService.Get("TraySettings") };
         settingsItem.Click += (s, e) => OnSettingsRequested();
         menu.Items.Add(settingsItem);
 
         // "语言"子菜单 - 动态生成所有支持的语言
-        var langMenu = new ToolStripMenuItem(LocalizationService.Get("TrayLanguage"));
+        var langMenu = new MenuItem { Header = LocalizationService.Get("TrayLanguage") };
 
         foreach (var lang in LocalizationService.GetSupportedLanguages())
         {
-            var langItem = new ToolStripMenuItem(LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)));
+            var langItem = new MenuItem
+            {
+                Header = LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)),
+                IsCheckable = true,
+                IsChecked = LocalizationService.CurrentLanguage == lang.Code
+            };
             langItem.Click += (s, e) => SetLanguage(lang.Code);
-            langItem.Checked = LocalizationService.CurrentLanguage == lang.Code;
-            langMenu.DropDownItems.Add(langItem);
+            langMenu.Items.Add(langItem);
         }
 
         menu.Items.Add(langMenu);
 
         // 分隔线
-        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new Separator());
 
         // "关于"菜单项 - 点击后显示关于信息
-        var aboutItem = new ToolStripMenuItem(LocalizationService.Get("TrayAbout"));
+        var aboutItem = new MenuItem { Header = LocalizationService.Get("TrayAbout") };
         aboutItem.Click += (s, e) => ShowAbout();
         menu.Items.Add(aboutItem);
 
         // "退出"菜单项 - 点击后退出应用程序
-        var exitItem = new ToolStripMenuItem(LocalizationService.Get("TrayExit"));
+        var exitItem = new MenuItem { Header = LocalizationService.Get("TrayExit") };
         exitItem.Click += (s, e) => OnExitRequested();
         menu.Items.Add(exitItem);
 
-        _notifyIcon.ContextMenuStrip = menu;
+        _taskbarIcon.ContextMenu = menu;
     }
 
     /// <summary>
@@ -232,9 +236,7 @@ public class TrayService : ITrayService
     }
 
     /// <summary>
-    /// 显示并激活主窗口。如果主窗口处于最小化状态，先恢复为正常状态，
-    /// 然后显示窗口、激活窗口并设置焦点。
-    /// 所有操作通过 Dispatcher 在 UI 线程上执行。
+    /// 显示并激活主窗口。
     /// </summary>
     private void ShowMainWindow()
     {
@@ -246,7 +248,6 @@ public class TrayService : ITrayService
 
     /// <summary>
     /// 处理"设置"菜单项的点击事件。
-    /// 先显示主窗口，然后触发 <see cref="SettingsRequested"/> 事件通知订阅者。
     /// </summary>
     private void OnSettingsRequested()
     {
@@ -256,12 +257,10 @@ public class TrayService : ITrayService
 
     /// <summary>
     /// 显示"关于"信息，通过 Toast 通知的方式展示作者和联系邮箱。
-    /// 通知持续 3 秒后自动消失。
     /// </summary>
     private void ShowAbout()
     {
-        // 通过 Toast 通知显示关于信息
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        Application.Current.Dispatcher.Invoke(() =>
         {
             ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
         });
@@ -269,7 +268,6 @@ public class TrayService : ITrayService
 
     /// <summary>
     /// 处理"退出"菜单项的点击事件。
-    /// 先检查 <see cref="CanExit"/> 回调，允许退出后才依次触发事件、释放资源并关闭应用。
     /// </summary>
     private void OnExitRequested()
     {
@@ -279,23 +277,22 @@ public class TrayService : ITrayService
 
         ExitRequested?.Invoke(this, EventArgs.Empty);
         Dispose();
-        System.Windows.Application.Current.Shutdown();
+        Application.Current.Shutdown();
     }
 
     /// <summary>
     /// 释放系统托盘服务占用的资源，包括隐藏和销毁托盘图标。
-    /// 该方法可以安全地多次调用，内部通过 <see cref="_disposed"/> 标志防止重复释放。
     /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
-        if (_notifyIcon != null)
+        if (_taskbarIcon != null)
         {
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-            _notifyIcon = null;
+            _taskbarIcon.Visibility = Visibility.Collapsed;
+            _taskbarIcon.Dispose();
+            _taskbarIcon = null;
         }
 
         Logger.Debug("TrayService disposed");

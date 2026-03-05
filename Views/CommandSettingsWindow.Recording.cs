@@ -174,15 +174,14 @@ public partial class CommandSettingsWindow
 
     private void RecordBrowseButton_Click(object sender, RoutedEventArgs e)
     {
-        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        var dialog = new Microsoft.Win32.OpenFolderDialog
         {
-            Description = LocalizationService.Get("RecordOutputPath"),
-            SelectedPath = RecordOutputPathBox.Text,
-            ShowNewFolderButton = true
+            Title = LocalizationService.Get("RecordOutputPath"),
+            InitialDirectory = RecordOutputPathBox.Text
         };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (dialog.ShowDialog() == true)
         {
-            RecordOutputPathBox.Text = dialog.SelectedPath;
+            RecordOutputPathBox.Text = dialog.FolderName;
             SaveRecordingSettings();
         }
     }

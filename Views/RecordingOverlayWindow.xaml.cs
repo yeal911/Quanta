@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Hardcodet.Wpf.TaskbarNotification;
 using WpfButton = System.Windows.Controls.Button;
 using WpfImage = System.Windows.Controls.Image;
 using WpfMouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
@@ -26,7 +27,6 @@ using Quanta.Core.Interfaces;
 using Quanta.Helpers;
 using GdiImage = System.Drawing.Image;
 using GdiPixelFormat = System.Drawing.Imaging.PixelFormat;
-using NotifyIcon = System.Windows.Forms.NotifyIcon;
 
 namespace Quanta.Views;
 
@@ -61,7 +61,7 @@ public partial class RecordingOverlayWindow : Window
     private bool _isDiscarding;  // 标记当前是放弃操作，防止 Stopping 状态覆盖文本
 
     // ── 系统托盘图标 ─────────────────────────────────────────────────
-    private NotifyIcon? _notifyIcon;
+    private TaskbarIcon? _notifyIcon;
 
     // ── 资源路径 ─────────────────────────────────────────────────────
     private static string ResourcePath(string fileName)
@@ -602,13 +602,13 @@ public partial class RecordingOverlayWindow : Window
 
         try
         {
-            _notifyIcon = new NotifyIcon
+            _notifyIcon = new TaskbarIcon
             {
-                Icon = new Icon(iconPath),
-                Text = LocalizationService.Get("RecordingInProgress"),
-                Visible = false
+                Icon = new System.Drawing.Icon(iconPath),
+                ToolTipText = LocalizationService.Get("RecordingInProgress"),
+                Visibility = Visibility.Collapsed
             };
-            _notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+            _notifyIcon.TrayMouseDoubleClick += (s, e) => NotifyIcon_DoubleClick(s, e);
             Logger.Debug("RecordingOverlayWindow: NotifyIcon initialized");
         }
         catch (Exception ex)
@@ -631,7 +631,7 @@ public partial class RecordingOverlayWindow : Window
     private void NotifyIcon_DoubleClick(object? sender, EventArgs e)
     {
         Logger.Debug("RecordingOverlayWindow: NotifyIcon double-clicked, animating restore");
-        if (_notifyIcon != null) _notifyIcon.Visible = false;
+        if (_notifyIcon != null) _notifyIcon.Visibility = Visibility.Collapsed;
         // 先设 Opacity=0 让窗口不可见，再 Show()，最后动画淡入
         this.Opacity = 0.0;
         Show();
@@ -672,7 +672,7 @@ public partial class RecordingOverlayWindow : Window
                     {
                         var anim = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs))
                         { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
-                        anim.Completed += (_, _) => { Hide(); this.Opacity = 1.0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                        anim.Completed += (_, _) => { Hide(); this.Opacity = 1.0; if (_notifyIcon != null) _notifyIcon.Visibility = Visibility.Visible; };
                         this.BeginAnimation(OpacityProperty, anim);
                         break;
                     }
@@ -681,7 +681,7 @@ public partial class RecordingOverlayWindow : Window
                     {
                         var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
                         var fade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease };
-                        fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootTranslate.Y = 0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                        fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootTranslate.Y = 0; if (_notifyIcon != null) _notifyIcon.Visibility = Visibility.Visible; };
                         this.BeginAnimation(OpacityProperty, fade);
                         RootTranslate.BeginAnimation(TranslateTransform.YProperty,
                             new DoubleAnimation(0, -18, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease });
@@ -692,7 +692,7 @@ public partial class RecordingOverlayWindow : Window
                     {
                         var ease = new QuadraticEase { EasingMode = EasingMode.EaseIn };
                         var fade = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease };
-                        fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootScale.ScaleX = RootScale.ScaleY = 1.0; if (_notifyIcon != null) _notifyIcon.Visible = true; };
+                        fade.Completed += (_, _) => { Hide(); this.Opacity = 1.0; RootScale.ScaleX = RootScale.ScaleY = 1.0; if (_notifyIcon != null) _notifyIcon.Visibility = Visibility.Visible; };
                         this.BeginAnimation(OpacityProperty, fade);
                         RootScale.BeginAnimation(ScaleTransform.ScaleXProperty,
                             new DoubleAnimation(1.0, 0.82, TimeSpan.FromMilliseconds(OutMs)) { EasingFunction = ease });
@@ -874,11 +874,19 @@ public partial class RecordingOverlayWindow : Window
         // 清理托盘图标
         if (_notifyIcon != null)
         {
-            _notifyIcon.Visible = false;
+            _notifyIcon.Visibility = Visibility.Collapsed;
             _notifyIcon.Dispose();
             _notifyIcon = null;
         }
 
         base.OnClosed(e);
+
+        // 录音结束后在后台主动回收 NAudio 分配的缓冲区（通常 30-50MB）
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            GC.Collect(2, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(2, GCCollectionMode.Forced);
+        });
     }
 }

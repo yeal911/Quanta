@@ -742,7 +742,7 @@ public class SearchEngine
                     catch (Exception ex)
                     {
                         Logger.Error($"Failed to copy QRCode to clipboard: {ex.Message}");
-                        ToastService.Instance.ShowError("复制失败");
+                        ToastService.Instance.ShowError(LocalizationService.Get("CopyFailed"));
                     }
                 }
                 return true;
@@ -956,7 +956,7 @@ public class SearchEngine
                 {
                     Logger.Debug("[winrecord] 所有方法都失败，显示提示");
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        ToastService.Instance.ShowWarning("Windows 录音机未安装，请从 Microsoft Store 搜索「录音机」下载"));
+                        ToastService.Instance.ShowWarning(LocalizationService.Get("WinRecordNotInstalled")));
                 }
                 return true;
 

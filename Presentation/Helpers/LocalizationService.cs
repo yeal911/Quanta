@@ -36,15 +36,58 @@ public static class LocalizationService
     private static readonly string[] SupportedLanguageCodes = { "zh-CN", "en-US", "es-ES", "ja-JP", "ko-KR", "fr-FR", "de-DE", "pt-BR", "ru-RU", "it-IT", "ar-SA" };
 
     /// <summary>
-    /// 静态构造函数 - 启动时加载所有语言文件
+    /// 静态构造函数 - 启动时只加载 zh-CN（回退语言）和用户配置语言，其余按需加载
     /// </summary>
     static LocalizationService()
     {
-        LoadAllLanguages();
+        _translations = new Dictionary<string, Dictionary<string, string>>();
+
+        // 先加载默认回退语言 zh-CN
+        LoadLanguageIfNeeded("zh-CN");
+        if (!_translations.ContainsKey("zh-CN"))
+            throw new System.InvalidOperationException("Failed to load default language (zh-CN)");
+
+        // 读取用户配置语言并预加载（避免首次 Get() 阻塞）
+        try
+        {
+            var config = ConfigLoader.Load();
+            var configLang = config.AppSettings?.Language ?? "zh-CN";
+            if (configLang != "zh-CN")
+                LoadLanguageIfNeeded(configLang);
+            _currentLanguage = configLang;
+        }
+        catch (System.Exception ex)
+        {
+            Logger.Warn($"[LocalizationService] Failed to read config language: {ex.Message}");
+        }
+
+        Logger.Debug($"[LocalizationService] Startup loaded {_translations.Count} language(s), current={_currentLanguage}");
     }
 
     /// <summary>
-    /// 从嵌入的 JSON 资源中加载所有语言
+    /// 按需加载指定语言（线程安全：Dictionary 写入在 UI 线程 static ctor / Set 中完成）
+    /// </summary>
+    private static void LoadLanguageIfNeeded(string langCode)
+    {
+        if (_translations.ContainsKey(langCode)) return;
+        if (!System.Array.Exists(SupportedLanguageCodes, c => c == langCode)) return;
+        try
+        {
+            var dict = LoadLanguage(langCode);
+            if (dict != null)
+            {
+                _translations[langCode] = dict;
+                Logger.Debug($"[LocalizationService] Lazy-loaded language: {langCode} ({dict.Count} keys)");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.Warn($"[LocalizationService] Failed to load language {langCode}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 从嵌入的 JSON 资源中加载所有语言（用于 ReloadAllLanguages）
     /// 优先级：外部文件 > 嵌入式资源
     /// </summary>
     private static void LoadAllLanguages()
@@ -68,11 +111,8 @@ public static class LocalizationService
             }
         }
 
-        // 确保至少加载了默认语言
         if (!_translations.ContainsKey("zh-CN"))
-        {
             throw new System.InvalidOperationException("Failed to load default language (zh-CN)");
-        }
 
         Logger.Debug($"[LocalizationService] Total languages loaded: {_translations.Count}");
     }
@@ -161,6 +201,11 @@ public static class LocalizationService
         get => _currentLanguage;
         set
         {
+            if (!System.Array.Exists(SupportedLanguageCodes, c => c == value)) return;
+
+            // 按需加载目标语言（未加载则先加载）
+            LoadLanguageIfNeeded(value);
+
             if (_translations.ContainsKey(value))
             {
                 _currentLanguage = value;
@@ -265,10 +310,10 @@ public static class LocalizationService
     /// </summary>
     public static bool TrySetLanguage(string languageCode)
     {
-        if (!_translations.ContainsKey(languageCode))
+        if (!System.Array.Exists(SupportedLanguageCodes, c => c == languageCode))
             return false;
 
         CurrentLanguage = languageCode;
-        return true;
+        return _translations.ContainsKey(languageCode);
     }
 }
