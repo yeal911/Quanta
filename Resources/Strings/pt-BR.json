@@ -82,7 +82,7 @@
   "MaxResults": "Máx. resultados:",
   "MaxResultsSuffix": " resultados",
   "QRCodeThreshold": "Limite QR:",
-  "QRCodeThresholdSuffix": " chars",
+  "QRCodeThresholdSuffix": " caracteres",
   "SearchCommands": "Buscar comandos...",
   "Add": "Adicionar",
   "Delete": "Excluir",

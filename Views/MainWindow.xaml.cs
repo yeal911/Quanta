@@ -92,6 +92,10 @@ public partial class MainWindow : Window, IMainWindowService
 
         // 订阅主题变更事件，更新 UI 图标
         _viewModel.ThemeChanged += (s, isDark) => UpdateThemeIcon(isDark);
+
+        // 订阅语言切换事件：无论从托盘、设置窗口还是搜索关键字切换语言，
+        // 主窗口都即时刷新本地化文本与布局方向（ar-SA 为 RTL）
+        LocalizationService.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>

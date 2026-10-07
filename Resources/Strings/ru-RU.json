@@ -177,7 +177,7 @@
   "BuiltinCmd_english": "Английский",
   "BuiltinCmd_chinese": "Китайский",
   "BuiltinCmd_spanish": "Испанский",
-  "BuiltinCmd_winrecord": "Windows Recorder",
+  "BuiltinCmd_winrecord": "Запись голоса Windows",
   "BuiltinDesc_cmd": "Открыть CMD",
   "BuiltinDesc_powershell": "Открыть PowerShell",
   "BuiltinDesc_notepad": "Открыть Блокнот",

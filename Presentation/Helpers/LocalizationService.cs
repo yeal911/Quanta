@@ -36,6 +36,22 @@ public static class LocalizationService
     }
 
     /// <summary>
+    /// 当前语言切换成功后触发的事件，事件参数为新语言代码。
+    /// 订阅者（窗口、托盘菜单等）在任意入口切换语言时都会收到通知，实现即时刷新。
+    /// </summary>
+    public static event System.EventHandler<string>? LanguageChanged
+    {
+        add => Current.LanguageChanged += value;
+        remove => Current.LanguageChanged -= value;
+    }
+
+    /// <summary>
+    /// 当前语言是否为从右到左（RTL）布局语言（如阿拉伯语）。
+    /// 窗口据此切换 FlowDirection。
+    /// </summary>
+    public static bool IsCurrentLanguageRightToLeft => Current.IsCurrentLanguageRightToLeft;
+
+    /// <summary>
     /// 获取或设置当前语言代码。
     /// 设置时会验证语言是否受支持，并自动将选择持久化到配置文件中。
     /// </summary>

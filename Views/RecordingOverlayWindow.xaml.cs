@@ -96,6 +96,12 @@ public partial class RecordingOverlayWindow : Window
         _recordingService.RecordingSaved += OnRecordingSaved;
         _recordingService.DeviceChanged += OnDeviceChanged;
 
+        // 订阅语言切换事件：录音期间切换语言时悬浮窗即时刷新文本与布局方向
+        LocalizationService.LanguageChanged += OnLanguageChanged;
+
+        // 按当前语言应用布局方向（ar-SA 为 RTL）
+        ApplyFlowDirection();
+
         PositionWindow();
 
         Logger.Debug("RecordingOverlayWindow: Created, outputDirectory=" + outputDirectory);
@@ -113,6 +119,32 @@ public partial class RecordingOverlayWindow : Window
         DropTooltip.Content = LocalizationService.Get("RecordDropTooltip");
         HideTooltip.Content = LocalizationService.Get("RecordHideTooltip");
         InfoTooltip.Content = LocalizationService.Get("RecordClickToOpenDir");
+    }
+
+    /// <summary>
+    /// 语言切换事件处理：刷新悬浮窗的本地化文本与布局方向（ar-SA 为 RTL）。
+    /// 事件可能从非 UI 线程触发，统一调度回 UI 线程执行。
+    /// </summary>
+    private void OnLanguageChanged(object? sender, string langCode)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(() => OnLanguageChanged(sender, langCode));
+            return;
+        }
+
+        ApplyLocalization();
+        ApplyFlowDirection();
+    }
+
+    /// <summary>
+    /// 按当前语言应用窗口布局方向：ar-SA（阿拉伯语）从右到左，其余语言从左到右。
+    /// </summary>
+    private void ApplyFlowDirection()
+    {
+        FlowDirection = LocalizationService.IsCurrentLanguageRightToLeft
+            ? System.Windows.FlowDirection.RightToLeft
+            : System.Windows.FlowDirection.LeftToRight;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -867,6 +899,8 @@ public partial class RecordingOverlayWindow : Window
         _recordingService.ErrorOccurred -= OnRecordingError;
         _recordingService.RecordingSaved -= OnRecordingSaved;
         _recordingService.DeviceChanged -= OnDeviceChanged;
+
+        LocalizationService.LanguageChanged -= OnLanguageChanged;
 
         StopGifTimer();
         _gifFramePixels = null;

@@ -21,6 +21,9 @@ public class LanguageInfo
 
     /// <summary>语言是否启用</summary>
     public bool Enabled { get; init; } = true;
+
+    /// <summary>语言是否为从右到左（RTL）布局语言，如阿拉伯语</summary>
+    public bool IsRightToLeft { get; init; } = false;
 }
 
 /// <summary>
@@ -43,7 +46,7 @@ public static class LanguageManager
         new() { Code = "pt-BR", DisplayName = "Português", NativeName = "Português" },
         new() { Code = "ru-RU", DisplayName = "Русский", NativeName = "Русский" },
         new() { Code = "it-IT", DisplayName = "Italiano", NativeName = "Italiano" },
-        new() { Code = "ar-SA", DisplayName = "العربية", NativeName = "العربية" }
+        new() { Code = "ar-SA", DisplayName = "العربية", NativeName = "العربية", IsRightToLeft = true }
     }.AsReadOnly();
 
     /// <summary>

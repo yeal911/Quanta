@@ -177,6 +177,7 @@
                                Visibility="{Binding IsPlaceholderVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                     <!-- "keyword >" indicator for param mode: keyword=blue, >=red -->
+                    <!-- FlowDirection 固定 LTR：">" 为命令行语法符号，RTL 语言下也不镜像 -->
                     <StackPanel x:Name="ParamIndicator" Grid.Column="1"
                                 Orientation="Horizontal" Margin="6,4,0,4"
                                 VerticalAlignment="Center" IsHitTestVisible="False"
