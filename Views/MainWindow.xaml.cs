@@ -1,19 +1,21 @@
 // ============================================================================
 // 文件名：MainWindow.xaml.cs
 // 文件用途：主窗口核心部分：字段声明、DI 构造、窗口初始化事件。
+//          业务逻辑已下沉到 MainViewModel（含 Recording 分部），
+//          本文件只保留视图接线：事件订阅、窗口生命周期、Win32 互操作桥。
 // ============================================================================
 // 文件结构（partial class 拆分）：
-//   MainWindow.xaml.cs          ← 字段、构造、Loaded、SearchBox事件
-//   MainWindow.Window.cs        ← 窗口显示/隐藏动画、ToggleVisibility
-//   MainWindow.Keyboard.cs      ← 键盘处理、结果执行、列表交互、设置窗口
-//   MainWindow.ParamMode.cs     ← 参数模式 UI 切换（Tab、record 模式）
-//   MainWindow.Recording.cs     ← 录音 UI 流程（启动/配置/关闭）
-//   MainWindow.UI.cs            ← 主题/本地化/颜色复制事件
+//   MainWindow.xaml.cs          ← 字段、构造、Loaded、失焦/拖动事件
+//   MainWindow.Window.cs        ← 窗口显示/隐藏动画、ToggleVisibility、滚轮转发
+//   MainWindow.Keyboard.cs      ← 键盘事件 → ViewModel 命令接线
+//   MainWindow.ParamMode.cs     ← 参数模式 UI 切换（Tab、record 模式绑定切换）
+//   MainWindow.Recording.cs     ← 录音悬浮窗接线、窗口关闭清理
+//   MainWindow.UI.cs            ← 主题图标、应用菜单、本地化刷新、颜色复制接线
 // ============================================================================
 
+using System;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Quanta.Core.Interfaces;
@@ -26,14 +28,15 @@ namespace Quanta.Views;
 
 /// <summary>
 /// 主窗口类，作为 Quanta 启动器的核心 UI 界面。
-/// 负责搜索框交互、快捷键响应、窗口动画、系统托盘管理等功能。
+/// 业务逻辑位于 <see cref="MainViewModel"/>；此处只做视图接线：
+/// 事件 → 命令、窗口生命周期、Win32 互操作桥。
 /// </summary>
 public partial class MainWindow : Window, IMainWindowService
 {
-    /// <summary>主窗口的视图模型，管理搜索逻辑和数据</summary>
+    /// <summary>主窗口的视图模型，管理搜索/热键/录音等业务逻辑</summary>
     private readonly MainViewModel _viewModel;
 
-    /// <summary>全局快捷键管理器，用于注册和监听系统级热键</summary>
+    /// <summary>全局快捷键管理器，用于注销热键（注册编排在 MainViewModel）</summary>
     private readonly HotkeyManager _hotkeyManager;
 
     /// <summary>窗口句柄，用于快捷键注册和 Win32 交互</summary>
@@ -51,14 +54,8 @@ public partial class MainWindow : Window, IMainWindowService
     /// <summary>剪贴板变化监听器</summary>
     private readonly ClipboardMonitor _clipboardMonitor;
 
-    /// <summary>执行完毕后是否需要向前台窗口发送 Ctrl+V 粘贴</summary>
-    private bool _pendingPaste;
-
-    /// <summary>录音服务实例（DI 注入）</summary>
+    /// <summary>录音服务实例（DI 注入），供录音悬浮窗使用</summary>
     private readonly IRecordingService _recordingService;
-
-    /// <summary>配置加载服务（DI 注入）</summary>
-    private readonly IConfigLoader _configLoader;
 
     /// <summary>当前录音悬浮窗口</summary>
     private RecordingOverlayWindow? _recordingOverlay;
@@ -79,8 +76,7 @@ public partial class MainWindow : Window, IMainWindowService
         MainViewModel viewModel,
         HotkeyManager hotkeyManager,
         ClipboardMonitor clipboardMonitor,
-        IRecordingService recordingService,
-        IConfigLoader configLoader)
+        IRecordingService recordingService)
     {
         InitializeComponent();
 
@@ -88,7 +84,6 @@ public partial class MainWindow : Window, IMainWindowService
         _hotkeyManager = hotkeyManager;
         _clipboardMonitor = clipboardMonitor;
         _recordingService = recordingService;
-        _configLoader = configLoader;
 
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
@@ -125,36 +120,27 @@ public partial class MainWindow : Window, IMainWindowService
     }
 
     /// <summary>
-    /// 搜索框文本变更事件处理。
-    /// 参数模式下更新 ViewModel 的参数值；普通模式下切换占位符可见性。
-    /// </summary>
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_viewModel.IsParamMode)
-        {
-            // In param mode, update the param in ViewModel
-            _viewModel.CommandParam = SearchBox.Text;
-            // Placeholder stays hidden, ParamIndicator stays visible
-        }
-        else
-        {
-            // Show/hide placeholder based on text
-            PlaceholderText.Visibility = string.IsNullOrEmpty(SearchBox.Text)
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-        }
-    }
-
-    /// <summary>
-    /// 窗口加载完成事件处理。
-    /// 依次执行：加载语言设置、设置占位符文本、初始化 Toast 服务、
-    /// 注册全局快捷键、初始化系统托盘、构建搜索图标菜单，
-    /// 最后隐藏窗口等待快捷键唤起。
+    /// 窗口加载完成事件处理：订阅 ViewModel 事件、恢复主题、注册全局快捷键、
+    /// 初始化系统托盘与剪贴板监听，最后隐藏窗口等待快捷键唤起。
     /// </summary>
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // Load language setting
         LocalizationService.LoadFromConfig();
+
+        // ── ViewModel 事件 → 视图动作接线 ──
+        _viewModel.HideRequested += (s, args) => Dispatcher.Invoke(() => HideWindow());
+        _viewModel.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
+        _viewModel.LocalizationChanged += (s, args) =>
+        {
+            RefreshLocalization();
+            _trayService?.Initialize();
+        };
+        _viewModel.ExitRequested += (s, args) =>
+        {
+            _trayService?.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        };
 
         // 当 IsParamMode 变为 false 时，还原 SearchBox 绑定（record 参数模式退出时使用）
         _viewModel.PropertyChanged += (s, e) =>
@@ -163,32 +149,21 @@ public partial class MainWindow : Window, IMainWindowService
                 RestoreSearchBinding();
         };
 
-        // Update placeholder with current hotkey
-        UpdatePlaceholderWithHotkey();
-
-        // Initialize ToastService with main window
-        ToastService.Instance.SetMainWindow(this);
-
         _windowHandle = new WindowInteropHelper(this).Handle;
-        var config = _configLoader.Load();
 
         // 恢复上次保存的主题（Dark/Light）
-        var savedTheme = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
-        _viewModel.IsDarkTheme = savedTheme;
-        ApplyTheme(savedTheme);
-        ToastService.Instance.SetTheme(savedTheme);
+        _viewModel.ApplyInitialTheme();
+        UpdateThemeIcon(_viewModel.IsDarkTheme);
 
-        var registered = _hotkeyManager.Initialize(_windowHandle, config.Hotkey);
-        _hotkeyManager.HotkeyPressed += (s, args) => Dispatcher.Invoke(() => ToggleVisibility());
-
-        // 日志输出当前快捷键配置
-        Logger.Debug($"[Hotkey] Config loaded: Modifier={config.Hotkey?.Modifier}, Key={config.Hotkey?.Key}");
-
-        if (!registered)
+        // 注册全局快捷键（业务在 MainViewModel.InitializeHotkey）
+        if (!_viewModel.InitializeHotkey(_windowHandle))
         {
             Dispatcher.BeginInvoke(() =>
                 ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed")));
         }
+
+        // Initialize ToastService with main window
+        ToastService.Instance.SetMainWindow(this);
 
         // Initialize system tray
         _trayService = new TrayService(this);
@@ -196,9 +171,9 @@ public partial class MainWindow : Window, IMainWindowService
         _trayService.ExitRequested += (s, args) => Dispatcher.Invoke(() => _trayService?.Dispose());
         _trayService.CanExit = () =>
         {
-            if (_recordingService != null && _recordingService.State != RecordingState.Idle)
+            if (_viewModel.IsRecordingActive)
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                Dispatcher.Invoke(() =>
                     ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording")));
                 return false;
             }

@@ -1,7 +1,7 @@
 // ============================================================================
 // 文件名：MainWindow.Window.cs
 // 文件用途：窗口显示/隐藏动画（ShowWindow、HideWindow、ToggleVisibility）
-//          以及视觉树辅助方法。
+//          以及结果列表滚轮转发。纯视图行为，不含业务逻辑。
 // ============================================================================
 
 using System;
@@ -50,10 +50,9 @@ public partial class MainWindow
         var scaleTransform = new ScaleTransform(1, 1);
         RenderTransform = scaleTransform;
 
+        // 清空搜索状态（参数指示器/占位符可见性由绑定跟随 IsParamMode/SearchText 更新）
         _viewModel.ClearSearchCommand.Execute(null);
-        ParamIndicator.Visibility = Visibility.Collapsed;
         SearchBox.Padding = new Thickness(6, 4, 0, 4);
-        PlaceholderText.Visibility = Visibility.Visible;
         SearchBox.Focus();
 
         // Update toast position
@@ -72,6 +71,7 @@ public partial class MainWindow
 
     /// <summary>
     /// 隐藏主窗口，播放淡出+缩小动画后执行 Hide()。
+    /// 若有待粘贴标记（剪贴板历史项执行），等待前台窗口获得焦点后发送 Ctrl+V。
     /// </summary>
     private void HideWindow()
     {
@@ -88,9 +88,8 @@ public partial class MainWindow
         fadeOut.Completed += (s, e) =>
         {
             Hide();
-            if (_pendingPaste)
+            if (_viewModel.ConsumePendingPaste())
             {
-                _pendingPaste = false;
                 // 等待前台窗口重新获得焦点后再发送 Ctrl+V
                 Task.Delay(150).ContinueWith(_ => Dispatcher.Invoke(() =>
                 {
@@ -109,14 +108,6 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// 搜索结果列表加载完成时的事件处理（图标颜色通过 XAML DataTrigger 自动处理）。
-    /// </summary>
-    private void ResultsList_Loaded(object sender, RoutedEventArgs e)
-    {
-        // 图标颜色现在通过 XAML DataTrigger 自动处理
-    }
-
-    /// <summary>
     /// 将结果列表上的鼠标滚轮事件转发给外层 ScrollViewer，避免 ListBox 内部滚动宿主吞掉滚轮。
     /// </summary>
     private void ResultsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -128,22 +119,5 @@ public partial class MainWindow
         nextOffset = Math.Max(0, Math.Min(nextOffset, ResultsScrollViewer.ScrollableHeight));
         ResultsScrollViewer.ScrollToVerticalOffset(nextOffset);
         e.Handled = true;
-    }
-
-    /// <summary>
-    /// 递归查找 Visual Tree 中指定类型的子元素。
-    /// </summary>
-    private static T? FindVisualChild<T>(System.Windows.DependencyObject parent) where T : System.Windows.DependencyObject
-    {
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-        {
-            var child = VisualTreeHelper.GetChild(parent, i);
-            if (child is T result)
-                return result;
-            var childOfChild = FindVisualChild<T>(child);
-            if (childOfChild != null)
-                return childOfChild;
-        }
-        return null;
     }
 }

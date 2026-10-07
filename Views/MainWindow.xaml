@@ -169,19 +169,20 @@
                         </TextBlock.ContextMenu>
                     </TextBlock>
 
-                    <!-- Placeholder text -->
+                    <!-- Placeholder text (visibility &amp; text follow ViewModel state) -->
                     <TextBlock x:Name="PlaceholderText" Grid.Column="1"
-                               Text="请输入命令关键字" FontSize="14" Padding="6,4"
+                               Text="{Binding PlaceholderText}" FontSize="14" Padding="6,4"
                                Foreground="{DynamicResource TertiaryText}" FontFamily="微软雅黑"
                                VerticalAlignment="Center" IsHitTestVisible="False"
-                               Visibility="Visible"/>
+                               Visibility="{Binding IsPlaceholderVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                     <!-- "keyword >" indicator for param mode: keyword=blue, >=red -->
                     <StackPanel x:Name="ParamIndicator" Grid.Column="1"
                                 Orientation="Horizontal" Margin="6,4,0,4"
                                 VerticalAlignment="Center" IsHitTestVisible="False"
-                                Visibility="Collapsed" Panel.ZIndex="1">
+                                Visibility="{Binding IsParamMode, Converter={StaticResource BoolToVisibilityConverter}}" Panel.ZIndex="1">
                         <TextBlock x:Name="ParamKeywordText" FontSize="14"
+                                   Text="{Binding CommandKeyword}"
                                    Foreground="#0078D4" FontFamily="Consolas" FontWeight="Bold"/>
                         <TextBlock x:Name="ParamArrowText" Text=" >" FontSize="14"
                                    Foreground="#E74C3C" FontFamily="Consolas" FontWeight="Bold"/>
@@ -196,12 +197,11 @@
                              VerticalAlignment="Center"
                              AcceptsReturn="True"
                              MaxHeight="28"
-                             TextWrapping="Wrap"
-                             TextChanged="SearchBox_TextChanged"/>
+                             TextWrapping="Wrap"/>
 
                     <Button x:Name="ThemeToggleButton" Grid.Column="2"
                             Style="{StaticResource ThemeToggleStyle}"
-                            Click="ThemeToggleButton_Click"
+                            Command="{Binding ToggleThemeCommand}"
                             MouseRightButtonUp="ThemeToggleButton_RightClick"
                             ToolTipService.InitialShowDelay="0">
                         <TextBlock x:Name="ThemeIcon" Text="🌙" FontSize="12" Foreground="{DynamicResource SecondaryText}"/>
@@ -225,8 +225,7 @@
                              ItemContainerStyle="{StaticResource ResultItemStyle}"
                              SelectionChanged="ResultsList_SelectionChanged"
                              PreviewMouseLeftButtonUp="ResultsList_MouseClick"
-                             PreviewMouseWheel="ResultsList_PreviewMouseWheel"
-                             Loaded="ResultsList_Loaded">
+                             PreviewMouseWheel="ResultsList_PreviewMouseWheel">
 
 
                     <!-- 分组标题样式：仅当有多种结果类型时才显示分组标题 -->

@@ -1,17 +1,19 @@
 // ============================================================================
 // 文件名：MainWindow.Keyboard.cs
-// 文件用途：键盘事件处理、搜索结果执行、列表交互、设置窗口。
+// 文件用途：键盘事件 → ViewModel 命令的视图接线：
+//          Ctrl+数字快速执行、Escape 退出/返回、方向键选择、
+//          Enter 执行、Tab 补全、参数模式下的 Backspace 删除、
+//          结果列表交互、设置窗口打开。
+//          键盘决策逻辑在 MainViewModel（GetTabAction / ExecuteByIndex 等）。
 // ============================================================================
 
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
-using Quanta.Core.Config;
 using Quanta.Domain.Search;
-using Quanta.Infrastructure.Logging;
 using Quanta.Presentation.Helpers;
+using Quanta.Presentation.ViewModels;
 
 namespace Quanta.Views;
 
@@ -23,20 +25,12 @@ public partial class MainWindow
     /// </summary>
     private void Window_PreviewKeyDown(object sender, WpfKeyEventArgs e)
     {
-        // Ctrl+数字 快速执行
-        if (e.Key >= Key.D1 && e.Key <= Key.D9 && Keyboard.Modifiers == ModifierKeys.Control)
+        // Ctrl+数字 快速执行（主键盘与小键盘）
+        if (Keyboard.Modifiers == ModifierKeys.Control &&
+            ((e.Key >= Key.D1 && e.Key <= Key.D9) || (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)))
         {
-            int index = e.Key - Key.D1;
-            ExecuteByIndex(index);
-            e.Handled = true;
-            return;
-        }
-
-        // Ctrl+数字 (小键盘)
-        if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9 && Keyboard.Modifiers == ModifierKeys.Control)
-        {
-            int index = e.Key - Key.NumPad1;
-            ExecuteByIndex(index);
+            int index = (e.Key >= Key.D1 && e.Key <= Key.D9) ? e.Key - Key.D1 : e.Key - Key.NumPad1;
+            _viewModel.ExecuteByIndexCommand.Execute(index);
             e.Handled = true;
             return;
         }
@@ -46,12 +40,11 @@ public partial class MainWindow
             case Key.Escape:
                 if (_viewModel.IsParamMode)
                 {
+                    // 退出参数模式（指示器/占位符可见性由绑定自动还原）
                     RestoreSearchBinding();
                     _viewModel.SwitchToNormalModeCommand.Execute(null);
                     SearchBox.Text = "";
-                    ParamIndicator.Visibility = Visibility.Collapsed;
                     SearchBox.Padding = new Thickness(6, 4, 0, 4);
-                    PlaceholderText.Visibility = Visibility.Visible;
                 }
                 else
                 {
@@ -71,7 +64,7 @@ public partial class MainWindow
                 break;
 
             case Key.Enter:
-                _ = ExecuteSelectedAsync();
+                _viewModel.ExecuteSelectedCommand.Execute(null);
                 e.Handled = true;
                 break;
 
@@ -81,57 +74,14 @@ public partial class MainWindow
                 break;
 
             case Key.Back:
-                if (_viewModel.IsParamMode)
-                {
-                    // 参数模式下的删除逻辑：
-                    // 情况3→情况2：SearchBox有参数，删除参数字符，参数空了进入情况2
-                    // 情况2→情况1：SearchBox为空，删除">"，退出参数模式但保留命令关键字
-
-                    if (string.IsNullOrEmpty(SearchBox.Text))
-                    {
-                        // 情况2：SearchBox已空，删除">"退出参数模式
-                        var keyword = _viewModel.CommandKeyword;
-                        _viewModel.SwitchToNormalModeCommand.Execute(null);
-                        SearchBox.Text = keyword;
-                        SearchBox.CaretIndex = SearchBox.Text.Length;
-                        ParamIndicator.Visibility = Visibility.Collapsed;
-                        SearchBox.Padding = new Thickness(6, 4, 0, 4);
-                        PlaceholderText.Visibility = Visibility.Collapsed;
-                        e.Handled = true;
-                    }
-                    else if (SearchBox.Text.Length == 1)
-                    {
-                        // 情况3→情况2：只剩一个参数字符，删除后变成空
-                        _viewModel.CommandParam = "";
-                        // 不拦截，让系统处理删除
-                    }
-                    else
-                    {
-                        // 情况3：有多个参数字符，正常删除
-                        _viewModel.CommandParam = SearchBox.Text.Substring(0, SearchBox.Text.Length - 1);
-                        // 不拦截，让系统处理删除
-                    }
-                }
+                HandleBackspaceInParamMode(e);
                 break;
         }
     }
 
     /// <summary>
-    /// 按索引快速执行搜索结果。用于 Ctrl+数字 快捷键。
-    /// </summary>
-    private void ExecuteByIndex(int index)
-    {
-        if (index >= 0 && index < _viewModel.Results.Count)
-        {
-            _viewModel.SelectedIndex = index;
-            _ = ExecuteSelectedAsync();
-        }
-    }
-
-    /// <summary>
-    /// 处理 Tab 键逻辑：
-    /// 参数模式下聚焦搜索框并移动光标到末尾；
-    /// 普通模式下尝试匹配自定义命令进入参数模式，否则选择下一项。
+    /// 处理 Tab 键：动作决策在 MainViewModel.GetTabAction，
+    /// 这里只做参数模式的 UI 切换与命令分发。
     /// </summary>
     private void HandleTabKey()
     {
@@ -142,88 +92,54 @@ public partial class MainWindow
             return;
         }
 
-        string? matchedKeyword = null;
-        bool hasRecordCommand = false;
-        foreach (var result in _viewModel.Results)
+        var (action, keyword) = _viewModel.GetTabAction();
+        switch (action)
         {
-            if (result.Type == SearchResultType.CustomCommand)
-            {
-                matchedKeyword = result.Title;
+            case TabAction.EnterParamMode:
+                EnterParamMode(keyword!);
+                return;
+
+            case TabAction.EnterRecordParamMode:
+                EnterRecordParamMode();
+                return;
+
+            default:
+                // Normal tab behavior - select next item
+                _viewModel.SelectNextCommand.Execute(null);
                 break;
-            }
-            if (result.Type == SearchResultType.RecordCommand)
-            {
-                hasRecordCommand = true;
-            }
         }
-
-        if (matchedKeyword != null)
-        {
-            EnterParamMode(matchedKeyword);
-            return;
-        }
-
-        if (hasRecordCommand)
-        {
-            EnterRecordParamMode();
-            return;
-        }
-
-        // Normal tab behavior - select next item
-        _viewModel.SelectNextCommand.Execute(null);
     }
 
     /// <summary>
-    /// 同步执行当前选中的搜索结果（Fire-and-Forget 模式）。
+    /// 参数模式下的 Backspace 删除逻辑（文本框操作属视图职责）：
+    /// 情况3→情况2：SearchBox 有参数，删除参数字符，参数空了进入情况2；
+    /// 情况2→情况1：SearchBox 为空，删除"&gt;"，退出参数模式但保留命令关键字。
     /// </summary>
-    private void ExecuteSelected()
+    private void HandleBackspaceInParamMode(WpfKeyEventArgs e)
     {
-        if (_viewModel.SelectedResult == null)
+        if (!_viewModel.IsParamMode) return;
+
+        if (string.IsNullOrEmpty(SearchBox.Text))
         {
-            Logger.Debug("ExecuteSelected: SelectedResult is null!");
-            return;
+            // 情况2：SearchBox 已空，删除">"退出参数模式（保留关键字）
+            var keyword = _viewModel.CommandKeyword;
+            _viewModel.SwitchToNormalModeCommand.Execute(null);
+            SearchBox.Text = keyword;
+            SearchBox.CaretIndex = SearchBox.Text.Length;
+            SearchBox.Padding = new Thickness(6, 4, 0, 4);
+            e.Handled = true;
         }
-
-        Logger.Debug($"ExecuteSelected: IsParamMode={_viewModel.IsParamMode}, Type={_viewModel.SelectedResult.Type}, CommandConfig={_viewModel.SelectedResult.CommandConfig?.Keyword}, CommandParam='{_viewModel.CommandParam}'");
-
-        Task.Run(async () =>
+        else if (SearchBox.Text.Length == 1)
         {
-            bool success;
-            if (_viewModel.IsParamMode && _viewModel.SelectedResult?.CommandConfig != null)
-            {
-                success = await _viewModel.SearchEngine.ExecuteCustomCommandAsync(_viewModel.SelectedResult, _viewModel.CommandParam);
-            }
-            else
-            {
-                success = _viewModel.SelectedResult != null
-                    ? await _viewModel.SearchEngine.ExecuteResultAsync(_viewModel.SelectedResult)
-                    : false;
-            }
-
-            if (success)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    _viewModel.ClearSearchCommand.Execute(null);
-                    HideWindow();
-                });
-            }
-        });
-    }
-
-    /// <summary>
-    /// 异步执行当前选中的搜索结果，执行成功且搜索文本为空时自动隐藏窗口。
-    /// </summary>
-    private async Task ExecuteSelectedAsync()
-    {
-        // 剪贴板历史项：执行后自动粘贴到前台窗口
-        if (_viewModel.SelectedResult?.GroupLabel == LocalizationService.Get("GroupClip"))
-            _pendingPaste = true;
-
-        await _viewModel.ExecuteSelectedCommand.ExecuteAsync(null);
-        if (string.IsNullOrEmpty(_viewModel.SearchText))
+            // 情况3→情况2：只剩一个参数字符，删除后变成空
+            _viewModel.CommandParam = "";
+            // 不拦截，让系统处理删除
+        }
+        else
         {
-            HideWindow();
+            // 情况3：有多个参数字符，正常删除
+            _viewModel.CommandParam = SearchBox.Text.Substring(0, SearchBox.Text.Length - 1);
+            // 不拦截，让系统处理删除
         }
     }
 
@@ -245,12 +161,13 @@ public partial class MainWindow
         if (item != null)
         {
             _viewModel.SelectedResult = item;
-            _ = ExecuteSelectedAsync();
+            _viewModel.ExecuteSelectedCommand.Execute(null);
         }
     }
 
     /// <summary>
-    /// 打开命令设置窗口。窗口关闭后自动重新加载快捷键配置和命令列表。
+    /// 打开命令设置窗口。窗口关闭后自动重注册快捷键并重新加载命令列表
+    /// （业务在 MainViewModel.ReregisterHotkey）。
     /// </summary>
     private void OpenCommandSettings(object? sender = null, RoutedEventArgs? e = null)
     {
@@ -260,11 +177,8 @@ public partial class MainWindow
 
         win.Closed += (s, args) =>
         {
-            var config = _configLoader.Load();
-            var registered = _hotkeyManager.Reregister(config.Hotkey);
             _viewModel.SearchEngine.ReloadCommands();
-            UpdatePlaceholderWithHotkey();
-            if (!registered)
+            if (!_viewModel.ReregisterHotkey())
             {
                 ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyRegisterFailed"));
             }

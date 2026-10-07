@@ -5,8 +5,8 @@
 //           （文案通过 i18n 资源 key 取值断言）。
 // ============================================================================
 
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core.Config;
+using Quanta.Domain.Search;
 using Xunit;
 
 namespace Quanta.Tests;

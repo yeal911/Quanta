@@ -5,7 +5,7 @@
 //           错误输入处理。
 // ============================================================================
 
-using Quanta.Services;
+using Quanta.Domain.Commands;
 using Xunit;
 
 namespace Quanta.Tests;
