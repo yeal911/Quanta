@@ -10,8 +10,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using Quanta.Core.Interfaces;
-using Quanta.Core.DependencyInjection;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
@@ -19,8 +17,10 @@ using FontFamily = System.Windows.Media.FontFamily;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using Application = System.Windows.Application;
 using IToastService = Quanta.Core.Interfaces.IToastService;
+using Quanta.Core.DependencyInjection;
+using Quanta.Core.Interfaces;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// Toast 通知服务，使用单例模式提供全局的轻量级弹窗通知功能。

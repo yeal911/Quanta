@@ -6,10 +6,10 @@
 
 using System;
 using System.IO;
-using Quanta.Helpers;
 using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 public partial class RecordingService
 {

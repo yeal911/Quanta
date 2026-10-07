@@ -5,9 +5,9 @@
 // ============================================================================
 
 using System.IO;
-using Quanta.Helpers;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 internal static class RecordingFileUtils
 {

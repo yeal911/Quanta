@@ -1,7 +1,7 @@
 <Window x:Class="Quanta.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:h="clr-namespace:Quanta.Helpers"
+        xmlns:h="clr-namespace:Quanta.Presentation.Converters"
         Title="Quanta"
         Width="540" SizeToContent="Height" MaxHeight="400" MinHeight="48"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"

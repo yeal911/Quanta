@@ -21,12 +21,12 @@ using WpfButton = System.Windows.Controls.Button;
 using WpfImage = System.Windows.Controls.Image;
 using WpfMouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using WpfMouseButtonState = System.Windows.Input.MouseButtonState;
-using Quanta.Services;
-using Quanta.Core.Interfaces;
-using Quanta.Helpers;
 using GdiImage = System.Drawing.Image;
 using GdiPixelFormat = System.Drawing.Imaging.PixelFormat;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
+using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

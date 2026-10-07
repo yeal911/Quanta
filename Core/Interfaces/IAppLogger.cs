@@ -1,9 +1,9 @@
-namespace Quanta.Interfaces;
+namespace Quanta.Core.Interfaces;
 
 /// <summary>
 /// 应用日志服务接口，供依赖注入使用。
-/// 默认实现为 <see cref="Services.LoggerService"/>；
-/// 静态门面 <see cref="Services.Logger"/> 委托到容器解析的本接口实例。
+/// 默认实现为 <see cref="Quanta.Infrastructure.Logging.LoggerService"/>；
+/// 静态门面 <see cref="Quanta.Infrastructure.Logging.Logger"/> 委托到容器解析的本接口实例。
 /// </summary>
 public interface IAppLogger
 {

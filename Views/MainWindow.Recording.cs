@@ -8,9 +8,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core.Config;
 using Quanta.Core.Interfaces;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

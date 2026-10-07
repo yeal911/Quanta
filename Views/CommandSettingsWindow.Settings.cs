@@ -8,9 +8,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

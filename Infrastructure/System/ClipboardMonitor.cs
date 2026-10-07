@@ -6,9 +6,9 @@
 // ============================================================================
 
 using System.Runtime.InteropServices;
-using System.Windows.Interop;
+using global::System.Windows.Interop;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>
 /// 剪贴板变化监听器。
@@ -58,9 +58,9 @@ public class ClipboardMonitor
 
         try
         {
-            if (System.Windows.Clipboard.ContainsText())
+            if (global::System.Windows.Clipboard.ContainsText())
             {
-                string text = System.Windows.Clipboard.GetText();
+                string text = global::System.Windows.Clipboard.GetText();
                 if (!string.IsNullOrWhiteSpace(text))
                     ClipboardChanged?.Invoke(text);
             }

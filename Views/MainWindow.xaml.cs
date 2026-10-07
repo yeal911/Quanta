@@ -16,10 +16,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using Quanta.Services;
-using Quanta.ViewModels;
-using Quanta.Interfaces;
 using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.System;
+using Quanta.Presentation.Helpers;
+using Quanta.Presentation.ViewModels;
 
 namespace Quanta.Views;
 

@@ -10,12 +10,12 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows;
-using System.Windows.Forms;
+using global::System.Windows.Forms;
 using Quanta.Core.Interfaces;
-using Quanta.Helpers;
-using Quanta.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>
 /// 系统托盘服务类，用于管理应用程序在 Windows 通知区域（系统托盘）中的图标和交互。
@@ -261,7 +261,7 @@ public class TrayService : ITrayService
     private void ShowAbout()
     {
         // 通过 Toast 通知显示关于信息
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        global::System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
             ToastService.Instance.ShowInfo($"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
         });
@@ -279,7 +279,7 @@ public class TrayService : ITrayService
 
         ExitRequested?.Invoke(this, EventArgs.Empty);
         Dispose();
-        System.Windows.Application.Current.Shutdown();
+        global::System.Windows.Application.Current.Shutdown();
     }
 
     /// <summary>

@@ -7,7 +7,7 @@
 using System.Linq;
 using System.Windows;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// 静态主题服务类，负责管理和切换应用程序的 UI 主题。

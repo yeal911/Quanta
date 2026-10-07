@@ -13,10 +13,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Core;
+using Quanta.Core.Config;
+using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// 本地化服务实现类，提供应用程序的多语言翻译支持。
@@ -24,7 +27,7 @@ namespace Quanta.Services;
 /// 当找不到当前语言的翻译时，会自动回退到中文（zh-CN）。
 /// 支持外部语言包：exe 同目录下 Resources/Strings/xx-XX.json
 /// </summary>
-public sealed class LocalizationManager : Quanta.Interfaces.ILocalizationService
+public sealed class LocalizationManager : Quanta.Core.Interfaces.ILocalizationService
 {
     /// <summary>进程级共享实例：DI 注册与静态门面回退共用，保证单实例语义</summary>
     private static LocalizationManager? _default;

@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Quanta.Models;
-using Quanta.Services;
 using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Quanta.Core.Config;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

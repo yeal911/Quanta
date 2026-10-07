@@ -5,7 +5,7 @@
 //           通过嵌套深度计数防止过深递归触发无法捕获的 StackOverflowException。
 // ============================================================================
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Commands;
 
 /// <summary>
 /// 数学表达式解析器，使用递归下降算法解析数学表达式。

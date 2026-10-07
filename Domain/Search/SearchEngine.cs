@@ -8,10 +8,15 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Core.Config;
+using Quanta.Domain.Commands;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
+using Quanta.Infrastructure.System;
+using Quanta.Presentation.Helpers;
+using Quanta.Views;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 搜索提供程序接口
@@ -825,13 +830,13 @@ public class SearchEngine
     private static SearchResult BuildRecordCommandResult(string filePrefix)
     {
         var config = ConfigLoader.Load();
-        var recSettings = config.RecordingSettings ?? new Models.RecordingSettings();
+        var recSettings = config.RecordingSettings ?? new RecordingSettings();
 
         var outputDir = string.IsNullOrEmpty(recSettings.OutputPath)
             ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
             : recSettings.OutputPath;
 
-        var recordData = new Models.RecordCommandData
+        var recordData = new RecordCommandData
         {
             FilePrefix = filePrefix,
             Source = recSettings.Source,
@@ -876,7 +881,7 @@ public class SearchEngine
             {
                 if (mainWindow is Views.MainWindow mw)
                 {
-                    var config = Helpers.ConfigLoader.Load();
+                    var config = ConfigLoader.Load();
                     mw.RefreshLocalization();
                     mw.ApplyTheme(config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false);
                 }

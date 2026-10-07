@@ -7,9 +7,9 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using Quanta.Models;
+using Quanta.Domain.Search;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>
 /// 窗口管理器，负责枚举系统中所有可见的应用程序窗口并提供窗口激活功能。

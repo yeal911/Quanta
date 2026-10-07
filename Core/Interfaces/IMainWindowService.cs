@@ -1,4 +1,4 @@
-namespace Quanta.Interfaces;
+namespace Quanta.Core.Interfaces;
 
 /// <summary>
 /// 主窗口服务接口，供 TrayService 依赖，避免与具体 MainWindow 类强耦合。

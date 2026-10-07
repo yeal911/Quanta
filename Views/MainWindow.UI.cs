@@ -7,11 +7,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using Quanta.Models;
-using Quanta.Services;
-using Quanta.Core.Interfaces;
 using WpfButton = System.Windows.Controls.Button;
 using WpfToolTip = System.Windows.Controls.ToolTip;
+using Quanta.Core.Interfaces;
+using Quanta.Domain.Search;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

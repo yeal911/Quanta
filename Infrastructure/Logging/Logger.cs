@@ -10,13 +10,13 @@ using System;
 using System.Diagnostics;
 using Quanta.Core.DependencyInjection;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.Logging;
 
 /// <summary>
 /// 全局日志静态门面。保留原静态 Logger 的全部签名以兼容既有调用点；
 /// 实际写入逻辑位于 DI 注册的 <see cref="LoggerService"/> 实例中，
 /// 本类只负责把调用转发给容器解析的实例。新代码请改为构造函数注入
-/// <see cref="Quanta.Interfaces.IAppLogger"/>。
+/// <see cref="Quanta.Core.Interfaces.IAppLogger"/>。
 /// </summary>
 public static class Logger
 {

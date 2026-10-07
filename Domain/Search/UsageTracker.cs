@@ -7,12 +7,12 @@
 
 using System.IO;
 using System.Text.Json;
-using Quanta.Core.Constants;
 using System.Timers;
-using Quanta.Models;
 using Timer = System.Timers.Timer;
+using Quanta.Core.Constants;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 使用频率跟踪器，负责记录和管理用户对各搜索项的使用情况。

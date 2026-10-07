@@ -3,7 +3,7 @@
 /// 负责计算查询字符串与目标字符串之间的模糊匹配分数。
 /// </summary>
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 搜索结果评分器接口

@@ -9,12 +9,14 @@
 
 using System.IO;
 using System.Text.Json;
-using Quanta.Core.Constants;
-using Quanta.Models;
-using Quanta.Services;
 using Application = System.Windows.Application;
+using Quanta.Core.Config;
+using Quanta.Core.Constants;
+using Quanta.Domain.Commands;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Helpers;
+namespace Quanta.Infrastructure.Storage;
 
 /// <summary>
 /// 静态配置加载器，提供应用配置的加载、保存、导出功能。
@@ -449,8 +451,8 @@ public static class ConfigLoader
             Version = "1.2",
             Theme = "Light",
             Hotkey = new HotkeyConfig { Modifier = "Alt", Key = "R" },
-            Commands = Services.CommandService.GenerateSampleCommands(),
-            CommandGroups = Services.CommandService.GenerateDefaultGroups(),
+            Commands = CommandService.GenerateSampleCommands(),
+            CommandGroups = CommandService.GenerateDefaultGroups(),
             PluginSettings = new PluginSettings
             {
                 Enabled = true,
@@ -492,13 +494,13 @@ public static class ConfigLoader
             // Add sample commands if empty
             if (config.Commands == null || config.Commands.Count == 0)
             {
-                config.Commands = Services.CommandService.GenerateSampleCommands();
+                config.Commands = CommandService.GenerateSampleCommands();
             }
 
             // Add command groups if not present
             if (config.CommandGroups == null || config.CommandGroups.Count == 0)
             {
-                config.CommandGroups = Services.CommandService.GenerateDefaultGroups();
+                config.CommandGroups = CommandService.GenerateDefaultGroups();
             }
 
             // Add plugin settings if not present
@@ -597,7 +599,7 @@ public static class ConfigLoader
             if (config.ExchangeRateSettings == null)
             {
                 // 不注入默认 API Key，由用户在设置页自行配置
-                config.ExchangeRateSettings = new Models.ExchangeRateSettings();
+                config.ExchangeRateSettings = new ExchangeRateSettings();
             }
 
             config.Version = "1.3";

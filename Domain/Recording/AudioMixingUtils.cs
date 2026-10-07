@@ -7,7 +7,7 @@
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 internal static class AudioMixingUtils
 {

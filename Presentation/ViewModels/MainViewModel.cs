@@ -11,11 +11,12 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.ViewModels;
+namespace Quanta.Presentation.ViewModels;
 
 /// <summary>
 /// 主窗口视图模型，管理搜索框输入、搜索结果显示、命令执行等核心交互逻辑。

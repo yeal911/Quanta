@@ -19,11 +19,12 @@ using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Lame;
+using Quanta.Core.Config;
 using Quanta.Core.Interfaces;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 public partial class RecordingService : IRecordingService
 {

@@ -6,9 +6,9 @@
 
 using System.Globalization;
 using System.Windows.Data;
-using Quanta.Services;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Helpers;
+namespace Quanta.Presentation.Converters;
 
 /// <summary>
 /// 搜索结果分组标签转换器，将内部分组键名转换为当前语言的显示文本。

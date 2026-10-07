@@ -1,6 +1,6 @@
 // ============================================================================
 // 文件名: LoggerService.cs
-// 文件用途: <see cref="Quanta.Interfaces.IAppLogger"/> 的默认实现，
+// 文件用途: <see cref="Quanta.Core.Interfaces.IAppLogger"/> 的默认实现，
 //          负责将日志按月份写入运行目录下 logs 文件夹的日志文件。
 //          DI 容器注册本类的 Default 共享实例；静态门面 Logger 在容器
 //          配置后委托容器解析，两者始终指向同一实例。
@@ -8,15 +8,16 @@
 
 using System;
 using System.IO;
+using Quanta.Core.Interfaces;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.Logging;
 
 /// <summary>
 /// 日志服务实现类，负责将应用程序运行时的日志信息写入本地日志文件。
 /// 日志文件按月份命名，存储在运行目录下的 logs 目录下。
 /// 所有写入操作通过锁机制保证线程安全。
 /// </summary>
-public sealed class LoggerService : Quanta.Interfaces.IAppLogger
+public sealed class LoggerService : Quanta.Core.Interfaces.IAppLogger
 {
     /// <summary>进程级共享实例：DI 注册与静态门面回退共用，保证单实例语义</summary>
     private static LoggerService? _default;

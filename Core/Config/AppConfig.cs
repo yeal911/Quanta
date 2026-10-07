@@ -7,7 +7,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace Quanta.Models;
+namespace Quanta.Core.Config;
 
 /// <summary>
 /// 汇率转换设置类

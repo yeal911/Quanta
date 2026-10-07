@@ -7,15 +7,16 @@
 // ============================================================================
 
 using System.Collections.Generic;
+using Quanta.Core;
 using Quanta.Core.DependencyInjection;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// 本地化静态门面。保留原静态 LocalizationService 的全部签名以兼容既有调用点；
 /// 实际翻译逻辑位于 DI 注册的 <see cref="LocalizationManager"/> 实例中，
 /// 本类只负责把调用转发给容器解析的实例。新代码请改为构造函数注入
-/// <see cref="Quanta.Interfaces.ILocalizationService"/>。
+/// <see cref="Quanta.Core.Interfaces.ILocalizationService"/>。
 /// </summary>
 public static class LocalizationService
 {
@@ -84,7 +85,7 @@ public static class LocalizationService
     /// <summary>
     /// 获取所有支持的语言列表
     /// </summary>
-    public static IReadOnlyList<Quanta.Models.LanguageInfo> GetSupportedLanguages()
+    public static IReadOnlyList<Quanta.Core.LanguageInfo> GetSupportedLanguages()
     {
         return Current.GetSupportedLanguages();
     }

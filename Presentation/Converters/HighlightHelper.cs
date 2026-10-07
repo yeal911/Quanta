@@ -10,13 +10,13 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace Quanta.Helpers;
+namespace Quanta.Presentation.Converters;
 
 /// <summary>
 /// TextBlock 高亮附加属性辅助类。
 /// 用法（XAML）:
 /// <code>
-///   xmlns:h="clr-namespace:Quanta.Helpers"
+///   xmlns:h="clr-namespace:Quanta.Presentation.Converters"
 ///   &lt;TextBlock h:HighlightHelper.Text="{Binding Title}"
 ///              h:HighlightHelper.Query="{Binding QueryMatch}" /&gt;
 /// </code>

@@ -6,10 +6,11 @@
 
 using System.Collections.Concurrent;
 using System.IO;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 文件搜索提供程序
