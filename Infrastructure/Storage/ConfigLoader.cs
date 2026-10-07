@@ -106,63 +106,13 @@ public static class ConfigLoader
                 Logger.Debug($"Config file path: {fullPath}");
                 Logger.Debug($"File exists: {File.Exists(ConfigPath)}");
 
-                if (File.Exists(ConfigPath))
-                {
-                    var json = File.ReadAllText(ConfigPath);
-                    Logger.Debug($"Config file content length: {json.Length} characters");
-
-                    AppConfig? parsedConfig = null;
-                    var parseFailed = false;
-                    try
-                    {
-                        parsedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
-                    }
-                    catch (JsonException ex)
-                    {
-                        parseFailed = true;
-                        Logger.Error($"Failed to parse config: {ex.Message}", ex);
-                    }
-
-                    if (parsedConfig != null)
-                    {
-                        _cachedConfig = parsedConfig;
-                        Logger.Debug($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
-                        if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
-                        {
-                            var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                            Logger.Debug($"Commands from file: {commandKeywords}");
-                        }
-                        else
-                        {
-                            Logger.Debug("No commands found in file");
-                        }
-
-                        // Migrate if needed
-                        _cachedConfig = MigrateConfig(_cachedConfig);
-                    }
-                    else
-                    {
-                        // 解析失败或内容为 "null" 等无效配置：
-                        // 先把损坏文件改名为 .bak 备份，再生成默认配置，绝不直接覆盖
-                        if (!parseFailed)
-                        {
-                            Logger.Debug("Failed to deserialize config, creating default");
-                        }
-                        BackupCorruptConfig(parseFailed ? "parse error" : "empty config");
-                        _cachedConfig = CreateDefaultConfig();
-                    }
-                }
-                else
-                {
-                    Logger.Debug("Config file not found, creating default config");
-                    _cachedConfig = CreateDefaultConfig();
-                }
+                _cachedConfig = LoadFromFile(ConfigPath);
             }
             catch (Exception ex)
             {
                 Logger.Error($"Failed to load config: {ex.Message}", ex);
                 // 读取失败时同样不覆盖原文件：先尝试备份再重建
-                BackupCorruptConfig("load error");
+                BackupCorruptConfig(ConfigPath, "load error");
                 _cachedConfig = CreateDefaultConfig();
             }
 
@@ -170,6 +120,77 @@ public static class ConfigLoader
             StartFileWatcher();
 
             return _cachedConfig!;
+        }
+    }
+
+    /// <summary>
+    /// 从指定路径加载配置文件（不含缓存与文件监视器逻辑）。
+    /// 文件存在且可解析时执行版本迁移；解析失败时先把损坏文件改名为
+    /// config.json.bak-&lt;yyyyMMddHHmmss&gt; 再生成默认配置；文件不存在时直接生成默认配置。
+    /// 供 <see cref="Load"/> 使用，也供单元测试以临时目录隔离文件系统。
+    /// </summary>
+    /// <param name="configPath">配置文件路径</param>
+    /// <param name="persist">持久化回调（迁移/生成默认配置时调用），默认写回正式配置路径</param>
+    /// <returns>加载（并按需迁移）后的配置对象</returns>
+    internal static AppConfig LoadFromFile(string configPath, Action<AppConfig>? persist = null)
+    {
+        persist ??= Save;
+
+        try
+        {
+            if (File.Exists(configPath))
+            {
+                var json = File.ReadAllText(configPath);
+                Logger.Debug($"Config file content length: {json.Length} characters");
+
+                AppConfig? parsedConfig = null;
+                var parseFailed = false;
+                try
+                {
+                    parsedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    parseFailed = true;
+                    Logger.Error($"Failed to parse config: {ex.Message}", ex);
+                }
+
+                if (parsedConfig != null)
+                {
+                    Logger.Debug($"Deserialized config - Commands count: {parsedConfig.Commands?.Count ?? 0}");
+                    if (parsedConfig.Commands != null && parsedConfig.Commands.Count > 0)
+                    {
+                        var commandKeywords = string.Join(", ", parsedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
+                        Logger.Debug($"Commands from file: {commandKeywords}");
+                    }
+                    else
+                    {
+                        Logger.Debug("No commands found in file");
+                    }
+
+                    // Migrate if needed
+                    return MigrateConfig(parsedConfig, persist);
+                }
+
+                // 解析失败或内容为 "null" 等无效配置：
+                // 先把损坏文件改名为 .bak 备份，再生成默认配置，绝不直接覆盖
+                if (!parseFailed)
+                {
+                    Logger.Debug("Failed to deserialize config, creating default");
+                }
+                BackupCorruptConfig(configPath, parseFailed ? "parse error" : "empty config");
+                return CreateDefaultConfig(persist);
+            }
+
+            Logger.Debug("Config file not found, creating default config");
+            return CreateDefaultConfig(persist);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to load config: {ex.Message}", ex);
+            // 读取失败时同样不覆盖原文件：先尝试备份再重建
+            BackupCorruptConfig(configPath, "load error");
+            return CreateDefaultConfig(persist);
         }
     }
 
@@ -263,8 +284,7 @@ public static class ConfigLoader
 
             try
             {
-                var json = JsonSerializer.Serialize(config, JsonOptions);
-                AtomicWrite(ConfigPath, json);
+                SaveToPath(ConfigPath, config);
             }
             finally
             {
@@ -285,6 +305,18 @@ public static class ConfigLoader
             Logger.Error($"Failed to save config: {ex.Message}", ex);
             NotifySaveFailed();
         }
+    }
+
+    /// <summary>
+    /// 将配置序列化并原子写入指定路径（不含缓存、监视器与失败提示逻辑）。
+    /// 供 <see cref="Save"/> 使用，也供单元测试以临时目录隔离文件系统。
+    /// </summary>
+    /// <param name="path">目标文件路径</param>
+    /// <param name="config">要序列化写入的配置对象</param>
+    internal static void SaveToPath(string path, AppConfig config)
+    {
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        AtomicWrite(path, json);
     }
 
     /// <summary>
@@ -327,15 +359,17 @@ public static class ConfigLoader
     /// 把损坏的配置文件改名为 config.json.bak-&lt;yyyyMMddHHmmss&gt;，
     /// 保证生成默认配置时绝不直接覆盖用户的原文件。
     /// </summary>
+    /// <param name="configPath">配置文件路径</param>
     /// <param name="reason">损坏原因描述，用于日志</param>
-    private static void BackupCorruptConfig(string reason)
+    /// <returns>备份文件路径；文件不存在或备份失败时返回 null</returns>
+    internal static string? BackupCorruptConfig(string configPath, string reason)
     {
         try
         {
-            if (!File.Exists(ConfigPath)) return;
+            if (!File.Exists(configPath)) return null;
 
             // 同一秒内多次损坏时追加序号，避免重名
-            var basePath = $"{ConfigPath}.bak-{DateTime.Now:yyyyMMddHHmmss}";
+            var basePath = $"{configPath}.bak-{DateTime.Now:yyyyMMddHHmmss}";
             var bakPath = basePath;
             var suffix = 1;
             while (File.Exists(bakPath))
@@ -343,12 +377,14 @@ public static class ConfigLoader
                 bakPath = $"{basePath}-{suffix++}";
             }
 
-            File.Move(ConfigPath, bakPath);
+            File.Move(configPath, bakPath);
             Logger.Error($"[ConfigLoader] Corrupt config ({reason}) backed up to: {bakPath}");
+            return bakPath;
         }
         catch (Exception ex)
         {
             Logger.Error($"[ConfigLoader] Failed to back up corrupt config: {ex.Message}", ex);
+            return null;
         }
     }
 
@@ -441,9 +477,12 @@ public static class ConfigLoader
     /// 创建并保存默认配置，包含默认快捷键（Alt+Space）、示例命令、
     /// 默认命令分组、插件设置和应用设置。
     /// </summary>
+    /// <param name="persist">持久化回调，默认写回正式配置路径</param>
     /// <returns>新创建的默认配置对象</returns>
-    private static AppConfig CreateDefaultConfig()
+    internal static AppConfig CreateDefaultConfig(Action<AppConfig>? persist = null)
     {
+        persist ??= Save;
+
         var config = new AppConfig
         {
             Version = "1.2",
@@ -469,7 +508,7 @@ public static class ConfigLoader
         };
 
         // Save default config
-        Save(config);
+        persist(config);
 
         return config;
     }
@@ -480,9 +519,11 @@ public static class ConfigLoader
     /// 并为缺少 ID 的命令生成唯一标识符。
     /// </summary>
     /// <param name="config">待迁移的配置对象</param>
+    /// <param name="persist">持久化回调（每个版本步骤迁移完成后调用），默认写回正式配置路径</param>
     /// <returns>迁移后的配置对象</returns>
-    private static AppConfig MigrateConfig(AppConfig config)
+    internal static AppConfig MigrateConfig(AppConfig config, Action<AppConfig>? persist = null)
     {
+        persist ??= Save;
         // Migrate from older versions
         if (string.IsNullOrEmpty(config.Version))
         {
@@ -541,7 +582,7 @@ public static class ConfigLoader
             config.Version = "1.0";
 
             // Save migrated config
-            Save(config);
+            persist(config);
         }
 
         // v1.0 → v1.1：录音参数优化为会议录音默认值（≤0.24MB/min）
@@ -566,7 +607,7 @@ public static class ConfigLoader
             }
 
             config.Version = "1.1";
-            Save(config);
+            persist(config);
         }
 
         // v1.1 → v1.2：SampleRate 字段已加入 UI，强制将未经用户修改的旧值 44100 迁移到 16000。
@@ -586,7 +627,7 @@ public static class ConfigLoader
             }
 
             config.Version = "1.2";
-            Save(config);
+            persist(config);
         }
 
         // v1.2 → v1.3：添加汇率 API 设置
@@ -601,7 +642,7 @@ public static class ConfigLoader
             }
 
             config.Version = "1.3";
-            Save(config);
+            persist(config);
         }
 
         return config;

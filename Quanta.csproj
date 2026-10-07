@@ -20,11 +20,19 @@
     <DebugType>embedded</DebugType>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <!-- 测试工程位于主工程目录树内（主 csproj 在仓库根），需从隐式项中排除，
+         否则 tests/**/*.cs 会被误编入主工程 -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <Optimize>true</Optimize>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 允许单元测试工程访问 internal 成员（MathParser/UnitConverter 等静态工具类为 internal） -->
+    <InternalsVisibleTo Include="Quanta.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />

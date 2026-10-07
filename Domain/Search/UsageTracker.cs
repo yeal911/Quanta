@@ -58,14 +58,37 @@ public class UsageTracker : IDisposable
     private const int MaxTrackedItems = 1000;
 
     /// <summary>
+    /// 默认数据文件路径（%LOCALAPPDATA%\Quanta\usage.json）。
+    /// </summary>
+    private static string DefaultDataFilePath
+    {
+        get
+        {
+            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Quanta");
+            return Path.Combine(appDataPath, "usage.json");
+        }
+    }
+
+    /// <summary>
     /// 构造函数，初始化使用跟踪器。
     /// 创建数据存储目录（如不存在），加载已有的使用数据，并启动定时保存计时器。
     /// </summary>
-    public UsageTracker()
+    public UsageTracker() : this(DefaultDataFilePath)
     {
-        var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Quanta");
-        Directory.CreateDirectory(appDataPath);
-        _dataFilePath = Path.Combine(appDataPath, "usage.json");
+    }
+
+    /// <summary>
+    /// 注入数据文件路径的构造函数，供单元测试用临时目录隔离文件系统。
+    /// </summary>
+    /// <param name="dataFilePath">使用数据 JSON 文件的完整路径</param>
+    internal UsageTracker(string dataFilePath)
+    {
+        _dataFilePath = dataFilePath;
+        var directory = Path.GetDirectoryName(dataFilePath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
         _usageData = LoadData();
 
         // 每 30 秒自动保存一次（如果数据有变更）
