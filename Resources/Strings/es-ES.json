@@ -325,5 +325,6 @@
   "TextUrlDecodeResult": "Decodificar URL",
   "TextJsonResult": "JSON ({0} líneas)",
   "FileSearchInvalidDirs": "Directorios inválidos:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "No se pudo guardar la configuración. Compruebe los permisos de la carpeta o el espacio en disco."
 }

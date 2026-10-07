@@ -325,5 +325,6 @@
   "TextUrlDecodeResult": "URL 解码",
   "TextJsonResult": "JSON ({0} 行)",
   "FileSearchInvalidDirs": "以下目录无效：",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "配置保存失败，请检查目录权限或磁盘空间"
 }

@@ -325,5 +325,6 @@
   "TextUrlDecodeResult": "URL dekodieren",
   "TextJsonResult": "JSON ({0} Zeilen)",
   "FileSearchInvalidDirs": "Ungültige Verzeichnisse:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "Einstellungen konnten nicht gespeichert werden. Bitte Ordnerberechtigungen oder Speicherplatz prüfen."
 }

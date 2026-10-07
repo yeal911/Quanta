@@ -325,5 +325,6 @@
   "TextUrlDecodeResult": "Decodifica URL",
   "TextJsonResult": "JSON ({0} righe)",
   "FileSearchInvalidDirs": "Cartelle non valide:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "Impossibile salvare le impostazioni. Verificare le autorizzazioni della cartella o lo spazio su disco."
 }
