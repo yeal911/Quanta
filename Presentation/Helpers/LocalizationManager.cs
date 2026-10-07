@@ -52,6 +52,12 @@ public sealed class LocalizationManager : Quanta.Core.Interfaces.ILocalizationSe
     private string _currentLanguage = "zh-CN";
 
     /// <summary>
+    /// 当前语言切换成功后触发的事件，事件参数为新语言代码。
+    /// 已打开的窗口、托盘菜单等订阅该事件即可在任意入口切换语言时即时刷新。
+    /// </summary>
+    public event System.EventHandler<string>? LanguageChanged;
+
+    /// <summary>
     /// 构造函数 - 首次使用时加载所有语言文件
     /// </summary>
     private LocalizationManager()
@@ -174,15 +180,29 @@ public sealed class LocalizationManager : Quanta.Core.Interfaces.ILocalizationSe
         {
             if (_translations.ContainsKey(value))
             {
+                var changed = !string.Equals(_currentLanguage, value, System.StringComparison.Ordinal);
                 _currentLanguage = value;
                 // 将语言设置保存到配置文件
                 var config = ConfigLoader.Load();
                 if (config.AppSettings == null) config.AppSettings = new AppSettings();
                 config.AppSettings.Language = value;
                 ConfigLoader.Save(config);
+
+                // 语言实际变化时通知订阅者（窗口/托盘菜单等）即时刷新
+                if (changed)
+                {
+                    LanguageChanged?.Invoke(this, value);
+                }
             }
         }
     }
+
+    /// <summary>
+    /// 当前语言是否为从右到左（RTL）布局语言（如阿拉伯语）。
+    /// 窗口据此切换 <see cref="System.Windows.FlowDirection"/>。
+    /// </summary>
+    public bool IsCurrentLanguageRightToLeft =>
+        LanguageManager.GetLanguage(_currentLanguage)?.IsRightToLeft == true;
 
     /// <summary>
     /// 从应用配置文件中加载语言设置。

@@ -20,9 +20,10 @@
     <ProjectReference Include="..\..\Quanta.csproj" />
   </ItemGroup>
 
-  <!-- i18n 资源文件：测试中的文案断言一律通过资源 key 取值，禁止硬编码 -->
+  <!-- i18n 资源文件：测试中的文案断言一律通过资源 key 取值，禁止硬编码；
+       全部语言文件随测试复制，供本地化完整性测试扫描 -->
   <ItemGroup>
-    <None Include="..\..\Resources\Strings\zh-CN.json" Link="Resources\Strings\zh-CN.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Resources\Strings\*.json" Link="Resources\Strings\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

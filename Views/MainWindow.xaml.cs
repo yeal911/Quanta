@@ -97,6 +97,10 @@ public partial class MainWindow : Window, IMainWindowService
 
         // 订阅主题变更事件，更新 UI 图标
         _viewModel.ThemeChanged += (s, isDark) => UpdateThemeIcon(isDark);
+
+        // 订阅语言切换事件：无论从托盘、设置窗口还是搜索关键字切换语言，
+        // 主窗口都即时刷新本地化文本与布局方向（ar-SA 为 RTL）
+        LocalizationService.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -155,6 +159,9 @@ public partial class MainWindow : Window, IMainWindowService
     {
         // Load language setting
         LocalizationService.LoadFromConfig();
+
+        // 按启动时恢复的语言应用布局方向（ar-SA 为 RTL）
+        ApplyFlowDirection();
 
         // 当 IsParamMode 变为 false 时，还原 SearchBox 绑定（record 参数模式退出时使用）
         _viewModel.PropertyChanged += (s, e) =>

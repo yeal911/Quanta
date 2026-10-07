@@ -177,10 +177,12 @@
                                Visibility="Visible"/>
 
                     <!-- "keyword >" indicator for param mode: keyword=blue, >=red -->
+                    <!-- FlowDirection 固定 LTR：">" 为命令行语法符号，RTL 语言下也不镜像 -->
                     <StackPanel x:Name="ParamIndicator" Grid.Column="1"
                                 Orientation="Horizontal" Margin="6,4,0,4"
                                 VerticalAlignment="Center" IsHitTestVisible="False"
-                                Visibility="Collapsed" Panel.ZIndex="1">
+                                Visibility="Collapsed" Panel.ZIndex="1"
+                                FlowDirection="LeftToRight">
                         <TextBlock x:Name="ParamKeywordText" FontSize="14"
                                    Foreground="#0078D4" FontFamily="Consolas" FontWeight="Bold"/>
                         <TextBlock x:Name="ParamArrowText" Text=" >" FontSize="14"

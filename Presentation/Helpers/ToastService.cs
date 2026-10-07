@@ -167,7 +167,11 @@ public class ToastService : IToastService
             WindowStartupLocation = WindowStartupLocation.Manual,
             Left = SystemParameters.WorkArea.Right - 340,
             Top = SystemParameters.WorkArea.Bottom - 70,
-            Opacity = 0
+            Opacity = 0,
+            // ar-SA 等 RTL 语言下 Toast 文本与图标列从右到左排布
+            FlowDirection = LocalizationService.IsCurrentLanguageRightToLeft
+                ? System.Windows.FlowDirection.RightToLeft
+                : System.Windows.FlowDirection.LeftToRight
         };
 
         // 创建圆角边框容器，带阴影效果

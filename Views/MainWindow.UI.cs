@@ -110,6 +110,33 @@ public partial class MainWindow
     // ── 本地化 ───────────────────────────────────────────────────────
 
     /// <summary>
+    /// 语言切换事件处理：刷新本地化文本并更新布局方向（ar-SA 为 RTL）。
+    /// 事件可能从非 UI 线程触发，统一调度回 UI 线程执行。
+    /// </summary>
+    private void OnLanguageChanged(object? sender, string langCode)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(() => OnLanguageChanged(sender, langCode));
+            return;
+        }
+
+        RefreshLocalization();
+        ApplyFlowDirection();
+    }
+
+    /// <summary>
+    /// 按当前语言应用窗口布局方向：ar-SA（阿拉伯语）从右到左，其余语言从左到右。
+    /// 在启动与每次语言切换后调用。
+    /// </summary>
+    private void ApplyFlowDirection()
+    {
+        FlowDirection = LocalizationService.IsCurrentLanguageRightToLeft
+            ? System.Windows.FlowDirection.RightToLeft
+            : System.Windows.FlowDirection.LeftToRight;
+    }
+
+    /// <summary>
     /// 刷新界面的本地化文本（如搜索框占位符、菜单项文字等）。
     /// 在语言切换后调用。
     /// </summary>

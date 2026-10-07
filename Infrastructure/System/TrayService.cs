@@ -67,6 +67,30 @@ public class TrayService : ITrayService
     public TrayService(IMainWindowService mainWindowService)
     {
         _mainWindowService = mainWindowService;
+
+        // 订阅语言切换事件：无论从哪个入口切换语言，托盘菜单文字都即时刷新
+        LocalizationService.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// 语言切换事件处理：重建右键菜单并更新托盘提示文字。
+    /// 事件可能从非 UI 线程触发，统一调度回 UI 线程（即创建 NotifyIcon 的线程）执行。
+    /// </summary>
+    private void OnLanguageChanged(object? sender, string langCode)
+    {
+        var app = global::System.Windows.Application.Current;
+        if (app == null) return;
+
+        if (!app.Dispatcher.CheckAccess())
+        {
+            app.Dispatcher.BeginInvoke(() => OnLanguageChanged(sender, langCode));
+            return;
+        }
+
+        if (_notifyIcon == null) return;
+
+        _notifyIcon.Text = LocalizationService.Get("TrayTooltip");
+        BuildContextMenu();
     }
 
     /// <summary>
@@ -290,6 +314,8 @@ public class TrayService : ITrayService
     {
         if (_disposed) return;
         _disposed = true;
+
+        LocalizationService.LanguageChanged -= OnLanguageChanged;
 
         if (_notifyIcon != null)
         {

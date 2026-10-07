@@ -68,6 +68,12 @@ public partial class CommandSettingsWindow : Window
         InitializeComponent();
         LoadConfig();
         ApplyLocalization();
+        ApplyFlowDirection();
+
+        // 订阅语言切换事件：从托盘/主窗口等其他入口切换语言时，已打开的设置窗口即时刷新
+        LocalizationService.LanguageChanged += OnLanguageChanged;
+        Closed += (s, e) => LocalizationService.LanguageChanged -= OnLanguageChanged;
+
         DataContext = this;
 
         _commandsView = CollectionViewSource.GetDefaultView(Commands);
@@ -214,10 +220,38 @@ public partial class CommandSettingsWindow : Window
     // ── 本地化 ────────────────────────────────────────────────────────
 
     /// <summary>
+    /// 语言切换事件处理：刷新设置窗口的本地化文本与布局方向（ar-SA 为 RTL）。
+    /// 事件可能从非 UI 线程触发，统一调度回 UI 线程执行。
+    /// </summary>
+    private void OnLanguageChanged(object? sender, string langCode)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(() => OnLanguageChanged(sender, langCode));
+            return;
+        }
+
+        ApplyLocalization();
+        ApplyFlowDirection();
+    }
+
+    /// <summary>
+    /// 按当前语言应用窗口布局方向：ar-SA（阿拉伯语）从右到左，其余语言从左到右。
+    /// 在窗口打开与每次语言切换后调用。
+    /// </summary>
+    private void ApplyFlowDirection()
+    {
+        FlowDirection = LocalizationService.IsCurrentLanguageRightToLeft
+            ? System.Windows.FlowDirection.RightToLeft
+            : System.Windows.FlowDirection.LeftToRight;
+    }
+
+    /// <summary>
     /// 应用本地化文本到窗口中的所有 UI 元素（标题、按钮、列头、页脚等）。
     /// </summary>
     private void ApplyLocalization()
     {
+        Title = LocalizationService.Get("SettingsTitle");
         TitleText.Text = LocalizationService.Get("SettingsTitle");
 
         MenuGeneral.Content = LocalizationService.Get("MenuGeneral");
