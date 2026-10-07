@@ -586,8 +586,12 @@ public class SearchEngine
         var results = new List<SearchResult>();
         var allCommands = _customCommands.Concat(GetBuiltInCommands()).ToList();
 
-        // 将所有命令按关键字索引，方便按使用记录 ID 查找
-        var commandByKey = allCommands.ToDictionary(c => $"cmd:{c.Keyword}", c => c);
+        // 将所有命令按关键字索引，方便按使用记录 ID 查找。
+        // 冲突安全构造：自定义命令优先于内置命令（Concat 在前），重复关键字时取先出现者，
+        // 行为确定且不抛 ArgumentException（大小写不敏感，与搜索匹配规则一致）
+        var commandByKey = allCommands
+            .GroupBy(c => $"cmd:{c.Keyword}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         // ── 1. 优先展示最近使用过的命令 ──────────────────────────
         var recentIds = _usageTracker.GetRecentItemIds(_maxResults);
@@ -720,6 +724,9 @@ public class SearchEngine
                 return true;
 
             case SearchResultType.Command:
+                // PowerShell 命令：搜索阶段仅生成预览项，此处是显式执行路径（Enter / Ctrl+数字）
+                return await ExecutePowerShellResultAsync(result);
+
             case SearchResultType.WebSearch:
                 return true;
 
@@ -762,6 +769,50 @@ public class SearchEngine
             default:
                 return false;
         }
+    }
+
+    /// <summary>
+    /// 显式执行 PowerShell 命令结果（用户按 Enter / Ctrl+数字 后调用）。
+    /// 执行失败或超时通过 Toast 提示且返回 false（不关闭窗口）；成功且输出非空时将输出复制到剪贴板。
+    /// </summary>
+    /// <param name="result">搜索阶段构造的 PowerShell 命令预览结果</param>
+    /// <returns>命令是否成功执行</returns>
+    private async Task<bool> ExecutePowerShellResultAsync(SearchResult result)
+    {
+        var command = result.Path;
+        if (string.IsNullOrEmpty(command)) return false;
+
+        CommandResult commandResult;
+        try
+        {
+            commandResult = await _commandRouter.ExecutePowerShellCommandAsync(command);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        result.Data = commandResult;
+
+        if (!commandResult.Success)
+        {
+            // 错误输出可能非常长（如向 stderr 写大量内容的命令），截断后再提示
+            var message = string.IsNullOrEmpty(commandResult.Error)
+                ? LocalizationService.Get("PowerShellExecuteFailed")
+                : commandResult.Error.Length > 200
+                    ? commandResult.Error.Substring(0, 200) + "..."
+                    : commandResult.Error;
+            ToastService.Instance.ShowError(message);
+            return false;
+        }
+
+        // 输出非空时复制到剪贴板，与计算器结果的行为保持一致
+        if (!string.IsNullOrEmpty(commandResult.Output))
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                System.Windows.Clipboard.SetText(commandResult.Output));
+            ToastService.Instance.ShowSuccess(LocalizationService.Get("CopiedToClipboard"));
+        }
+        return true;
     }
 
     /// <summary>
