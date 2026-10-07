@@ -201,14 +201,18 @@ public class SearchEngine
     /// <param name="usageTracker">使用频率追踪器实例</param>
     /// <param name="commandRouter">命令路由器实例</param>
     /// <param name="fileSearchProvider">文件搜索提供程序</param>
-    public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter, FileSearchProvider fileSearchProvider)
+    /// <param name="windowManager">窗口管理器实例</param>
+    /// <param name="scorer">搜索结果评分器实例</param>
+    /// <param name="pathCache">可执行文件路径缓存实例</param>
+    public SearchEngine(UsageTracker usageTracker, CommandRouter commandRouter, FileSearchProvider fileSearchProvider,
+        WindowManager windowManager, ISearchResultScorer scorer, IExecutablePathCache pathCache)
     {
         _usageTracker = usageTracker;
         _commandRouter = commandRouter;
-        _windowManager = new WindowManager();
+        _windowManager = windowManager;
         _fileSearchProvider = fileSearchProvider;
-        _scorer = SearchResultScorer.Instance;
-        _pathCache = ExecutablePathCache.Instance;
+        _scorer = scorer;
+        _pathCache = pathCache;
 
         LoadCustomCommands();
         ConfigLoader.ConfigChanged += OnConfigChanged;

@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Quanta.Core.Interfaces;
+using Quanta.Core.DependencyInjection;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
@@ -28,15 +29,19 @@ namespace Quanta.Services;
 /// </summary>
 public class ToastService : IToastService
 {
-    /// <summary>
-    /// 单例实例（懒加载）
-    /// </summary>
-    private static ToastService? _instance;
+    /// <summary>进程级共享实例：DI 注册与静态门面回退共用，保证单实例语义</summary>
+    private static ToastService? _default;
+
+    /// <summary>获取进程级共享实例（懒加载）。DI 容器注册的即此实例。</summary>
+    public static ToastService Default => _default ??= new ToastService();
 
     /// <summary>
-    /// 获取 ToastService 的全局单例实例
+    /// 获取 ToastService 的全局实例（静态门面）。
+    /// 容器配置后从 DI 解析，早期启动阶段回退到 Default，两者为同一实例。
+    /// 新代码请改为构造函数注入 <see cref="IToastService"/>。
     /// </summary>
-    public static ToastService Instance => _instance ??= new ToastService();
+    public static ToastService Instance
+        => AppServices.TryGet<ToastService>() ?? Default;
 
     /// <summary>
     /// 当前活动的 Toast 窗口字典，Key 为唯一标识符，Value 为对应的窗口对象

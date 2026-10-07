@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Quanta.Interfaces;
 using Quanta.Core.Interfaces;
+using Quanta.Core.DependencyInjection;
 using Quanta.Services;
 using Quanta.Helpers;
 using Quanta.ViewModels;
@@ -46,9 +47,13 @@ public partial class App : System.Windows.Application
             Current.Shutdown();
             return;
         }
+        // 先建立 DI 组合根并配置服务定位器，静态门面（Logger /
+        // LocalizationService / ToastService）自此统一从容器解析实例
+        _serviceProvider = BuildServiceProvider();
+        AppServices.Configure(_serviceProvider);
+
         ApplyStartWithWindows();
 
-        _serviceProvider = BuildServiceProvider();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
 
@@ -81,14 +86,20 @@ public partial class App : System.Windows.Application
     {
         var services = new ServiceCollection();
 
-        // ── 基础设施（接口 → 包装实现，保留原静态类向后兼容） ──
-        services.AddSingleton<IAppLogger, LoggerService>();
+        // ── 基础设施：真实实现注册为单例，静态门面（Logger / LocalizationService /
+        //    ToastService）委托容器解析，与门面回退路径共享同一实例 ──
+        services.AddSingleton(_ => LoggerService.Default);
+        services.AddSingleton<IAppLogger>(sp => sp.GetRequiredService<LoggerService>());
         services.AddSingleton<IConfigLoader, ConfigLoaderService>();
-        services.AddSingleton<ILocalizationService, LocalizationServiceWrapper>();
+        services.AddSingleton(_ => LocalizationManager.Default);
+        services.AddSingleton<ILocalizationService>(sp => sp.GetRequiredService<LocalizationManager>());
         services.AddSingleton<IThemeService, ThemeServiceWrapper>();
 
-        // ── 搜索提供者 ──
+        // ── 搜索提供者与搜索内部依赖 ──
         services.AddSingleton<FileSearchProvider>();
+        services.AddSingleton<WindowManager>();
+        services.AddSingleton<ISearchResultScorer>(_ => SearchResultScorer.Instance);
+        services.AddSingleton<IExecutablePathCache>(_ => ExecutablePathCache.Instance);
 
         // ── 领域服务 ──
         services.AddSingleton<UsageTracker>();
@@ -100,7 +111,8 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IRecordingService, RecordingService>();
 
         // ── 已有单例（通过工厂桥接，不改变其单例语义） ──
-        services.AddSingleton(_ => ToastService.Instance);
+        services.AddSingleton(_ => ToastService.Default);
+        services.AddSingleton<IToastService>(sp => sp.GetRequiredService<ToastService>());
         services.AddSingleton(_ => ClipboardHistoryService.Instance);
 
         // ── UI 层 ──
@@ -118,7 +130,8 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            var config = ConfigLoader.Load();
+            // 从 DI 容器解析配置服务（容器在调用前已通过 AppServices.Configure 配置）
+            var config = AppServices.TryGet<IConfigLoader>()?.Load() ?? ConfigLoader.Load();
             var startWithWindows = config.AppSettings?.StartWithWindows ?? false;
             const string appName = "Quanta";
             var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;

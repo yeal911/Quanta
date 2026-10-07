@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 using Quanta.Core.Interfaces;
@@ -149,7 +148,7 @@ public partial class MainWindow
     /// </summary>
     private void UpdatePlaceholderWithHotkey()
     {
-        var config = ConfigLoader.Load();
+        var config = _configLoader.Load();
         var hotkey = config.Hotkey;
         var hotkeyStr = $"{hotkey.Modifier}+{hotkey.Key}";
         PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder") + " | " + hotkeyStr;

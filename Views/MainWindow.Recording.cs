@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 using Quanta.Core.Interfaces;
@@ -37,13 +36,13 @@ public partial class MainWindow
             var outputDir = System.IO.Path.GetDirectoryName(outputPath) ?? "";
 
             // 保存当前配置到 AppConfig
-            var config = ConfigLoader.Load();
+            var config = _configLoader.Load();
             config.RecordingSettings.Source = recordData.Source;
             config.RecordingSettings.Format = recordData.Format;
             config.RecordingSettings.Bitrate = recordData.Bitrate;
             config.RecordingSettings.Channels = recordData.Channels;
             config.RecordingSettings.OutputPath = recordData.OutputPath;
-            ConfigLoader.Save(config);
+            _configLoader.Save(config);
 
 
 
@@ -162,9 +161,9 @@ public partial class MainWindow
     }
 
     /// <summary>将单个录音配置字段保存到 AppConfig</summary>
-    private static void SaveRecordingSettingField(string field, string value)
+    private void SaveRecordingSettingField(string field, string value)
     {
-        var config = ConfigLoader.Load();
+        var config = _configLoader.Load();
         switch (field)
         {
             case "Source": config.RecordingSettings.Source = value; break;
@@ -172,7 +171,7 @@ public partial class MainWindow
             case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
             case "Channels": config.RecordingSettings.Channels = int.TryParse(value, out int ch) ? ch : 1; break;
         }
-        ConfigLoader.Save(config);
+        _configLoader.Save(config);
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

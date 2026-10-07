@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Quanta.Helpers;
 using Quanta.Models;
 using Quanta.Services;
 using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
@@ -259,7 +258,7 @@ public partial class MainWindow
 
         win.Closed += (s, args) =>
         {
-            var config = ConfigLoader.Load();
+            var config = _configLoader.Load();
             var registered = _hotkeyManager.Reregister(config.Hotkey);
             _viewModel.SearchEngine.ReloadCommands();
             UpdatePlaceholderWithHotkey();
