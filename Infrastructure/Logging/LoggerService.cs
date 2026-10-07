@@ -30,6 +30,9 @@ public sealed class LoggerService : Quanta.Core.Interfaces.IAppLogger
     /// </summary>
     private readonly string _logDirectory;
 
+    /// <summary>日志目录绝对路径（对 Quanta.Tests 可见，供单元测试创建/校验日志文件）</summary>
+    internal string LogDirectory => _logDirectory;
+
     /// <summary>
     /// 用于保证多线程写入日志时线程安全的锁对象
     /// </summary>
@@ -106,6 +109,57 @@ public sealed class LoggerService : Quanta.Core.Interfaces.IAppLogger
             File.AppendAllText(_currentLogFilePath, $"[INFO] Logger initialized. BaseDir={exeDir}, LogDir={_logDirectory}, ProcessPath={Environment.ProcessPath}{Environment.NewLine}");
         }
         catch { }
+    }
+
+    /// <summary>
+    /// 启动时清理过期日志：删除日志目录内最后写入时间早于
+    /// <paramref name="retentionMonths"/> 个月前的 quanta_*.log 文件。
+    /// 只匹配本应用日志目录内的 <c>quanta_*.log</c> 模式，绝不越界删除；
+    /// 清理动作（删除了哪些文件）会写一条 INFO 日志留痕。
+    /// </summary>
+    /// <param name="retentionMonths">日志保留月数，小于等于 0 表示不清理</param>
+    /// <returns>实际删除的文件数</returns>
+    public int CleanupExpiredLogs(int retentionMonths)
+    {
+        if (retentionMonths <= 0) return 0;
+
+        var cutoff = DateTime.Now.AddMonths(-retentionMonths);
+        var deleted = new List<string>();
+
+        try
+        {
+            lock (_lockObj)
+            {
+                foreach (var file in Directory.EnumerateFiles(_logDirectory, "quanta_*.log"))
+                {
+                    try
+                    {
+                        if (File.GetLastWriteTime(file) < cutoff)
+                        {
+                            File.Delete(file);
+                            deleted.Add(Path.GetFileName(file));
+                        }
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        // 单个文件被占用或无权限时跳过，不影响其余文件清理
+                        WriteLog($"[LogCleanup] Skip locked file '{Path.GetFileName(file)}': {ex.Message}", "WARN");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteLog($"[LogCleanup] Failed to enumerate log directory: {ex.Message}", "WARN");
+            return 0;
+        }
+
+        if (deleted.Count > 0)
+        {
+            WriteLog($"[LogCleanup] Deleted {deleted.Count} expired log file(s) older than {retentionMonths} months: {string.Join(", ", deleted)}", "INFO");
+        }
+
+        return deleted.Count;
     }
 
     /// <summary>

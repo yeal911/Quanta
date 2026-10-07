@@ -9,7 +9,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Quanta</AssemblyName>
-    <Version>1.0.0</Version>
     <Authors>Quanta Team</Authors>
     <Description>A fast Windows 11 launcher with global hotkey support</Description>
     <UseWPF>true</UseWPF>
@@ -23,6 +22,10 @@
     <!-- 测试工程位于主工程目录树内（主 csproj 在仓库根），需从隐式项中排除，
          否则 tests/**/*.cs 会被误编入主工程 -->
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
+    <!-- 版本号由 MinVer 从 git tag 自动戳记：tag v1.2.3 → 1.2.3；
+         无 tag 时为基于最近 tag 的占位版本（含提交哈希构建元数据）。
+         CI 打 tag 出包前需完整拉取历史（actions/checkout fetch-depth: 0） -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -35,6 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />

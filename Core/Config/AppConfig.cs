@@ -227,6 +227,9 @@ public class AppSettings
 
     /// <summary>界面语言，默认为简体中文</summary>
     [JsonPropertyName("Language")] public string Language { get; set; } = "zh-CN";
+
+    /// <summary>日志保留月数：启动时清理最后写入时间早于该月数的日志文件；小于等于 0 表示不清理</summary>
+    [JsonPropertyName("LogRetentionMonths")] public int LogRetentionMonths { get; set; } = 6;
 }
 
 /// <summary>
