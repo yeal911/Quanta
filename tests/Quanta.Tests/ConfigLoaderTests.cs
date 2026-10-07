@@ -6,8 +6,8 @@
 // ============================================================================
 
 using System.Text.Json;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Infrastructure.Storage;
+using Quanta.Core.Config;
 using Xunit;
 
 namespace Quanta.Tests;

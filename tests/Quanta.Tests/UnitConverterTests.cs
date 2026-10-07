@@ -6,7 +6,7 @@
 // ============================================================================
 
 using System.Globalization;
-using Quanta.Services;
+using Quanta.Domain.Commands;
 using Xunit;
 
 namespace Quanta.Tests;
