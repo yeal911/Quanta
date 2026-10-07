@@ -2,7 +2,6 @@
 // 文件名: CommandRouter.cs
 // 文件描述: 命令路由服务，负责解析用户输入并将其分发到对应的命令处理器。
 //           支持 PowerShell 命令执行、数学表达式计算和浏览器搜索三种命令类型。
-//           采用 ICommandHandler 插件架构，便于扩展新的命令类型。
 // ============================================================================
 
 using System.Diagnostics;
@@ -14,23 +13,6 @@ using Quanta.Core.Constants;
 using Quanta.Models;
 
 namespace Quanta.Services;
-
-// ─────────────────────────────────────────────────────────────
-// 命令处理器接口 - 插件架构基础
-// ─────────────────────────────────────────────────────────────
-/// <summary>
-/// 命令处理器接口，所有命令处理器需实现此接口。
-/// </summary>
-public interface ICommandHandler
-{
-    /// <summary>处理器名称</summary>
-    string Name { get; }
-
-    /// <summary>
-    /// 尝试处理输入，返回搜索结果；如果不匹配则返回 null。
-    /// </summary>
-    Task<SearchResult?> HandleAsync(string input, UsageTracker usageTracker);
-}
 
 /// <summary>
 /// 命令路由器，负责解析用户输入的文本并路由到对应的命令处理逻辑。
