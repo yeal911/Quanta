@@ -31,6 +31,10 @@ internal static class UnitConverter
         ["mm"] = 0.001,
         ["millimeter"] = 0.001,
         ["毫米"] = 0.001,
+        ["nm"] = 0.000000001,
+        ["nanometer"] = 0.000000001,
+        ["nanometers"] = 0.000000001,
+        ["纳米"] = 0.000000001,
         ["ft"] = 0.3048,
         ["foot"] = 0.3048,
         ["feet"] = 0.3048,
@@ -46,8 +50,9 @@ internal static class UnitConverter
         ["yd"] = 0.9144,
         ["yard"] = 0.9144,
         ["yards"] = 0.9144,
-        ["nm"] = 1852,
+        ["nmi"] = 1852,
         ["nautical mile"] = 1852,
+        ["海里"] = 1852,
     };
 
     // ── 重量（基准单位：千克）────────────────────────────────
@@ -182,11 +187,12 @@ internal static class UnitConverter
 
     /// <summary>
     /// 将 double 格式化为简洁字符串（最多 2 位小数，超大/超小数用科学计数法）。
+    /// 固定使用 InvariantCulture，保证任何系统 locale 下输出一致（小数点恒为 "."）。
     /// </summary>
     internal static string FormatNumber(double n)
     {
         if (Math.Abs(n) >= 1e9 || (Math.Abs(n) < 0.005 && n != 0))
-            return n.ToString("G4");
-        return Math.Round(n, 2, MidpointRounding.AwayFromZero).ToString("0.##");
+            return n.ToString("G4", System.Globalization.CultureInfo.InvariantCulture);
+        return Math.Round(n, 2, MidpointRounding.AwayFromZero).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     }
 }

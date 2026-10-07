@@ -556,7 +556,9 @@ public class ExchangeRateService : IExchangeRateService
             _ => ""
         };
 
-        string formatted = amount >= 1000 ? amount.ToString("#,##0.00") : amount.ToString("0.00");
+        string formatted = amount >= 1000
+            ? amount.ToString("#,##0.00", System.Globalization.CultureInfo.InvariantCulture)
+            : amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
         return $"{symbol}{formatted}";
     }
 
@@ -565,8 +567,8 @@ public class ExchangeRateService : IExchangeRateService
     /// </summary>
     private string FormatUnitRate(double amount, string fromCurrency, double rate, string toCurrency, double reverseRate)
     {
-        string rateStr = rate.ToString("0.0000");
-        string reverseRateStr = reverseRate.ToString("0.0000");
+        string rateStr = rate.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture);
+        string reverseRateStr = reverseRate.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture);
 
         // 双向展示: 1 CNY = 0.1371 USD · 1 USD = 7.2950 CNY
         return $"1 {fromCurrency} = {rateStr} {toCurrency} · 1 {toCurrency} = {reverseRateStr} {fromCurrency}";
