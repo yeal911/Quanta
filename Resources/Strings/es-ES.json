@@ -48,6 +48,7 @@
   "ImportResult": "Importados {0}, omitidos {1} (palabras clave duplicadas)",
   "ImportFailed": "Error en la importación",
   "HotkeyRegisterFailed": "Error al registrar el atajo, puede estar ocupado por otro programa",
+  "HotkeyUnsupportedKey": "Combinación de teclas no reconocida, inténtalo de nuevo",
   "CommandSearchPlaceholder": "Buscar comandos...",
   "Admin": "Administrador",
   "CopiedToClipboard": "Resultado copiado al portapapeles",

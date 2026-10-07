@@ -48,6 +48,7 @@
   "ImportResult": "Importados {0}, ignorados {1} (duplicados)",
   "ImportFailed": "Falha na importação",
   "HotkeyRegisterFailed": "Falha ao registrar atalho",
+  "HotkeyUnsupportedKey": "Combinação de teclas não reconhecida, tente novamente",
   "CommandSearchPlaceholder": "Buscar comandos por palavra-chave",
   "Admin": "Administrador",
   "CopiedToClipboard": "Resultado copiado",

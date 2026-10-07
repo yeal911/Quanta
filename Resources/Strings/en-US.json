@@ -48,6 +48,7 @@
   "ImportResult": "Imported {0}, skipped {1} (duplicate keywords)",
   "ImportFailed": "Import failed",
   "HotkeyRegisterFailed": "Hotkey registration failed, may be occupied by another program",
+  "HotkeyUnsupportedKey": "Unrecognized key combination, please try again",
   "CommandSearchPlaceholder": "Search commands by keyword",
   "Admin": "Admin",
   "CopiedToClipboard": "Result copied to clipboard",

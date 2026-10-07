@@ -20,6 +20,13 @@ public partial class CommandSettingsWindow
     private const string AppRegistryName = "Quanta";
 
     /// <summary>
+    /// 加载期抑制事件回写标志（参照 _suppressRecordingEvents 模式）。
+    /// LoadAppSettings / LoadFileSearchSettings 填充控件时会触发 Checked/Unchecked 事件，
+    /// 置为 true 可避免加载过程以未填充完的控件值回写配置。
+    /// </summary>
+    private bool _suppressSettingsEvents = false;
+
+    /// <summary>
     /// 设置当前主题（明/暗）。
     /// 颜色由 DynamicResource + ThemeService 统一处理，此处只记录状态。
     /// </summary>
@@ -34,11 +41,19 @@ public partial class CommandSettingsWindow
     /// </summary>
     private void LoadAppSettings()
     {
-        var config = ConfigLoader.Load();
-        StartWithWindowsCheck.IsChecked = IsStartWithWindowsEnabled();
-        MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
-        QRCodeThresholdBox.Text = config.AppSettings.QRCodeThreshold.ToString();
-        DarkThemeCheck.IsChecked = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
+        _suppressSettingsEvents = true;
+        try
+        {
+            var config = ConfigLoader.Load();
+            StartWithWindowsCheck.IsChecked = IsStartWithWindowsEnabled();
+            MaxResultsBox.Text = config.AppSettings.MaxResults.ToString();
+            QRCodeThresholdBox.Text = config.AppSettings.QRCodeThreshold.ToString();
+            DarkThemeCheck.IsChecked = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;
+        }
+        finally
+        {
+            _suppressSettingsEvents = false;
+        }
     }
 
     /// <summary>查询注册表，判断 Quanta 是否已设置为开机启动。</summary>
@@ -52,6 +67,8 @@ public partial class CommandSettingsWindow
     /// <summary>暗色主题 CheckBox 状态变更。</summary>
     private void DarkThemeCheck_Changed(object sender, RoutedEventArgs e)
     {
+        if (_suppressSettingsEvents) return;
+
         bool isDark = DarkThemeCheck.IsChecked == true;
 
         var config = ConfigLoader.Load();
@@ -103,6 +120,8 @@ public partial class CommandSettingsWindow
     /// <summary>开机启动 CheckBox 状态变更，立即写入注册表。</summary>
     private void StartWithWindowsCheck_Changed(object sender, RoutedEventArgs e)
     {
+        if (_suppressSettingsEvents) return;
+
         ApplyStartWithWindows(StartWithWindowsCheck.IsChecked == true);
     }
 
@@ -197,26 +216,34 @@ public partial class CommandSettingsWindow
     /// <summary>加载文件搜索设置到控件</summary>
     private void LoadFileSearchSettings()
     {
-        var config = ConfigLoader.Load();
-        var fs = config.FileSearchSettings;
-
-        FileSearchEnabledCheck.IsChecked = fs.Enabled;
-
-        // 如果没有自定义目录，使用默认值显示
-        if (fs.Directories == null || fs.Directories.Count == 0)
+        _suppressSettingsEvents = true;
+        try
         {
-            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var downloads = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
-            FileSearchDirectoriesBox.Text = $"{desktop}\n{downloads}";
-        }
-        else
-        {
-            FileSearchDirectoriesBox.Text = string.Join("\n", fs.Directories);
-        }
+            var config = ConfigLoader.Load();
+            var fs = config.FileSearchSettings;
 
-        FileSearchMaxFilesBox.Text = fs.MaxFiles.ToString();
-        FileSearchMaxResultsBox.Text = fs.MaxResults.ToString();
-        FileSearchRecursiveCheck.IsChecked = fs.Recursive;
+            FileSearchEnabledCheck.IsChecked = fs.Enabled;
+
+            // 如果没有自定义目录，使用默认值显示
+            if (fs.Directories == null || fs.Directories.Count == 0)
+            {
+                var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                var downloads = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
+                FileSearchDirectoriesBox.Text = $"{desktop}\n{downloads}";
+            }
+            else
+            {
+                FileSearchDirectoriesBox.Text = string.Join("\n", fs.Directories);
+            }
+
+            FileSearchMaxFilesBox.Text = fs.MaxFiles.ToString();
+            FileSearchMaxResultsBox.Text = fs.MaxResults.ToString();
+            FileSearchRecursiveCheck.IsChecked = fs.Recursive;
+        }
+        finally
+        {
+            _suppressSettingsEvents = false;
+        }
     }
 
     /// <summary>保存文件搜索设置到配置</summary>
@@ -280,6 +307,8 @@ public partial class CommandSettingsWindow
     /// <summary>启用文件搜索 CheckBox 变更</summary>
     private void FileSearchEnabledCheck_Changed(object sender, RoutedEventArgs e)
     {
+        if (_suppressSettingsEvents) return;
+
         SaveFileSearchSettings();
     }
 
@@ -323,6 +352,8 @@ public partial class CommandSettingsWindow
     /// <summary>递归搜索 CheckBox 变更</summary>
     private void FileSearchRecursiveCheck_Changed(object sender, RoutedEventArgs e)
     {
+        if (_suppressSettingsEvents) return;
+
         SaveFileSearchSettings();
     }
 

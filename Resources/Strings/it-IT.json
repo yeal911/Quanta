@@ -48,6 +48,7 @@
   "ImportResult": "Importati {0}, saltati {1} (duplicati)",
   "ImportFailed": "Importazione fallita",
   "HotkeyRegisterFailed": "Registrazione tasto fallita",
+  "HotkeyUnsupportedKey": "Combinazione di tasti non riconosciuta, riprova",
   "CommandSearchPlaceholder": "Cerca comandi",
   "Admin": "Admin",
   "CopiedToClipboard": "Copiato negli appunti",
