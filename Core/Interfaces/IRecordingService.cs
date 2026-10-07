@@ -5,7 +5,7 @@
 
 using System;
 using System.Threading.Tasks;
-using Quanta.Models;
+using Quanta.Core.Config;
 
 namespace Quanta.Core.Interfaces;
 

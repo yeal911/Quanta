@@ -5,7 +5,7 @@
 
 using System.IO;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 可执行文件路径缓存接口

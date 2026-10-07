@@ -8,9 +8,10 @@ using System.IO;
 using System.Text.Json;
 using Quanta.Core.Constants;
 using Quanta.Core.Interfaces;
-using Quanta.Models;
+using Quanta.Domain.Search;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>单条剪贴板历史记录。</summary>
 public record ClipboardEntry(string Text, DateTime Time);

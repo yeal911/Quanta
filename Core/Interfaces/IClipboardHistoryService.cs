@@ -2,8 +2,7 @@
 // 文件名: IClipboardHistoryService.cs
 // 文件描述: 剪贴板历史服务接口，定义剪贴板历史功能的抽象层
 // ============================================================================
-
-using Quanta.Models;
+using Quanta.Domain.Search;
 
 namespace Quanta.Core.Interfaces;
 

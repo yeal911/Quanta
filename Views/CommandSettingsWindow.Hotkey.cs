@@ -5,9 +5,10 @@
 
 using System.Windows;
 using System.Windows.Input;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Storage;
+using Quanta.Infrastructure.System;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

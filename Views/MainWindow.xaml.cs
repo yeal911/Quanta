@@ -16,11 +16,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using Quanta.Helpers;
-using Quanta.Services;
-using Quanta.ViewModels;
-using Quanta.Interfaces;
 using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.System;
+using Quanta.Presentation.Helpers;
+using Quanta.Presentation.ViewModels;
 
 namespace Quanta.Views;
 
@@ -57,6 +57,9 @@ public partial class MainWindow : Window, IMainWindowService
     /// <summary>录音服务实例（DI 注入）</summary>
     private readonly IRecordingService _recordingService;
 
+    /// <summary>配置加载服务（DI 注入）</summary>
+    private readonly IConfigLoader _configLoader;
+
     /// <summary>当前录音悬浮窗口</summary>
     private RecordingOverlayWindow? _recordingOverlay;
 
@@ -76,7 +79,8 @@ public partial class MainWindow : Window, IMainWindowService
         MainViewModel viewModel,
         HotkeyManager hotkeyManager,
         ClipboardMonitor clipboardMonitor,
-        IRecordingService recordingService)
+        IRecordingService recordingService,
+        IConfigLoader configLoader)
     {
         InitializeComponent();
 
@@ -84,6 +88,7 @@ public partial class MainWindow : Window, IMainWindowService
         _hotkeyManager = hotkeyManager;
         _clipboardMonitor = clipboardMonitor;
         _recordingService = recordingService;
+        _configLoader = configLoader;
 
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
@@ -165,7 +170,7 @@ public partial class MainWindow : Window, IMainWindowService
         ToastService.Instance.SetMainWindow(this);
 
         _windowHandle = new WindowInteropHelper(this).Handle;
-        var config = ConfigLoader.Load();
+        var config = _configLoader.Load();
 
         // 恢复上次保存的主题（Dark/Light）
         var savedTheme = config.Theme?.Equals("Dark", StringComparison.OrdinalIgnoreCase) ?? false;

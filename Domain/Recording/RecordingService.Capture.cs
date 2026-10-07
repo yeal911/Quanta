@@ -12,11 +12,11 @@ using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using NAudio.Lame;
-using Quanta.Helpers;
 using Quanta.Core.Interfaces;
-using Quanta.Models;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 public partial class RecordingService
 {

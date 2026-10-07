@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using Quanta.Services;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

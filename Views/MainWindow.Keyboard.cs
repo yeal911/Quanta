@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
 using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Quanta.Core.Config;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 
@@ -259,7 +260,7 @@ public partial class MainWindow
 
         win.Closed += (s, args) =>
         {
-            var config = ConfigLoader.Load();
+            var config = _configLoader.Load();
             var registered = _hotkeyManager.Reregister(config.Hotkey);
             _viewModel.SearchEngine.ReloadCommands();
             UpdatePlaceholderWithHotkey();

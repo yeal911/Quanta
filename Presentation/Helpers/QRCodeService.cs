@@ -9,8 +9,9 @@ using System.IO;
 using System.Windows.Media.Imaging;
 using QRCoder;
 using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// 二维码生成服务，提供将文本内容转换为二维码图片的功能。

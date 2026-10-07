@@ -2,8 +2,7 @@
 // 文件名: IHotkeyManager.cs
 // 文件描述: 全局热键管理器接口，定义热键注册和管理功能的抽象层
 // ============================================================================
-
-using Quanta.Models;
+using Quanta.Core.Config;
 
 namespace Quanta.Core.Interfaces;
 

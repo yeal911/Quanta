@@ -6,7 +6,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace Quanta.Models;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 使用数据根模型类，包含所有命令/结果的使用统计信息。

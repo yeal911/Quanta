@@ -6,7 +6,7 @@
 
 using System.Collections.Generic;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Commands;
 
 /// <summary>
 /// 单位转换工具类，支持长度、重量、速度和温度单位的相互转换。

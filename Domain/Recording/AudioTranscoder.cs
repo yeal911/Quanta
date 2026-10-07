@@ -8,10 +8,10 @@ using System.IO;
 using System.Threading.Tasks;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Recording;
 
 internal static class AudioTranscoder
 {

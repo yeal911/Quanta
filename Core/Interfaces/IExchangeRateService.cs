@@ -1,4 +1,4 @@
-using Quanta.Services;
+using Quanta.Domain.Search;
 
 namespace Quanta.Core.Interfaces;
 

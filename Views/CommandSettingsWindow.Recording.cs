@@ -6,10 +6,11 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using Quanta.Helpers;
-using Quanta.Services;
 using WpfComboBox = System.Windows.Controls.ComboBox;
 using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

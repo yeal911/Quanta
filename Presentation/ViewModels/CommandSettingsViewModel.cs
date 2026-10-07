@@ -11,11 +11,13 @@ using System.Linq;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core;
+using Quanta.Core.Config;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.ViewModels;
+namespace Quanta.Presentation.ViewModels;
 
 /// <summary>
 /// 命令设置窗口视图模型，管理命令配置、快捷键、主题、语言等设置。

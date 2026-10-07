@@ -15,8 +15,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>
 /// 单实例管理器：命名 Mutex 负责互斥检测，命名管道负责唤醒通知。

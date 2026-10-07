@@ -1,6 +1,6 @@
-using Quanta.Interfaces;
+using Quanta.Core.Interfaces;
 
-namespace Quanta.Services;
+namespace Quanta.Presentation.Helpers;
 
 /// <summary>
 /// <see cref="IThemeService"/> 的默认实现，委托到静态 <see cref="ThemeService"/>。

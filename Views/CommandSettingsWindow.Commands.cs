@@ -10,9 +10,12 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core.Config;
+using Quanta.Domain.Commands;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 

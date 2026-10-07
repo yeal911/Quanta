@@ -9,13 +9,15 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Quanta.Core.Constants;
 using System.Threading.Tasks;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Core.Config;
+using Quanta.Core.Constants;
 using Quanta.Core.Interfaces;
+using Quanta.Infrastructure.Logging;
+using Quanta.Infrastructure.Storage;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 汇率转换结果

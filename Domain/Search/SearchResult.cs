@@ -7,9 +7,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media.Imaging;
-using Quanta.Services;
+using Quanta.Core.Config;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Models;
+namespace Quanta.Domain.Search;
 
 /// <summary>
 /// 搜索结果类型枚举，标识搜索结果的来源类别。

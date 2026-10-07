@@ -1,7 +1,7 @@
-using Quanta.Interfaces;
-using Quanta.Models;
+using Quanta.Core.Config;
+using Quanta.Core.Interfaces;
 
-namespace Quanta.Helpers;
+namespace Quanta.Infrastructure.Storage;
 
 /// <summary>
 /// <see cref="IConfigLoader"/> 的默认实现，委托到静态 <see cref="ConfigLoader"/>。

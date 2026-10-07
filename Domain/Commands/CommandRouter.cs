@@ -10,9 +10,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Quanta.Core.Constants;
-using Quanta.Models;
+using Quanta.Domain.Search;
+using Quanta.Infrastructure.Logging;
+using Quanta.Presentation.Helpers;
 
-namespace Quanta.Services;
+namespace Quanta.Domain.Commands;
 
 /// <summary>
 /// 命令路由器，负责解析用户输入的文本并路由到对应的命令处理逻辑。

@@ -5,9 +5,8 @@
 
 using System;
 using System.Windows;
-using Quanta.Helpers;
-using Quanta.Models;
-using Quanta.Services;
+using Quanta.Core.Config;
+using Quanta.Infrastructure.Storage;
 
 namespace Quanta.Views;
 

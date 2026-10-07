@@ -7,11 +7,11 @@
 
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
+using Quanta.Core.Config;
 using Quanta.Core.Interfaces;
-using Quanta.Helpers;
-using Quanta.Models;
+using Quanta.Infrastructure.Logging;
 
-namespace Quanta.Services;
+namespace Quanta.Infrastructure.System;
 
 /// <summary>
 /// 全局热键管理器，负责注册、监听和注销系统级全局热键。
