@@ -111,6 +111,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<CommandRouter>();
         services.AddSingleton<SearchEngine>();
         services.AddSingleton<HotkeyManager>();
+        services.AddSingleton<IHotkeyManager>(sp => sp.GetRequiredService<HotkeyManager>());
         services.AddSingleton<ClipboardMonitor>();
         // ── 录音服务 ──
         services.AddSingleton<IRecordingService, RecordingService>();
