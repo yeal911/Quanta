@@ -8,7 +8,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
@@ -24,12 +23,12 @@ namespace Quanta;
 /// <summary>
 /// 应用程序类，继承自 WPF Application。
 /// 在启动时检查并确保只有一个 Quanta 实例运行。
-/// 如果检测到已有实例，则激活已有窗口并退出当前进程。
+/// 如果检测到已有实例，则通过命名管道通知其显示主窗口并退出当前进程。
 /// </summary>
 public partial class App : System.Windows.Application
 {
     private IServiceProvider? _serviceProvider;
-    private Mutex? _singleInstanceMutex;
+    private SingleInstanceManager? _singleInstance;
 
     /// <summary>
     /// 应用启动事件处理。检查单实例约束，建立 DI 组合根，创建主窗口。
@@ -38,12 +37,40 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        if (!EnsureSingleInstance()) { Current.Shutdown(); return; }
+        _singleInstance = new SingleInstanceManager();
+        if (!_singleInstance.TryAcquireExclusiveLock())
+        {
+            // 已有实例：通知其显示主窗口后释放资源并退出
+            _singleInstance.SignalFirstInstance();
+            _singleInstance.Dispose();
+            Current.Shutdown();
+            return;
+        }
         ApplyStartWithWindows();
 
         _serviceProvider = BuildServiceProvider();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
+
+        // 首实例监听第二实例的激活通知，在 UI 线程复用既有显示路径弹出主窗口
+        _singleInstance.StartActivationListener(OnSingleInstanceActivated);
+    }
+
+    /// <summary>
+    /// 收到第二实例的激活通知：在 UI 线程复用 MainWindow.Window.cs 的
+    /// ShowWindow 显示路径弹出主窗口。第二实例已通过 AllowSetForegroundWindow
+    /// 转交前台权限，Activate 不受前台锁限制。
+    /// </summary>
+    private void OnSingleInstanceActivated()
+    {
+        Current.Dispatcher.BeginInvoke(() =>
+        {
+            var mainWindow = _serviceProvider?.GetRequiredService<MainWindow>();
+            if (mainWindow == null) return;
+            // 与托盘显示路径一致：记录时间戳，防止激活动画期间 Deactivated 误触发隐藏
+            mainWindow.LastShownFromTray = DateTime.Now;
+            mainWindow.ShowWindow();
+        });
     }
 
     /// <summary>
@@ -120,58 +147,12 @@ public partial class App : System.Windows.Application
         }
     }
 
-    /// <summary>
-    /// 确保应用程序单实例运行。
-    /// 使用命名互斥锁（Mutex）检测是否已有实例。
-    /// 如果已有实例运行，尝试将其主窗口置前并恢复显示。
-    /// </summary>
-    /// <returns>如果是首个实例返回 true，否则返回 false</returns>
-    private bool EnsureSingleInstance()
-    {
-        string mutexName = "Quanta_SingleInstance_Mutex";
-        _singleInstanceMutex = new Mutex(true, mutexName, out bool createdNew);
-        if (!createdNew)
-        {
-            var currentProcess = Process.GetCurrentProcess();
-            foreach (var process in Process.GetProcessesByName(currentProcess.ProcessName))
-            {
-                if (process.Id != currentProcess.Id)
-                {
-                    var handle = process.MainWindowHandle;
-                    if (handle != IntPtr.Zero) { SetForegroundWindow(handle); ShowWindow(handle, SW_RESTORE); }
-                    break;
-                }
-            }
-            return false;
-        }
-        return true;
-    }
-
     protected override void OnExit(ExitEventArgs e)
     {
-        try
-        {
-            _singleInstanceMutex?.ReleaseMutex();
-        }
-        catch
-        {
-            // 非拥有线程/已释放时忽略
-        }
-        finally
-        {
-            _singleInstanceMutex?.Dispose();
-            _singleInstanceMutex = null;
-        }
+        // 释放单实例资源：停止管道监听、释放命名 Mutex，不残留系统句柄
+        _singleInstance?.Dispose();
+        _singleInstance = null;
 
         base.OnExit(e);
     }
-
-    /// <summary>Win32 API：将指定窗口设置为前台窗口</summary>
-    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    /// <summary>Win32 API：设置指定窗口的显示状态</summary>
-    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    /// <summary>ShowWindow 命令常量：恢复窗口（从最小化状态还原）</summary>
-    private const int SW_RESTORE = 9;
 }
