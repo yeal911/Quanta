@@ -73,10 +73,11 @@ public class CommandRouter
     /// </summary>
     /// <summary>
     /// 匹配单位换算的正则表达式，格式为: {数字} {源单位} to/in {目标单位}
-    /// 例如: 100 km to mile, 30 c to f
+    /// 例如: 100 km to mile, 30 c to f, 1 nautical mile to km
+    /// 单位部分允许多词别名（如 "nautical mile"），与 UnitConverter 别名表保持一致。
     /// </summary>
     private static readonly Regex UnitConvertRegex = new(
-        @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+|[\u4e00-\u9fff]+)$",
+        @"^(-?\d+\.?\d*)\s*([a-zA-Z°/]+(?:\s+[a-zA-Z°/]+)*|[\u4e00-\u9fff]+)\s+(?:to|in|转|换)\s+([a-zA-Z°/]+(?:\s+[a-zA-Z°/]+)*|[\u4e00-\u9fff]+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
@@ -400,8 +401,8 @@ public class CommandRouter
                                : double.IsNegativeInfinity(computed) ? "-∞"
                                : double.IsNaN(computed) ? "NaN"
                                : (Math.Abs(computed) >= 1e9 || (Math.Abs(computed) < 0.005 && computed != 0))
-                                 ? computed.ToString("G4")
-                                 : Math.Round(computed, 2, MidpointRounding.AwayFromZero).ToString("0.##");
+                                 ? computed.ToString("G4", System.Globalization.CultureInfo.InvariantCulture)
+                                 : Math.Round(computed, 2, MidpointRounding.AwayFromZero).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
             // 结果作为主标题；表达式在搜索框已可见，副标题留空
             result.Title = computedStr;
             result.Data = new CommandResult { Success = true, Output = computedStr };
@@ -428,7 +429,7 @@ public class CommandRouter
     /// </summary>
     private async Task<SearchResult> ConvertCurrencyAsync(string amountStr, string fromCurrency, string toCurrency)
     {
-        if (!double.TryParse(amountStr, out double amount))
+        if (!double.TryParse(amountStr, System.Globalization.CultureInfo.InvariantCulture, out double amount))
         {
             return new SearchResult
             {
@@ -446,7 +447,7 @@ public class CommandRouter
         var fetchingResult = new SearchResult
         {
             Title = LocalizationService.Get("ExchangeRateFetching"),
-            Subtitle = $"{amount} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}...",
+            Subtitle = $"{amount.ToString(System.Globalization.CultureInfo.InvariantCulture)} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}...",
             Type = SearchResultType.Calculator,
             GroupLabel = "",
             GroupOrder = 0,
@@ -470,7 +471,7 @@ public class CommandRouter
 
             return new SearchResult
             {
-                Title = $"{amount} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}",
+                Title = $"{amount.ToString(System.Globalization.CultureInfo.InvariantCulture)} {fromCurrency.ToUpper()} → {toCurrency.ToUpper()}",
                 SubtitleSmall = rateResult.Result,   // 结果数字（大字显示）
                 Subtitle = subtitle,                  // 单位汇率 + 时间（小字）
                 Type = SearchResultType.Calculator,
@@ -727,7 +728,7 @@ public class CommandRouter
 
     private SearchResult? ConvertUnit(string valueStr, string fromUnit, string toUnit)
     {
-        if (!double.TryParse(valueStr, out double value))
+        if (!double.TryParse(valueStr, System.Globalization.CultureInfo.InvariantCulture, out double value))
             return null;
         if (!UnitConverter.TryConvert(value, fromUnit, toUnit, out double convertedValue))
             return null;
