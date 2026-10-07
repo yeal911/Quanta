@@ -13,7 +13,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # MinVer 需要 git tag 计算版本号，必须完整拉取历史与 tag
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
