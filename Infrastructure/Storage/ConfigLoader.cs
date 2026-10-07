@@ -596,11 +596,8 @@ public static class ConfigLoader
 
             if (config.ExchangeRateSettings == null)
             {
-                config.ExchangeRateSettings = new Models.ExchangeRateSettings
-                {
-                    ApiKey = "f02c1174e7cdfb412a48337c",
-                    CacheMinutes = 60
-                };
+                // 不注入默认 API Key，由用户在设置页自行配置
+                config.ExchangeRateSettings = new Models.ExchangeRateSettings();
             }
 
             config.Version = "1.3";
