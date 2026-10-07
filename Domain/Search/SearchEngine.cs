@@ -155,7 +155,7 @@ public class SearchEngine
     /// <summary>
     /// 获取本地化后的内置命令列表
     /// </summary>
-    private List<CommandConfig> GetBuiltInCommands()
+    internal static List<CommandConfig> GetBuiltInCommands()
     {
         return BuiltInCommandsTemplate.Select(cmd =>
         {
@@ -179,7 +179,7 @@ public class SearchEngine
     /// <summary>
     /// 根据分组 key 返回分组排序权重
     /// </summary>
-    private static int GetGroupOrder(string groupKey) => groupKey switch
+    internal static int GetGroupOrder(string groupKey) => groupKey switch
     {
         "GroupCalc"    => 0,
         "GroupQRCode"  => 0,
@@ -459,12 +459,7 @@ public class SearchEngine
         }
 
         // ── 4. 按匹配分数降序排列；同分时按 GroupOrder 升序（Calculator=2.0 始终置顶）──
-        var finalList = results
-            .OrderByDescending(r => r.MatchScore)
-            .ThenBy(r => r.GroupOrder)
-            .ThenByDescending(r => _usageTracker.GetUsageCount(r.Id))
-            .Take(_maxResults)
-            .ToList();
+        var finalList = OrderResults(results, _maxResults, id => _usageTracker.GetUsageCount(id));
 
         // 为每个结果设置索引和 QueryMatch
         for (int i = 0; i < finalList.Count; i++)
@@ -474,6 +469,27 @@ public class SearchEngine
                 finalList[i].QueryMatch = query;
         }
         return finalList;
+    }
+
+    /// <summary>
+    /// 对搜索结果排序并截断：按匹配分数降序，同分按分组权重升序，
+    /// 再按使用次数降序，最后截取前 maxResults 条。
+    /// 抽取为独立方法便于单元测试分组排序规则。
+    /// </summary>
+    /// <param name="results">待排序的搜索结果</param>
+    /// <param name="maxResults">最多返回条数</param>
+    /// <param name="usageCountProvider">获取结果使用次数的回调，用于同分时的使用频率排序</param>
+    /// <returns>排序并截断后的结果列表</returns>
+    internal static List<SearchResult> OrderResults(
+        IEnumerable<SearchResult> results, int maxResults, Func<string, int>? usageCountProvider = null)
+    {
+        usageCountProvider ??= _ => 0;
+        return results
+            .OrderByDescending(r => r.MatchScore)
+            .ThenBy(r => r.GroupOrder)
+            .ThenByDescending(r => usageCountProvider(r.Id))
+            .Take(maxResults)
+            .ToList();
     }
 
     /// <summary>
@@ -587,11 +603,7 @@ public class SearchEngine
         var allCommands = _customCommands.Concat(GetBuiltInCommands()).ToList();
 
         // 将所有命令按关键字索引，方便按使用记录 ID 查找。
-        // 冲突安全构造：自定义命令优先于内置命令（Concat 在前），重复关键字时取先出现者，
-        // 行为确定且不抛 ArgumentException（大小写不敏感，与搜索匹配规则一致）
-        var commandByKey = allCommands
-            .GroupBy(c => $"cmd:{c.Keyword}", StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        var commandByKey = BuildCommandIndex(allCommands);
 
         // ── 1. 优先展示最近使用过的命令 ──────────────────────────
         var recentIds = _usageTracker.GetRecentItemIds(_maxResults);
@@ -618,6 +630,21 @@ public class SearchEngine
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// 构建关键字 → 命令 的索引，方便按使用记录 ID（cmd:{Keyword}）查找。
+    /// 冲突安全构造：自定义命令优先于内置命令（Concat 在前），重复关键字时取先出现者，
+    /// 行为确定且不抛 ArgumentException（大小写不敏感，与搜索匹配规则一致）。
+    /// 抽取为独立方法便于单元测试重复关键字场景。
+    /// </summary>
+    /// <param name="commands">待索引的命令列表（顺序即优先级，先出现者优先）</param>
+    /// <returns>以 cmd:{Keyword} 为键的命令索引</returns>
+    internal static Dictionary<string, CommandConfig> BuildCommandIndex(IEnumerable<CommandConfig> commands)
+    {
+        return commands
+            .GroupBy(c => $"cmd:{c.Keyword}", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
