@@ -53,6 +53,11 @@ public class CommandRouter
     private static readonly Regex PowerShellRegex = new(@"^>\s*(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
+    /// PowerShell 命令执行超时时间（毫秒），超时后终止进程并返回错误
+    /// </summary>
+    private const int PowerShellTimeoutMs = 10_000;
+
+    /// <summary>
     /// 匹配计算表达式的正则表达式，格式为: calc 表达式
     /// </summary>
     private static readonly Regex CalcRegex = new(@"^calc\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -140,10 +145,11 @@ public class CommandRouter
 
         Logger.Debug($"Input: '{input}'");
 
-        // PowerShell 命令（> command）
+        // PowerShell 命令（> command）——搜索阶段仅构造预览项，不启动进程；
+        // 实际执行移至用户显式确认（Enter / Ctrl+数字）后的 ExecutePowerShellCommandAsync
         var psMatch = PowerShellRegex.Match(input);
         Logger.Debug($"PowerShellRegex: {psMatch.Success}");
-        if (psMatch.Success) return await ExecutePowerShellAsync(psMatch.Groups[1].Value);
+        if (psMatch.Success) return BuildPowerShellPreview(psMatch.Groups[1].Value);
 
         // 数学计算（calc expression）
         var calcMatch = CalcRegex.Match(input);
@@ -258,29 +264,108 @@ public class CommandRouter
     }
 
     /// <summary>
-    /// 异步执行 PowerShell 命令并返回执行结果。
-    /// 使用无窗口模式启动 powershell.exe，捕获标准输出和错误输出。
+    /// 构建 PowerShell 命令的预览结果项（不启动进程）。
+    /// 搜索阶段只做"匹配 + 构造结果项"，进程启动等副作用推迟到显式执行路径，
+    /// 避免输入 "&gt; cmd" 过程中每个中间按键都执行一次命令。
+    /// </summary>
+    /// <param name="command">用户输入的 PowerShell 命令字符串</param>
+    /// <returns>命令预览搜索结果</returns>
+    private static SearchResult BuildPowerShellPreview(string command) => new()
+    {
+        Title = $"PowerShell: {command}",
+        Subtitle = LocalizationService.Get("PowerShellPreviewHint"),
+        Type = SearchResultType.Command,
+        Path = command,
+        IconText = ">",
+        GroupLabel = LocalizationService.Get("GroupCommand"),
+        GroupOrder = 1,
+        MatchScore = 1.0
+    };
+
+    /// <summary>
+    /// 显式执行 PowerShell 命令（用户按 Enter / Ctrl+数字 后调用）。
+    /// stdout/stderr 并发读取，避免命令向任一管道写入超过缓冲区（约 4KB）时永久挂起；
+    /// 整体执行受 10 秒超时与调用方 CancellationToken 约束，超时后终止进程并返回可理解的错误。
     /// </summary>
     /// <param name="command">要执行的 PowerShell 命令字符串</param>
-    /// <returns>包含命令执行结果的搜索结果对象</returns>
-    private async Task<SearchResult> ExecutePowerShellAsync(string command)
+    /// <param name="cancellationToken">取消令牌，用于取消等待</param>
+    /// <returns>命令执行结果（成功标志、标准输出、错误信息）</returns>
+    public async Task<CommandResult> ExecutePowerShellCommandAsync(string command, CancellationToken cancellationToken = default)
     {
-        var result = new SearchResult { Title = $"PowerShell: {command}", Type = SearchResultType.Command, Path = command };
+        var result = new CommandResult();
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            result.Error = LocalizationService.Get("PowerShellExecuteFailed");
+            return result;
+        }
+
+        // 链接调用方令牌并施加固定超时
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(PowerShellTimeoutMs);
+
+        Process? process = null;
         try
         {
-            var psi = new ProcessStartInfo { FileName = "powershell.exe", Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
-            using var process = Process.Start(psi);
-            if (process != null)
+            var psi = new ProcessStartInfo
             {
-                string output = await process.StandardOutput.ReadToEndAsync();
-                string error = await process.StandardError.ReadToEndAsync();
-                await process.WaitForExitAsync();
-                result.Data = new CommandResult { Success = process.ExitCode == 0, Output = output, Error = error };
-                _usageTracker.RecordUsage($"cmd:{command}");
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            process = Process.Start(psi);
+            if (process == null)
+            {
+                result.Error = LocalizationService.Get("PowerShellExecuteFailed");
+                return result;
             }
+
+            // 并发读取 stdout/stderr：顺序读取会在另一条管道写满时死锁
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+            var stderrTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
+            await Task.WhenAll(stdoutTask, stderrTask, process.WaitForExitAsync(timeoutCts.Token));
+
+            result.Success = process.ExitCode == 0;
+            result.Output = stdoutTask.Result;
+            result.Error = stderrTask.Result;
+            _usageTracker.RecordUsage($"cmd:{command}");
         }
-        catch (Exception ex) { result.Data = new CommandResult { Success = false, Error = ex.Message }; }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // 超时：终止进程树，返回可理解的超时错误
+            KillProcess(process);
+            result.Error = LocalizationService.Get("PowerShellTimeout");
+        }
+        catch (OperationCanceledException)
+        {
+            // 调用方主动取消：同样终止进程后原样抛出，交给上层按取消处理
+            KillProcess(process);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            KillProcess(process);
+            result.Error = ex.Message;
+        }
+        finally
+        {
+            process?.Dispose();
+        }
+
         return result;
+    }
+
+    /// <summary>
+    /// 终止 PowerShell 进程及其子进程树（用于超时/取消/异常清理）。
+    /// </summary>
+    private static void KillProcess(Process? process)
+    {
+        if (process == null) return;
+        try { process.Kill(entireProcessTree: true); }
+        catch (Exception ex) { Logger.Debug($"Failed to kill PowerShell process: {ex.Message}"); }
     }
 
     private static bool LooksLikeMathExpression(string input)
