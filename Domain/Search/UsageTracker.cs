@@ -52,6 +52,12 @@ public class UsageTracker : IDisposable
     private bool _disposed;
 
     /// <summary>
+    /// 使用记录条目数上限。超出时按最后使用时间淘汰最旧的条目，
+    /// 防止以原始输入为 key（如 calc:...、cmd:...、文件路径）的记录无限增长。
+    /// </summary>
+    private const int MaxTrackedItems = 1000;
+
+    /// <summary>
     /// 构造函数，初始化使用跟踪器。
     /// 创建数据存储目录（如不存在），加载已有的使用数据，并启动定时保存计时器。
     /// </summary>
@@ -86,7 +92,9 @@ public class UsageTracker : IDisposable
 
     /// <summary>
     /// 从本地 JSON 文件加载使用数据。
-    /// 如果文件不存在或加载失败，则返回一个新的空数据对象。
+    /// 如果文件不存在则返回一个新的空数据对象；如果解析失败（文件损坏），
+    /// 先把损坏文件改名为 usage.json.bak-&lt;yyyyMMddHHmmss&gt; 备份，再从空数据开始，
+    /// 绝不直接覆盖用户的原文件（与 ConfigLoader 同模式）。
     /// </summary>
     /// <returns>加载的使用数据对象，加载失败时返回新的空 UsageData 实例</returns>
     private UsageData LoadData()
@@ -97,18 +105,50 @@ public class UsageTracker : IDisposable
             {
                 var data = JsonSerializer.Deserialize<UsageData>(File.ReadAllText(_dataFilePath));
                 if (data != null) return data;
+                BackupCorruptFile("empty usage data");
             }
         }
         catch (Exception ex)
         {
             Logger.Error("Failed to load usage data", ex);
+            BackupCorruptFile("parse error");
         }
         return new UsageData();
     }
 
     /// <summary>
+    /// 把损坏的使用数据文件改名为 usage.json.bak-&lt;yyyyMMddHHmmss&gt;，
+    /// 保证从空数据重新开始时绝不直接覆盖用户的原文件。
+    /// </summary>
+    /// <param name="reason">损坏原因描述，用于日志</param>
+    private void BackupCorruptFile(string reason)
+    {
+        try
+        {
+            if (!File.Exists(_dataFilePath)) return;
+
+            // 同一秒内多次损坏时追加序号，避免重名
+            var basePath = $"{_dataFilePath}.bak-{DateTime.Now:yyyyMMddHHmmss}";
+            var bakPath = basePath;
+            var suffix = 1;
+            while (File.Exists(bakPath))
+            {
+                bakPath = $"{basePath}-{suffix++}";
+            }
+
+            File.Move(_dataFilePath, bakPath);
+            Logger.Error($"[UsageTracker] Corrupt usage data ({reason}) backed up to: {bakPath}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[UsageTracker] Failed to back up corrupt usage data: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
     /// 在有变更的情况下将使用数据保存到本地 JSON 文件。
-    /// 使用锁机制保证线程安全，保存后重置变更标记。
+    /// 保存前先修剪条目数至上限，再通过临时文件 + File.Move 原子写入，
+    /// 保证写入中途崩溃不会产生截断的 JSON。使用锁机制保证线程安全，保存后重置变更标记。
     /// </summary>
     private void SaveDataIfNeeded()
     {
@@ -118,7 +158,8 @@ public class UsageTracker : IDisposable
 
             try
             {
-                File.WriteAllText(_dataFilePath, JsonSerializer.Serialize(_usageData, JsonDefaults.Indented));
+                PruneItems();
+                AtomicWrite(_dataFilePath, JsonSerializer.Serialize(_usageData, JsonDefaults.Indented));
                 _hasChanges = false;
                 Logger.Debug("Usage data saved");
             }
@@ -126,6 +167,65 @@ public class UsageTracker : IDisposable
             {
                 Logger.Error("Failed to save usage data", ex);
             }
+        }
+    }
+
+    /// <summary>
+    /// 把条目数修剪到上限以内：按最后使用时间升序排序，淘汰最旧的条目。
+    /// 从未使用过（LastUsedTime 为 DateTime.MinValue）的条目排在最前，优先被淘汰。
+    /// </summary>
+    private void PruneItems()
+    {
+        if (_usageData.Items.Count <= MaxTrackedItems) return;
+
+        var evictCount = _usageData.Items.Count - MaxTrackedItems;
+        var oldestKeys = _usageData.Items
+            .OrderBy(kv => kv.Value.LastUsedTime)
+            .Take(evictCount)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        foreach (var key in oldestKeys)
+        {
+            _usageData.Items.Remove(key);
+        }
+
+        Logger.Debug($"[UsageTracker] Pruned {oldestKeys.Count} oldest usage entries (limit: {MaxTrackedItems})");
+    }
+
+    /// <summary>
+    /// 原子写入文件：先写入同目录下的临时文件，再通过 File.Move（overwrite）替换目标文件。
+    /// 同目录保证同一卷，Move 在同一卷上是原子操作；写入中途崩溃最多残留临时文件，
+    /// 目标文件要么是旧内容、要么是完整新内容，不会损坏。
+    /// </summary>
+    /// <param name="path">目标文件路径</param>
+    /// <param name="contents">要写入的内容</param>
+    private static void AtomicWrite(string path, string contents)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var tempPath = path + ".tmp";
+        try
+        {
+            File.WriteAllText(tempPath, contents);
+            File.Move(tempPath, path, true);
+        }
+        catch
+        {
+            // 清理残留的临时文件（可能被占用，尽力而为）
+            try
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            catch
+            {
+                // 忽略清理失败
+            }
+            throw;
         }
     }
 
