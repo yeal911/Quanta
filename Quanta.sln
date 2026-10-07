@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quanta", "Quanta.csproj", "{42AFE5A9-F7B4-4501-ACE0-853EE7B0D756}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DBC9F5BF-6D84-4CD6-97EB-CBDDC9429E75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quanta.Tests", "tests\Quanta.Tests\Quanta.Tests.csproj", "{31DDB844-2263-4F2B-A182-D12166CD7643}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42AFE5A9-F7B4-4501-ACE0-853EE7B0D756}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{42AFE5A9-F7B4-4501-ACE0-853EE7B0D756}.Debug|Any CPU.Build.0 = Debug|x64
+		{42AFE5A9-F7B4-4501-ACE0-853EE7B0D756}.Release|Any CPU.ActiveCfg = Release|x64
+		{42AFE5A9-F7B4-4501-ACE0-853EE7B0D756}.Release|Any CPU.Build.0 = Release|x64
+		{31DDB844-2263-4F2B-A182-D12166CD7643}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{31DDB844-2263-4F2B-A182-D12166CD7643}.Debug|Any CPU.Build.0 = Debug|x64
+		{31DDB844-2263-4F2B-A182-D12166CD7643}.Release|Any CPU.ActiveCfg = Release|x64
+		{31DDB844-2263-4F2B-A182-D12166CD7643}.Release|Any CPU.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{31DDB844-2263-4F2B-A182-D12166CD7643} = {DBC9F5BF-6D84-4CD6-97EB-CBDDC9429E75}
+	EndGlobalSection
+EndGlobal

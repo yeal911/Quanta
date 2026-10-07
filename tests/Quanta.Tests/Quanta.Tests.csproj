@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>Quanta.Tests</RootNamespace>
+    <AssemblyName>Quanta.Tests</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Quanta.csproj" />
+  </ItemGroup>
+
+  <!-- i18n 资源文件：测试中的文案断言一律通过资源 key 取值，禁止硬编码 -->
+  <ItemGroup>
+    <None Include="..\..\Resources\Strings\zh-CN.json" Link="Resources\Strings\zh-CN.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
