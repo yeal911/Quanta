@@ -1,15 +1,14 @@
 // ============================================================================
 // 文件名：MainWindow.UI.cs
-// 文件用途：主题切换、本地化刷新、搜索图标菜单、颜色复制事件处理。
+// 文件用途：主题图标更新、应用菜单构建（搜索图标/主题按钮右键共用）、
+//          本地化 ToolTip 刷新、颜色复制事件 → ViewModel 接线。
+//          菜单动作（语言切换/关于/退出）与颜色复制业务在 MainViewModel。
 // ============================================================================
 
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using WpfButton = System.Windows.Controls.Button;
 using WpfToolTip = System.Windows.Controls.ToolTip;
-using Quanta.Core.Interfaces;
 using Quanta.Domain.Search;
 using Quanta.Presentation.Helpers;
 
@@ -30,23 +29,6 @@ public partial class MainWindow
 
     // ── 主题 ─────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// 主题切换按钮点击事件处理。
-    /// </summary>
-    private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.ToggleThemeCommand.Execute(null);
-    }
-
-    /// <summary>
-    /// 应用主题：通过 ThemeService 切换 MergedDictionaries，所有使用 DynamicResource 的控件自动刷新。
-    /// </summary>
-    public void ApplyTheme(bool isDark)
-    {
-        ThemeService.ApplyTheme(isDark ? "Dark" : "Light");
-        UpdateThemeIcon(isDark);
-    }
-
     /// <summary>更新主题切换按钮的图标文字（☀ / 🌙）</summary>
     public void UpdateThemeIcon(bool isDark)
     {
@@ -55,54 +37,22 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// 主题切换按钮右键点击，显示上下文菜单（与托盘菜单相同）。
+    /// 应用主题：通过 ThemeService 切换 MergedDictionaries，所有使用 DynamicResource 的控件自动刷新。
+    /// （供 SearchEngine 的语言切换系统动作在 Dispatcher 上调用）
+    /// </summary>
+    public void ApplyTheme(bool isDark)
+    {
+        ThemeService.ApplyTheme(isDark ? "Dark" : "Light");
+        UpdateThemeIcon(isDark);
+    }
+
+    /// <summary>
+    /// 主题切换按钮右键点击，显示上下文菜单（与搜索图标菜单相同）。
     /// </summary>
     private void ThemeToggleButton_RightClick(object sender, MouseButtonEventArgs e)
     {
         var menu = new ContextMenu();
-
-        var settingsItem = new MenuItem { Header = LocalizationService.Get("TraySettings") };
-        settingsItem.Click += (s, args) => OpenCommandSettings();
-        menu.Items.Add(settingsItem);
-
-        var langItem = new MenuItem { Header = LocalizationService.Get("TrayLanguage") };
-        foreach (var lang in LocalizationService.GetSupportedLanguages())
-        {
-            var langMenuItem = new MenuItem
-            {
-                Header = LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)),
-                IsChecked = LocalizationService.CurrentLanguage == lang.Code
-            };
-            langMenuItem.Click += (s, args) =>
-            {
-                LocalizationService.CurrentLanguage = lang.Code;
-                RefreshLocalization();
-                _trayService?.Initialize();
-            };
-            langItem.Items.Add(langMenuItem);
-        }
-        menu.Items.Add(langItem);
-
-        menu.Items.Add(new Separator());
-
-        var aboutItem = new MenuItem { Header = LocalizationService.Get("TrayAbout") };
-        aboutItem.Click += (s, args) => ToastService.Instance.ShowInfo(
-            $"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
-        menu.Items.Add(aboutItem);
-
-        var exitItem = new MenuItem { Header = LocalizationService.Get("TrayExit") };
-        exitItem.Click += (s, args) =>
-        {
-            if (_recordingService != null && _recordingService.State != RecordingState.Idle)
-            {
-                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
-                return;
-            }
-            _trayService?.Dispose();
-            System.Windows.Application.Current.Shutdown();
-        };
-        menu.Items.Add(exitItem);
-
+        BuildAppMenu(menu);
         menu.IsOpen = true;
         e.Handled = true;
     }
@@ -142,7 +92,6 @@ public partial class MainWindow
     /// </summary>
     public void RefreshLocalization()
     {
-        UpdatePlaceholderWithHotkey();
         BuildSearchIconMenu();
         UpdateTooltips();
     }
@@ -170,29 +119,27 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>
-    /// 更新搜索框占位符，包含当前快捷键信息。
-    /// </summary>
-    private void UpdatePlaceholderWithHotkey()
-    {
-        var config = _configLoader.Load();
-        var hotkey = config.Hotkey;
-        var hotkeyStr = $"{hotkey.Modifier}+{hotkey.Key}";
-        PlaceholderText.Text = LocalizationService.Get("SearchPlaceholder") + " | " + hotkeyStr;
-    }
-
-    // ── 搜索图标菜单 ─────────────────────────────────────────────────
+    // ── 应用菜单（搜索图标右键 / 主题按钮右键共用） ──────────────────
 
     /// <summary>
-    /// 构建搜索图标的右键上下文菜单，包含设置、语言切换、关于、退出等菜单项。
+    /// 重建搜索图标的右键上下文菜单。
     /// </summary>
     private void BuildSearchIconMenu()
     {
-        SearchIconMenu.Items.Clear();
+        BuildAppMenu(SearchIconMenu);
+    }
+
+    /// <summary>
+    /// 构建应用菜单：设置、语言切换、关于、退出。
+    /// 菜单项动作全部委托给 MainViewModel 命令。
+    /// </summary>
+    private void BuildAppMenu(ContextMenu menu)
+    {
+        menu.Items.Clear();
 
         var settingsItem = new MenuItem { Header = LocalizationService.Get("TraySettings") };
         settingsItem.Click += (s, e) => OpenCommandSettings();
-        SearchIconMenu.Items.Add(settingsItem);
+        menu.Items.Add(settingsItem);
 
         var langItem = new MenuItem { Header = LocalizationService.Get("TrayLanguage") };
         foreach (var lang in LocalizationService.GetSupportedLanguages())
@@ -202,35 +149,20 @@ public partial class MainWindow
                 Header = LocalizationService.Get(LocalizationService.GetLanguageDisplayKey(lang.Code)),
                 IsChecked = LocalizationService.CurrentLanguage == lang.Code
             };
-            langMenuItem.Click += (s, e) =>
-            {
-                LocalizationService.CurrentLanguage = lang.Code;
-                RefreshLocalization();
-                _trayService?.Initialize();
-            };
+            langMenuItem.Click += (s, e) => _viewModel.SwitchLanguageCommand.Execute(lang.Code);
             langItem.Items.Add(langMenuItem);
         }
-        SearchIconMenu.Items.Add(langItem);
+        menu.Items.Add(langItem);
 
-        SearchIconMenu.Items.Add(new Separator());
+        menu.Items.Add(new Separator());
 
         var aboutItem = new MenuItem { Header = LocalizationService.Get("TrayAbout") };
-        aboutItem.Click += (s, e) => ToastService.Instance.ShowInfo(
-            $"{LocalizationService.Get("Author")}: yeal911\n{LocalizationService.Get("Email")}: yeal91117@gmail.com", 3.0);
-        SearchIconMenu.Items.Add(aboutItem);
+        aboutItem.Click += (s, e) => _viewModel.ShowAboutCommand.Execute(null);
+        menu.Items.Add(aboutItem);
 
         var exitItem = new MenuItem { Header = LocalizationService.Get("TrayExit") };
-        exitItem.Click += (s, e) =>
-        {
-            if (_recordingService != null && _recordingService.State != RecordingState.Idle)
-            {
-                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
-                return;
-            }
-            _trayService?.Dispose();
-            System.Windows.Application.Current.Shutdown();
-        };
-        SearchIconMenu.Items.Add(exitItem);
+        exitItem.Click += (s, e) => _viewModel.ExitApplicationCommand.Execute(null);
+        menu.Items.Add(exitItem);
     }
 
     /// <summary>
@@ -243,71 +175,23 @@ public partial class MainWindow
         e.Handled = true;
     }
 
-    // ── 颜色复制事件处理 ──────────────────────────────────────────────
-
-    private void CopyColorHex_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
-        {
-            var textBlock = contextMenu.PlacementTarget as TextBlock;
-            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
-            {
-                System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
-                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hex));
-            }
-        }
-    }
-
-    private void CopyColorRgb_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
-        {
-            var textBlock = contextMenu.PlacementTarget as TextBlock;
-            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
-            {
-                System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
-                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Rgb));
-            }
-        }
-    }
-
-    private void CopyColorHsl_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
-        {
-            var textBlock = contextMenu.PlacementTarget as TextBlock;
-            if (textBlock?.DataContext is SearchResult result && result.ColorInfo != null)
-            {
-                System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
-                ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hsl));
-            }
-        }
-    }
+    // ── 颜色复制事件处理（业务在 MainViewModel.CopyColor） ────────────
 
     private void CopyColorHex_RightClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
-        {
-            System.Windows.Clipboard.SetText(result.ColorInfo.Hex);
-            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hex));
-        }
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result)
+            _viewModel.CopyColor(result, "Hex");
     }
 
     private void CopyColorRgb_RightClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
-        {
-            System.Windows.Clipboard.SetText(result.ColorInfo.Rgb);
-            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Rgb));
-        }
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result)
+            _viewModel.CopyColor(result, "Rgb");
     }
 
     private void CopyColorHsl_RightClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result && result.ColorInfo != null)
-        {
-            System.Windows.Clipboard.SetText(result.ColorInfo.Hsl);
-            ToastService.Instance.ShowInfo(LocalizationService.Get("ColorCopied", result.ColorInfo.Hsl));
-        }
+        if (sender is TextBlock textBlock && textBlock.DataContext is SearchResult result)
+            _viewModel.CopyColor(result, "Hsl");
     }
 }

@@ -18,7 +18,7 @@
     <!-- 根 Grid：包含加载层和主内容层 -->
     <Grid>
         <!-- 加载层：半透明背景 + 文字 -->
-        <Border x:Name="LoadingOverlay" Background="#CC666666" CornerRadius="6" Height="25">
+        <Border x:Name="LoadingOverlay" Background="{DynamicResource OverlayLoadingBackground}" CornerRadius="6" Height="25">
             <TextBlock x:Name="LoadingText"
                        Foreground="White"
                        FontSize="12"
@@ -52,12 +52,12 @@
         </Image>
 
         <!-- 统一控制面板：外层灰色半透明容器，宽度由内容决定（5×按钮自然撑开） -->
-        <Border Background="#88707070" CornerRadius="6" Padding="4,4"
+        <Border Background="{DynamicResource OverlayPanelBackground}" CornerRadius="6" Padding="4,4"
                 HorizontalAlignment="Center">
             <StackPanel>
 
                 <!-- 按钮容器：内层高透明背景 -->
-                <Border Background="#55252525" CornerRadius="3" Padding="1,1" Margin="0,0,0,3"
+                <Border Background="{DynamicResource OverlayPanelInnerBackground}" CornerRadius="3" Padding="1,1" Margin="0,0,0,3"
                         HorizontalAlignment="Center" Width="125">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="PauseButton" Width="24" Height="24" Padding="0" Margin="0.2,0,0.2,0"
@@ -153,26 +153,26 @@
                 </Border>
 
                 <!-- 信息行：内层高透明背景，点击打开录音目录 -->
-                <Border Background="#55252525" CornerRadius="3" Height="22" Padding="6,3"
+                <Border Background="{DynamicResource OverlayPanelInnerBackground}" CornerRadius="3" Height="22" Padding="6,3"
                         Margin="0,0,0,3" Cursor="Hand" MouseLeftButtonDown="InfoBox_Click"
                         HorizontalAlignment="Center" Width="125">
                     <Border.ToolTip><ToolTip x:Name="InfoTooltip"/></Border.ToolTip>
                     <TextBlock x:Name="InfoTextBlock" Text="00:00 | 0 KB"
-                               Foreground="#F5F5F5" FontSize="9" FontFamily="Consolas"
+                               Foreground="{DynamicResource OverlayText}" FontSize="9" FontFamily="Consolas"
                                TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Border>
 
                 <!-- 设备信息行：内层高透明背景，文字居左，鼠标悬停 tooltip 显示全名 -->
-                <Border x:Name="DeviceInfoBorder" Background="#55252525" CornerRadius="3"
+                <Border x:Name="DeviceInfoBorder" Background="{DynamicResource OverlayPanelInnerBackground}" CornerRadius="3"
                         Padding="6,3" Margin="0,0,0,0" Visibility="Collapsed"
                         HorizontalAlignment="Center" Width="125">
                     <StackPanel>
                         <TextBlock x:Name="MicDeviceText"
-                                   Foreground="#F5F5F5" FontSize="8" FontFamily="Consolas"
+                                   Foreground="{DynamicResource OverlayText}" FontSize="8" FontFamily="Consolas"
                                    TextTrimming="CharacterEllipsis" TextAlignment="Left"
                                    HorizontalAlignment="Stretch" Visibility="Collapsed"/>
                         <TextBlock x:Name="SpeakerDeviceText"
-                                   Foreground="#F5F5F5" FontSize="8" FontFamily="Consolas"
+                                   Foreground="{DynamicResource OverlayText}" FontSize="8" FontFamily="Consolas"
                                    TextTrimming="CharacterEllipsis" TextAlignment="Left"
                                    HorizontalAlignment="Stretch" Visibility="Collapsed"/>
                     </StackPanel>

@@ -1,18 +1,14 @@
 // ============================================================================
 // 文件名：MainWindow.Recording.cs
-// 文件用途：录音 UI 流程（启动/配置右键切换/资源清理）。
+// 文件用途：录音悬浮窗接线（创建/展示/关闭）与窗口关闭清理。
+//          录音业务（状态校验、配置持久化、启停、错误处理）在
+//          MainViewModel.Recording.cs，此处只做视图层编排。
 // ============================================================================
 
 using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using Quanta.Core.Config;
+using System.ComponentModel;
 using Quanta.Core.Interfaces;
 using Quanta.Domain.Search;
-using Quanta.Infrastructure.Logging;
-using Quanta.Presentation.Helpers;
 
 namespace Quanta.Views;
 
@@ -20,43 +16,25 @@ public partial class MainWindow
 {
     /// <summary>
     /// 从搜索结果启动录音（由 SearchEngine 通过 Dispatcher 调用）。
+    /// 前置校验与配置持久化在 MainViewModel.PrepareRecording，
+    /// 这里只负责悬浮窗的生命周期接线。
     /// </summary>
     public async void StartRecordingFromResult(SearchResult result)
     {
+        var request = _viewModel.PrepareRecording(result);
+        if (request == null) return;
+
         try
         {
-            if (_recordingService.State != RecordingState.Idle)
-            {
-                ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
-                return;
-            }
-
-            var recordData = result.RecordData;
-            if (recordData == null) return;
-
-            var outputPath = recordData.OutputFileName;
-            var outputDir = System.IO.Path.GetDirectoryName(outputPath) ?? "";
-
-            // 保存当前配置到 AppConfig
-            var config = _configLoader.Load();
-            config.RecordingSettings.Source = recordData.Source;
-            config.RecordingSettings.Format = recordData.Format;
-            config.RecordingSettings.Bitrate = recordData.Bitrate;
-            config.RecordingSettings.Channels = recordData.Channels;
-            config.RecordingSettings.OutputPath = recordData.OutputPath;
-            _configLoader.Save(config);
-
-
-
-            _recordingOverlay = new RecordingOverlayWindow(_recordingService, outputDir);
+            _recordingOverlay = new RecordingOverlayWindow(_recordingService, request.OutputDirectory);
             _recordingOverlay.Closed += (s, e) =>
             {
                 _recordingOverlay = null;
-                if (_recordingService.State != RecordingState.Idle)
-                    _ = _recordingService.StopAsync();
+                if (_viewModel.IsRecordingActive)
+                    _ = _viewModel.StopRecordingAsync();
             };
 
-            bool started = await _recordingService.StartAsync(config.RecordingSettings, outputPath);
+            bool started = await _viewModel.StartRecordingAsync(request);
             if (!started)
             {
                 _recordingOverlay?.Close();
@@ -69,131 +47,51 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            Logger.Error($"StartRecordingFromResult failed: {ex}");
-            ToastService.Instance.ShowError(LocalizationService.Get("RecordError") + ": " + ex.Message);
+            _viewModel.HandleRecordingStartError(ex);
             try { _recordingOverlay?.Close(); } catch { }
             _recordingOverlay = null;
         }
     }
 
     /// <summary>
-    /// 处理录音配置芯片的右键点击，显示上下文菜单以切换配置值。
+    /// 处理录音配置芯片的右键点击，循环切换配置值（业务在 MainViewModel.CycleRecordOption）。
     /// </summary>
-    private void RecordChip_RightClick(object sender, MouseButtonEventArgs e)
+    private void RecordChip_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        var element = sender as FrameworkElement;
+        var element = sender as System.Windows.FrameworkElement;
         if (element == null) return;
 
         var result = element.DataContext as SearchResult;
-        var recordData = result?.RecordData;
-        if (recordData == null) return;
+        if (result == null) return;
 
         var tag = element.Tag?.ToString() ?? "";
-
-        switch (tag)
-        {
-            case "Source":
-                CycleOption(new[] { "Mic", "Speaker", "Mic&Speaker" }, recordData.Source, val =>
-                {
-                    recordData.Source = val;
-                    SaveRecordingSettingField("Source", val);
-                });
-                break;
-
-            case "Format":
-                CycleOption(new[] { "m4a", "mp3" }, recordData.Format, val =>
-                {
-                    recordData.Format = val;
-                    SaveRecordingSettingField("Format", val);
-                });
-                break;
-
-            case "Bitrate":
-                CycleOption(new[] { "64", "96", "128", "160" }, recordData.Bitrate.ToString(), val =>
-                {
-                    recordData.Bitrate = int.Parse(val);
-                    SaveRecordingSettingField("Bitrate", val);
-                }, v => v + " kbps");
-                break;
-
-            case "Channels":
-                CycleOption(new[] { "1", "2" }, recordData.Channels.ToString(), val =>
-                {
-                    recordData.Channels = int.Parse(val);
-                    SaveRecordingSettingField("Channels", val);
-                }, v => v == "1"
-                    ? LocalizationService.Get("RecordChannelsMono")
-                    : LocalizationService.Get("RecordChannelsStereo"));
-                break;
-        }
-
+        _viewModel.CycleRecordOption(result, tag);
         e.Handled = true;
     }
 
     /// <summary>
-    /// 通过右键点击循环切换选项值。
+    /// 窗口关闭前校验：录音进行中时提示并阻止关闭（校验在 MainViewModel.ConfirmCanExit）。
     /// </summary>
-    private void CycleOption(string[] options, string currentValue, Action<string> onChange, Func<string, string>? displayFormatter = null)
+    protected override void OnClosing(CancelEventArgs e)
     {
-        int currentIndex = Array.IndexOf(options, currentValue);
-        int nextIndex = (currentIndex + 1) % options.Length;
-        onChange(options[nextIndex]);
-    }
-
-    /// <summary>生成配置菜单项</summary>
-    private static void AddMenuItems(
-        ContextMenu menu,
-        string[] values,
-        string current,
-        Action<string> onSelect,
-        Func<string, string>? labelFormatter = null)
-    {
-        foreach (var val in values)
+        if (!_viewModel.ConfirmCanExit())
         {
-            var label = labelFormatter != null ? labelFormatter(val) : val;
-            var item = new MenuItem
-            {
-                Header = label,
-                IsChecked = val.Equals(current, StringComparison.OrdinalIgnoreCase)
-            };
-            var capturedVal = val;
-            item.Click += (s, e) => onSelect(capturedVal);
-            menu.Items.Add(item);
-        }
-    }
-
-    /// <summary>将单个录音配置字段保存到 AppConfig</summary>
-    private void SaveRecordingSettingField(string field, string value)
-    {
-        var config = _configLoader.Load();
-        switch (field)
-        {
-            case "Source": config.RecordingSettings.Source = value; break;
-            case "Format": config.RecordingSettings.Format = value; break;
-            case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
-            case "Channels": config.RecordingSettings.Channels = int.TryParse(value, out int ch) ? ch : 1; break;
-        }
-        _configLoader.Save(config);
-    }
-
-    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-    {
-        if (_recordingService.State != RecordingState.Idle)
-        {
-            ToastService.Instance.ShowWarning(LocalizationService.Get("RecordAlreadyRecording"));
             e.Cancel = true;
             return;
         }
         base.OnClosing(e);
     }
 
+    /// <summary>
+    /// 窗口关闭后清理：停止剪贴板监听、注销热键、停止录音并关闭悬浮窗。
+    /// </summary>
     protected override void OnClosed(EventArgs e)
     {
         _clipboardMonitor.Stop();
         _hotkeyManager.Dispose();
-        if (_recordingService.State != RecordingState.Idle)
+        if (_viewModel.IsRecordingActive)
         {
-            _ = _recordingService.StopAsync();
+            _ = _viewModel.StopRecordingAsync();
         }
         _recordingOverlay?.Close();
         base.OnClosed(e);

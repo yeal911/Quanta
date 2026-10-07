@@ -66,7 +66,7 @@
                                FontFamily="微软雅黑" VerticalAlignment="Center"
                                Foreground="{DynamicResource PrimaryText}"/>
                     <TextBlock x:Name="AutoSaveIndicator" Text=" · 保存成功" FontSize="12" FontWeight="Normal"
-                               Foreground="#27AE60" FontFamily="微软雅黑" VerticalAlignment="Center"
+                               Foreground="{DynamicResource AccentGreenText}" FontFamily="微软雅黑" VerticalAlignment="Center"
                                Visibility="Collapsed" Margin="4,0,0,0"/>
                 </StackPanel>
                 <Button x:Name="CloseButton" Content="✕" HorizontalAlignment="Right"
@@ -240,7 +240,7 @@
                                              Padding="4,2" BorderThickness="1" VerticalAlignment="Center"
                                              LostFocus="RecordOutputPathBox_LostFocus"/>
                                     <Button x:Name="RecordBrowseButton" Margin="6,0,0,0"
-                                            Background="#0078D4" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                            Background="{DynamicResource AccentBlueButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                             BorderThickness="0" Padding="10,3" Height="26" Cursor="Hand"
                                             Click="RecordBrowseButton_Click"/>
                                 </StackPanel>
@@ -251,7 +251,7 @@
                                                Foreground="{DynamicResource TertiaryText}"
                                                VerticalAlignment="Center" Width="160"/>
                                     <TextBlock x:Name="RecordEstimatedSizeValue" FontSize="11" FontFamily="Consolas"
-                                               Foreground="#E67E22" VerticalAlignment="Center"/>
+                                               Foreground="{DynamicResource AccentOrangeText}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
@@ -290,7 +290,7 @@
                                              GotFocus="FileSearchDirectoriesBox_GotFocus"/>
                                 </StackPanel>
                                 <TextBlock x:Name="FileSearchDirectoriesError" FontSize="10" FontFamily="微软雅黑"
-                                           Foreground="#E74C3C" Margin="168,0,0,4" TextWrapping="Wrap" MaxWidth="280"
+                                           Foreground="{DynamicResource AccentRedText}" Margin="168,0,0,4" TextWrapping="Wrap" MaxWidth="280"
                                            Visibility="Collapsed"/>
                                 <TextBlock x:Name="FileSearchDirectoriesHint" FontSize="10"
                                            Foreground="{DynamicResource TertiaryText}" Margin="168,0,0,12"/>
@@ -418,10 +418,10 @@
                             <!-- 导入/导出按钮 -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                                 <Button x:Name="ImportButton" Click="ImportCommands_Click"
-                                        Background="#E67E22" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentOrangeButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
                                 <Button x:Name="ExportButton" Click="ExportCommands_Click"
-                                        Background="#E67E22" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentOrangeButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand"/>
                             </StackPanel>
 
@@ -431,16 +431,16 @@
 
                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button x:Name="AddButton"    Click="AddCommand_Click"
-                                        Background="#0078D4" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentBlueButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
                                 <Button x:Name="DeleteButton" Click="DeleteCommand_Click"
-                                        Background="#E74C3C" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentRedButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
                                 <Button x:Name="TestButton"   Click="TestCommand_Click"
-                                        Background="#8E44AD" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentPurpleButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand" Margin="0,0,4,0"/>
                                 <Button x:Name="SaveButton"   Click="SaveCommand_Click"
-                                        Background="#27AE60" Foreground="White" FontSize="11" FontFamily="微软雅黑"
+                                        Background="{DynamicResource AccentGreenButton}" Foreground="White" FontSize="11" FontFamily="微软雅黑"
                                         BorderThickness="0" Padding="10,4" Height="26" MinWidth="50" Cursor="Hand"/>
                             </StackPanel>
                         </Grid>
@@ -477,13 +477,13 @@
                                                             <Thumb>
                                                                 <Thumb.Template>
                                                                     <ControlTemplate TargetType="Thumb">
-                                                                        <Border x:Name="thumbBorder" Background="#30888888" CornerRadius="3"/>
+                                                                        <Border x:Name="thumbBorder" Background="{DynamicResource ScrollBarThumbBackground}" CornerRadius="3"/>
                                                                         <ControlTemplate.Triggers>
                                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                                <Setter TargetName="thumbBorder" Property="Background" Value="#80888888"/>
+                                                                                <Setter TargetName="thumbBorder" Property="Background" Value="{DynamicResource ScrollBarThumbHoverBackground}"/>
                                                                             </Trigger>
                                                                             <Trigger Property="IsDragging" Value="True">
-                                                                                <Setter TargetName="thumbBorder" Property="Background" Value="#A0888888"/>
+                                                                                <Setter TargetName="thumbBorder" Property="Background" Value="{DynamicResource ScrollBarThumbPressedBackground}"/>
                                                                             </Trigger>
                                                                         </ControlTemplate.Triggers>
                                                                     </ControlTemplate>
@@ -685,7 +685,7 @@
                                                             <Thumb>
                                                                 <Thumb.Template>
                                                                     <ControlTemplate TargetType="Thumb">
-                                                                        <Border x:Name="thumbBorder" Background="#30888888" CornerRadius="3"/>
+                                                                        <Border x:Name="thumbBorder" Background="{DynamicResource ScrollBarThumbBackground}" CornerRadius="3"/>
                                                                     </ControlTemplate>
                                                                 </Thumb.Template>
                                                             </Thumb>
