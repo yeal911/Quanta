@@ -48,6 +48,7 @@
   "ImportResult": "{0} importiert, {1} übersprungen (Doppelgänger)",
   "ImportFailed": "Import fehlgeschlagen",
   "HotkeyRegisterFailed": "Tastenkombination belegt",
+  "HotkeyUnsupportedKey": "Unbekannte Tastenkombination, bitte erneut versuchen",
   "CommandSearchPlaceholder": "Befehle suchen",
   "Admin": "Admin",
   "CopiedToClipboard": "In Zwischenablage kopiert",

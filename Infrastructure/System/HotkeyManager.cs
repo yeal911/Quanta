@@ -93,16 +93,26 @@ public class HotkeyManager : IHotkeyManager
             _isRegistered = false;
         }
 
-        uint modifiers = config.Modifier?.ToUpper() switch
+        // 快捷键已被清空（双击清除）：无需注册，直接视为成功
+        if (string.IsNullOrEmpty(config.Modifier) && string.IsNullOrEmpty(config.Key))
         {
-            "ALT" => MOD_ALT,
-            "CTRL" => MOD_CONTROL,
-            "SHIFT" => MOD_SHIFT,
-            "WIN" => MOD_WIN,
-            _ => MOD_ALT
-        };
+            Logger.Debug("[Hotkey] No hotkey configured, skipping registration");
+            return true;
+        }
 
-        uint vk = ParseVirtualKey(config.Key);
+        // 修饰键支持多键组合（如 "Ctrl+Shift"），按位组合 MOD_* 标志；
+        // 无法识别的组合不再静默回退，返回 false 由调用方给出提示
+        if (!TryParseModifiers(config.Modifier, out uint modifiers))
+        {
+            Logger.Debug($"[Hotkey] Unrecognized modifier: {config.Modifier}");
+            return false;
+        }
+
+        if (!TryParseVirtualKey(config.Key, out uint vk))
+        {
+            Logger.Debug($"[Hotkey] Unrecognized key: {config.Key}");
+            return false;
+        }
 
         Logger.Debug($"[Hotkey] Registering: Modifier={config.Modifier}({modifiers}), Key={config.Key}({vk})");
 
@@ -117,63 +127,107 @@ public class HotkeyManager : IHotkeyManager
     }
 
     /// <summary>
+    /// 判断按键名称是否为可注册的虚拟键码。
+    /// 供设置界面在录制阶段校验，避免保存无法注册的组合。
+    /// </summary>
+    /// <param name="key">按键名称字符串，例如 "F1"、"P" 等</param>
+    /// <returns>能解析为虚拟键码返回 true，否则 false</returns>
+    public static bool IsSupportedKey(string? key) => TryParseVirtualKey(key, out _);
+
+    /// <summary>
+    /// 解析修饰键字符串为 MOD_* 标志位的按位组合。
+    /// 支持以 "+" 分隔的多修饰键组合（如 "Ctrl+Shift"）。
+    /// </summary>
+    /// <param name="modifier">修饰键字符串，如 "Ctrl"、"Ctrl+Shift"</param>
+    /// <param name="modifiers">解析出的 MOD_* 标志位组合</param>
+    /// <returns>全部令牌可识别返回 true；为空或含未知令牌返回 false</returns>
+    private static bool TryParseModifiers(string? modifier, out uint modifiers)
+    {
+        modifiers = 0;
+        if (string.IsNullOrWhiteSpace(modifier))
+            return false;
+
+        foreach (var part in modifier.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var bit = part.ToUpperInvariant() switch
+            {
+                "ALT" => MOD_ALT,
+                "CTRL" => MOD_CONTROL,
+                "SHIFT" => MOD_SHIFT,
+                "WIN" => MOD_WIN,
+                _ => 0u
+            };
+            if (bit == 0)
+                return false;
+            modifiers |= bit;
+        }
+        return true;
+    }
+
+    /// <summary>
     /// 将按键名称字符串解析为对应的 Windows 虚拟键码（Virtual Key Code）。
     /// 支持功能键（F1-F12）、特殊键（Space、Enter、Escape 等）、方向键、数字键和字母键。
     /// </summary>
     /// <param name="key">按键名称字符串，例如 "F1"、"SPACE"、"A" 等</param>
-    /// <returns>对应的虚拟键码。如果无法识别则默认返回空格键（0x20）</returns>
-    private uint ParseVirtualKey(string? key)
+    /// <param name="vk">解析出的虚拟键码</param>
+    /// <returns>可识别返回 true 并输出虚拟键码；无法识别（含空值）返回 false，不再静默回退为空格键</returns>
+    private static bool TryParseVirtualKey(string? key, out uint vk)
     {
-        if (string.IsNullOrEmpty(key)) return 0x20; // 默认为空格键
+        vk = 0;
+        if (string.IsNullOrEmpty(key)) return false;
 
-        return key.ToUpper() switch
+        switch (key.ToUpper())
         {
             // 功能键 F1-F12
-            "F1" => 0x70,
-            "F2" => 0x71,
-            "F3" => 0x72,
-            "F4" => 0x73,
-            "F5" => 0x74,
-            "F6" => 0x75,
-            "F7" => 0x76,
-            "F8" => 0x77,
-            "F9" => 0x78,
-            "F10" => 0x79,
-            "F11" => 0x7A,
-            "F12" => 0x7B,
+            case "F1": vk = 0x70; return true;
+            case "F2": vk = 0x71; return true;
+            case "F3": vk = 0x72; return true;
+            case "F4": vk = 0x73; return true;
+            case "F5": vk = 0x74; return true;
+            case "F6": vk = 0x75; return true;
+            case "F7": vk = 0x76; return true;
+            case "F8": vk = 0x77; return true;
+            case "F9": vk = 0x78; return true;
+            case "F10": vk = 0x79; return true;
+            case "F11": vk = 0x7A; return true;
+            case "F12": vk = 0x7B; return true;
             // 特殊键
-            "SPACE" => 0x20,
-            "ENTER" => 0x0D,
-            "ESCAPE" => 0x1B,
-            "TAB" => 0x09,
-            "BACKSPACE" => 0x08,
-            "DELETE" => 0x2E,
-            "INSERT" => 0x2D,
-            "HOME" => 0x24,
-            "END" => 0x23,
-            "PAGEUP" => 0x21,
-            "PAGEDOWN" => 0x22,
+            case "SPACE": vk = 0x20; return true;
+            case "ENTER": vk = 0x0D; return true;
+            case "ESCAPE": vk = 0x1B; return true;
+            case "TAB": vk = 0x09; return true;
+            case "BACKSPACE": vk = 0x08; return true;
+            case "DELETE": vk = 0x2E; return true;
+            case "INSERT": vk = 0x2D; return true;
+            case "HOME": vk = 0x24; return true;
+            case "END": vk = 0x23; return true;
+            case "PAGEUP": vk = 0x21; return true;
+            case "PAGEDOWN": vk = 0x22; return true;
             // 方向键
-            "UP" => 0x26,
-            "DOWN" => 0x28,
-            "LEFT" => 0x25,
-            "RIGHT" => 0x27,
+            case "UP": vk = 0x26; return true;
+            case "DOWN": vk = 0x28; return true;
+            case "LEFT": vk = 0x25; return true;
+            case "RIGHT": vk = 0x27; return true;
             // 数字键 0-9
-            "0" => 0x30,
-            "1" => 0x31,
-            "2" => 0x32,
-            "3" => 0x33,
-            "4" => 0x34,
-            "5" => 0x35,
-            "6" => 0x36,
-            "7" => 0x37,
-            "8" => 0x38,
-            "9" => 0x39,
-            // 字母键（单个字母字符转换为大写后获取其 ASCII 码）
-            _ when key.Length == 1 && char.IsLetter(key[0]) => (uint)char.ToUpper(key[0]),
-            // 无法识别的按键默认为空格键
-            _ => 0x20
-        };
+            case "0": vk = 0x30; return true;
+            case "1": vk = 0x31; return true;
+            case "2": vk = 0x32; return true;
+            case "3": vk = 0x33; return true;
+            case "4": vk = 0x34; return true;
+            case "5": vk = 0x35; return true;
+            case "6": vk = 0x36; return true;
+            case "7": vk = 0x37; return true;
+            case "8": vk = 0x38; return true;
+            case "9": vk = 0x39; return true;
+            default:
+                // 字母键（单个字母字符转换为大写后获取其 ASCII 码）
+                if (key.Length == 1 && char.IsLetter(key[0]))
+                {
+                    vk = (uint)char.ToUpper(key[0]);
+                    return true;
+                }
+                return false;
+        }
     }
 
     /// <summary>

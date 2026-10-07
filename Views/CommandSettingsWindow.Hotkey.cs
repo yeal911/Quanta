@@ -78,6 +78,15 @@ public partial class CommandSettingsWindow
         if (modifiers.HasFlag(ModifierKeys.Windows)) modifierStr += "Win+";
 
         string keyStr = key.ToString();
+
+        // 无法注册的按键（如无法映射为虚拟键码的键）给出提示，不做静默回退
+        if (!HotkeyManager.IsSupportedKey(keyStr))
+        {
+            HotkeyTextBox.Text = LocalizationService.Get("HotkeyPress");
+            ToastService.Instance.ShowWarning(LocalizationService.Get("HotkeyUnsupportedKey"));
+            return;
+        }
+
         _currentHotkey = modifierStr + keyStr;
         HotkeyTextBox.Text = _currentHotkey;
 
@@ -86,7 +95,7 @@ public partial class CommandSettingsWindow
 
     /// <summary>
     /// 保存当前配置的快捷键到配置文件。
-    /// 解析快捷键字符串，分离修饰键和主键后写入配置。
+    /// 解析快捷键字符串，累加多个修饰键（Ctrl/Alt/Shift/Win 可组合）后写入配置。
     /// </summary>
     private void SaveHotkey()
     {
@@ -95,17 +104,24 @@ public partial class CommandSettingsWindow
 
         var config = ConfigLoader.Load();
         var parts = _currentHotkey.Split('+');
-        string modifier = "";
+        var modifierParts = new List<string>();
         string key = "";
 
         foreach (var part in parts)
         {
             if (part == "Ctrl" || part == "Alt" || part == "Shift" || part == "Win")
-                modifier = part;
+            {
+                // 累加修饰键而非覆盖，保证 Ctrl+Shift+P 之类组合完整保存
+                if (!modifierParts.Contains(part))
+                    modifierParts.Add(part);
+            }
             else
+            {
                 key = part;
+            }
         }
 
+        string modifier = string.Join("+", modifierParts);
         config.Hotkey = new HotkeyConfig { Modifier = modifier, Key = key };
         ConfigLoader.Save(config);
     }

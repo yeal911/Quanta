@@ -48,6 +48,7 @@
   "ImportResult": "تم استيراد {0}، تخطي {1} (مكررة)",
   "ImportFailed": "فشل الاستيراد",
   "HotkeyRegisterFailed": "فشل تسجيل المفتاح",
+  "HotkeyUnsupportedKey": "مجموعة مفاتيح غير معروفة، حاول مرة أخرى",
   "CommandSearchPlaceholder": "ابحث بأمر مفتاحي",
   "Admin": "مدير",
   "CopiedToClipboard": "تم النسخ",

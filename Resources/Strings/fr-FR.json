@@ -48,6 +48,7 @@
   "ImportResult": "{0} importées, {1} ignorées (doublons)",
   "ImportFailed": "Échec de l'importation",
   "HotkeyRegisterFailed": "Échec de l'enregistrement du raccourci",
+  "HotkeyUnsupportedKey": "Combinaison de touches non reconnue, veuillez réessayer",
   "CommandSearchPlaceholder": "Rechercher par mot-clé",
   "Admin": "Administrateur",
   "CopiedToClipboard": "Résultat copié",

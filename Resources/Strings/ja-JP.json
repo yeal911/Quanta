@@ -48,6 +48,7 @@
   "ImportResult": "{0}件インポート、{1}件スキップ（重複）",
   "ImportFailed": "インポート失敗",
   "HotkeyRegisterFailed": "ホットキーの登録に失敗しました",
+  "HotkeyUnsupportedKey": "認識できないキーの組み合わせです。もう一度お試しください",
   "CommandSearchPlaceholder": "キーワードでコマンドを検索",
   "Admin": "管理者",
   "CopiedToClipboard": "結果をクリップボードにコピーしました",

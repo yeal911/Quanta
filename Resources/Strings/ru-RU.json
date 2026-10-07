@@ -48,6 +48,7 @@
   "ImportResult": "Импортировано: {0}, пропущено: {1} (дубликаты)",
   "ImportFailed": "Ошибка импорта",
   "HotkeyRegisterFailed": "Не удалось зарегистрировать клавишу",
+  "HotkeyUnsupportedKey": "Неизвестная комбинация клавиш, попробуйте ещё раз",
   "CommandSearchPlaceholder": "Поиск команд",
   "Admin": "Админ",
   "CopiedToClipboard": "Скопировано",

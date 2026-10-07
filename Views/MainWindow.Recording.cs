@@ -120,7 +120,9 @@ public partial class MainWindow
                 {
                     recordData.Channels = int.Parse(val);
                     SaveRecordingSettingField("Channels", val);
-                }, v => v == "1" ? "单声道" : "立体声");
+                }, v => v == "1"
+                    ? LocalizationService.Get("RecordChannelsMono")
+                    : LocalizationService.Get("RecordChannelsStereo"));
                 break;
         }
 
@@ -168,6 +170,7 @@ public partial class MainWindow
             case "Source": config.RecordingSettings.Source = value; break;
             case "Format": config.RecordingSettings.Format = value; break;
             case "Bitrate": config.RecordingSettings.Bitrate = int.TryParse(value, out int br) ? br : 128; break;
+            case "Channels": config.RecordingSettings.Channels = int.TryParse(value, out int ch) ? ch : 1; break;
         }
         ConfigLoader.Save(config);
     }
