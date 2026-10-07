@@ -58,6 +58,7 @@ public partial class App : System.Windows.Application
         AppServices.Configure(_serviceProvider);
 
         ApplyStartWithWindows();
+        CleanupExpiredLogs();
 
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show(); // MainWindow_Loaded 内部会调用 Hide()
@@ -126,6 +127,23 @@ public partial class App : System.Windows.Application
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// 启动时按配置清理过期日志文件（保留月数由 AppSettings.LogRetentionMonths 配置，默认 6 个月）。
+    /// 清理范围仅限日志目录内 quanta_*.log 模式文件，删除动作由 LoggerService 记录 INFO 日志。
+    /// </summary>
+    private static void CleanupExpiredLogs()
+    {
+        try
+        {
+            var config = AppServices.TryGet<IConfigLoader>()?.Load() ?? ConfigLoader.Load();
+            LoggerService.Default.CleanupExpiredLogs(config.AppSettings.LogRetentionMonths);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[LogCleanup] Failed to clean expired logs on startup", ex);
+        }
     }
 
     /// <summary>
