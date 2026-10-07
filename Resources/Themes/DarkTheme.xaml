@@ -34,7 +34,34 @@
     <SolidColorBrush x:Key="GroupHeaderBorder"          Color="#404040"/>
     <SolidColorBrush x:Key="ScrollBarThumbBackground"    Color="#40FFFFFF"/>
     <SolidColorBrush x:Key="ScrollBarThumbHoverBackground" Color="#66FFFFFF"/>
+    <SolidColorBrush x:Key="ScrollBarThumbPressedBackground" Color="#80FFFFFF"/>
     <SolidColorBrush x:Key="ScrollBarTrackBackground"    Color="#22FFFFFF"/>
+
+    <!-- 强调色（文字）：暗色下提亮，保证在深色背景上的对比度 -->
+    <SolidColorBrush x:Key="AccentBlueText"           Color="#60A5FA"/>
+    <SolidColorBrush x:Key="AccentLightBlueText"      Color="#5DADE2"/>
+    <SolidColorBrush x:Key="AccentGreenText"          Color="#27AE60"/>
+    <SolidColorBrush x:Key="AccentOrangeText"         Color="#E67E22"/>
+    <SolidColorBrush x:Key="AccentPurpleText"         Color="#BA68C8"/>
+    <SolidColorBrush x:Key="AccentRedText"            Color="#FF6B6B"/>
+
+    <!-- 强调色（实心按钮背景，前景白色，两套主题一致） -->
+    <SolidColorBrush x:Key="AccentBlueButton"         Color="#0078D4"/>
+    <SolidColorBrush x:Key="AccentGreenButton"        Color="#27AE60"/>
+    <SolidColorBrush x:Key="AccentOrangeButton"       Color="#E67E22"/>
+    <SolidColorBrush x:Key="AccentPurpleButton"       Color="#8E44AD"/>
+    <SolidColorBrush x:Key="AccentRedButton"          Color="#E74C3C"/>
+
+    <!-- 录制配置芯片背景（暗色下用低饱和深色底） -->
+    <SolidColorBrush x:Key="ChipBlueBackground"       Color="#1E3A5F"/>
+    <SolidColorBrush x:Key="ChipGreenBackground"      Color="#1A3324"/>
+    <SolidColorBrush x:Key="ChipPurpleBackground"     Color="#251B38"/>
+
+    <!-- 录音悬浮窗（HUD）：悬浮于任意屏幕内容之上，深浅主题刻意保持一致的半透明深色 -->
+    <SolidColorBrush x:Key="OverlayLoadingBackground"    Color="#CC666666"/>
+    <SolidColorBrush x:Key="OverlayPanelBackground"      Color="#88707070"/>
+    <SolidColorBrush x:Key="OverlayPanelInnerBackground" Color="#55252525"/>
+    <SolidColorBrush x:Key="OverlayText"                 Color="#F5F5F5"/>
 
     <!-- ========================================================== -->
     <!-- 隐式控件样式 — 同类控件自动应用，无需在每个控件上单独设置       -->

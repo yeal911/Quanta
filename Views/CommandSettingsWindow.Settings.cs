@@ -281,15 +281,13 @@ public partial class CommandSettingsWindow
         {
             FileSearchDirectoriesError.Text = LocalizationService.Get("FileSearchInvalidDirs") + "\n" + string.Join("\n", invalidLines);
             FileSearchDirectoriesError.Visibility = Visibility.Visible;
-            FileSearchDirectoriesBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
-                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E74C3C"));
+            FileSearchDirectoriesBox.BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("AccentRedText");
             return; // 不保存配置
         }
 
         // 验证通过，清除错误提示
         FileSearchDirectoriesError.Visibility = Visibility.Collapsed;
-        FileSearchDirectoriesBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#CCCCCC"));
+        FileSearchDirectoriesBox.BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("InputBorder");
 
         config.FileSearchSettings.Directories = dirs;
 
