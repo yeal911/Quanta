@@ -2,6 +2,7 @@
 // 文件名: MathParser.cs
 // 文件描述: 数学表达式解析器（递归下降），支持基础算术、常用函数与常量。
 //           优先级（由低到高）：加减 < 乘除模 < 幂 < 一元符号 < 括号/函数/数字
+//           通过嵌套深度计数防止过深递归触发无法捕获的 StackOverflowException。
 // ============================================================================
 
 namespace Quanta.Services;
@@ -12,6 +13,14 @@ namespace Quanta.Services;
 /// </summary>
 internal static class MathParser
 {
+    /// <summary>
+    /// 最大表达式嵌套深度（括号/函数调用/幂运算的层级数）。
+    /// 每层嵌套约消耗 5 层调用栈，无限制时粘贴大量 <c>(</c> 会触发
+    /// 无法捕获的 <see cref="StackOverflowException"/> 导致进程崩溃，
+    /// 因此超限时抛出可捕获的 <see cref="MathParserException"/>。
+    /// </summary>
+    private const int MaxNestingDepth = 100;
+
     /// <summary>
     /// 解析并计算数学表达式
     /// </summary>
@@ -24,31 +33,43 @@ internal static class MathParser
             throw new FormatException("Expression is empty");
 
         int pos = 0;
-        double result = ParseAddSub(expr, ref pos);
+        int depth = 0;
+        double result = ParseAddSub(expr, ref pos, ref depth);
         if (pos != expr.Length)
             throw new FormatException($"Unexpected character '{expr[pos]}' at position {pos}");
         return result;
     }
 
-    private static double ParseAddSub(string expr, ref int pos)
+    /// <summary>
+    /// 进入一层嵌套（括号/函数调用/幂运算）前检查深度上限，
+    /// 超限时抛出可捕获的 <see cref="MathParserException"/>，阻止递归继续深入。
+    /// </summary>
+    private static void EnterNestingLevel(ref int depth)
     {
-        double result = ParseMulDiv(expr, ref pos);
+        if (depth >= MaxNestingDepth)
+            throw new MathParserException($"Expression nesting depth exceeds the limit of {MaxNestingDepth}");
+        depth++;
+    }
+
+    private static double ParseAddSub(string expr, ref int pos, ref int depth)
+    {
+        double result = ParseMulDiv(expr, ref pos, ref depth);
         while (pos < expr.Length && (expr[pos] == '+' || expr[pos] == '-'))
         {
             char op = expr[pos++];
-            double right = ParseMulDiv(expr, ref pos);
+            double right = ParseMulDiv(expr, ref pos, ref depth);
             result = op == '+' ? result + right : result - right;
         }
         return result;
     }
 
-    private static double ParseMulDiv(string expr, ref int pos)
+    private static double ParseMulDiv(string expr, ref int pos, ref int depth)
     {
-        double result = ParsePow(expr, ref pos);
+        double result = ParsePow(expr, ref pos, ref depth);
         while (pos < expr.Length && (expr[pos] == '*' || expr[pos] == '/' || expr[pos] == '%'))
         {
             char op = expr[pos++];
-            double right = ParsePow(expr, ref pos);
+            double right = ParsePow(expr, ref pos, ref depth);
             result = op == '*' ? result * right
                    : op == '/' ? result / right
                    : result % right;
@@ -56,45 +77,49 @@ internal static class MathParser
         return result;
     }
 
-    private static double ParsePow(string expr, ref int pos)
+    private static double ParsePow(string expr, ref int pos, ref int depth)
     {
-        double result = ParseUnary(expr, ref pos);
+        double result = ParseUnary(expr, ref pos, ref depth);
         if (pos < expr.Length && expr[pos] == '^')
         {
             pos++;
-            double exp = ParsePow(expr, ref pos);
+            EnterNestingLevel(ref depth);
+            double exp = ParsePow(expr, ref pos, ref depth);
+            depth--;
             result = Math.Pow(result, exp);
         }
         return result;
     }
 
-    private static double ParseUnary(string expr, ref int pos)
+    private static double ParseUnary(string expr, ref int pos, ref int depth)
     {
-        if (pos < expr.Length && expr[pos] == '-') { pos++; return -ParseFactor(expr, ref pos); }
+        if (pos < expr.Length && expr[pos] == '-') { pos++; return -ParseFactor(expr, ref pos, ref depth); }
         if (pos < expr.Length && expr[pos] == '+') { pos++; }
-        return ParseFactor(expr, ref pos);
+        return ParseFactor(expr, ref pos, ref depth);
     }
 
-    private static double ParseFactor(string expr, ref int pos)
+    private static double ParseFactor(string expr, ref int pos, ref int depth)
     {
         if (pos < expr.Length && expr[pos] == '(')
         {
+            EnterNestingLevel(ref depth);
             pos++;
-            double val = ParseAddSub(expr, ref pos);
+            double val = ParseAddSub(expr, ref pos, ref depth);
             if (pos >= expr.Length || expr[pos] != ')')
                 throw new FormatException($"Missing ')' at position {pos}");
 
             pos++;
+            depth--;
             return val;
         }
 
         if (pos < expr.Length && char.IsLetter(expr[pos]))
-            return ParseIdentifier(expr, ref pos);
+            return ParseIdentifier(expr, ref pos, ref depth);
 
         return ParseNumber(expr, ref pos);
     }
 
-    private static double ParseIdentifier(string expr, ref int pos)
+    private static double ParseIdentifier(string expr, ref int pos, ref int depth)
     {
         int start = pos;
         while (pos < expr.Length && (char.IsLetterOrDigit(expr[pos]) || expr[pos] == '_')) pos++;
@@ -103,12 +128,13 @@ internal static class MathParser
         if (pos < expr.Length && expr[pos] == '(')
         {
             pos++; // (
+            EnterNestingLevel(ref depth);
             var args = new List<double>();
             if (pos < expr.Length && expr[pos] != ')')
             {
                 while (true)
                 {
-                    args.Add(ParseAddSub(expr, ref pos));
+                    args.Add(ParseAddSub(expr, ref pos, ref depth));
                     if (pos < expr.Length && expr[pos] == ',')
                     {
                         pos++;
@@ -122,6 +148,7 @@ internal static class MathParser
                 throw new FormatException($"Missing ')' for function '{name}' at position {pos}");
 
             pos++; // )
+            depth--;
             return EvaluateFunction(name, args);
         }
 

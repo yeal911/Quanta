@@ -407,6 +407,14 @@ public class CommandRouter
             result.Data = new CommandResult { Success = true, Output = computedStr };
             _usageTracker.RecordUsage($"calc:{expression}");
         }
+        catch (MathParserException)
+        {
+            // 嵌套深度超限等解析器错误：展示本地化的计算错误提示
+            // （CalcError key 由 i18n 任务补齐，资源未就绪时 Get 回退显示 key 本身）
+            string errorText = LocalizationService.Get("CalcError");
+            result.Subtitle = errorText;
+            result.Data = new CommandResult { Success = false, Error = errorText };
+        }
         catch (Exception ex)
         {
             result.Subtitle = $"Error: {ex.Message}";
