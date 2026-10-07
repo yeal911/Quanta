@@ -14,8 +14,8 @@ namespace Quanta.Models;
 /// </summary>
 public class ExchangeRateSettings
 {
-    /// <summary>Exchangerate-API 的 API Key</summary>
-    [JsonPropertyName("ApiKey")] public string ApiKey { get; set; } = "f02c1174e7cdfb412a48337c";
+    /// <summary>Exchangerate-API 的 API Key（需用户在设置页配置）</summary>
+    [JsonPropertyName("ApiKey")] public string ApiKey { get; set; } = string.Empty;
 
     /// <summary>缓存时间（分钟）</summary>
     [JsonPropertyName("CacheMinutes")] public int CacheMinutes { get; set; } = 60;

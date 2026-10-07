@@ -184,11 +184,10 @@ public class ExchangeRateService : IExchangeRateService
         Logger.Debug($"[ExchangeRate] ConvertAsync called: {amount} {fromCurrency} -> {toCurrency}");
 
         var config = ConfigLoader.Load();
-        var apiKey = config.ExchangeRateSettings?.ApiKey ?? "f02c1174e7cdfb412a48337c";
+        var apiKey = config.ExchangeRateSettings?.ApiKey;
         var cacheMinutes = config.ExchangeRateSettings?.CacheMinutes ?? 60;
 
-        Logger.Debug($"[ExchangeRate] API Key: {(string.IsNullOrWhiteSpace(apiKey) ? "EMPTY" : apiKey.Substring(0, 8) + "...")}");
-
+        // 先判空再使用，且日志中不得出现 key 的任何片段
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             Logger.Debug("[ExchangeRate] No API key configured");
@@ -198,6 +197,8 @@ public class ExchangeRateService : IExchangeRateService
                 Result = LocalizationService.Get("ExchangeRateNoApiKey")
             };
         }
+
+        Logger.Debug("[ExchangeRate] API key configured");
 
         fromCurrency = NormalizeCurrencyCode(fromCurrency);
         toCurrency = NormalizeCurrencyCode(toCurrency);
@@ -336,7 +337,8 @@ public class ExchangeRateService : IExchangeRateService
         try
         {
             var url = $"https://v6.exchangerate-api.com/v6/{apiKey}/latest/{cacheKey}";
-            Logger.Debug($"[ExchangeRate] Request URL: {url}");
+            // 日志中不得出现 API Key，仅记录脱敏后的 URL
+            Logger.Debug($"[ExchangeRate] Request URL: https://v6.exchangerate-api.com/v6/***/latest/{cacheKey}");
 
             var response = await _httpClient.GetStringAsync(url);
             Logger.Debug($"[ExchangeRate] Response received, length: {response?.Length ?? 0}");
