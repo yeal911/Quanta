@@ -321,5 +321,6 @@
   "TextUrlDecodeResult": "URL декод",
   "TextJsonResult": "JSON ({0} строк)",
   "FileSearchInvalidDirs": "Неверные папки:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "Не удалось сохранить настройки. Проверьте права доступа к папке или место на диске."
 }

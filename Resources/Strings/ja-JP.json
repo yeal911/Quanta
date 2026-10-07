@@ -321,5 +321,6 @@
   "TextUrlDecodeResult": "URLデコード",
   "TextJsonResult": "JSON ({0}行)",
   "FileSearchInvalidDirs": "無効なディレクトリ:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "設定の保存に失敗しました。フォルダーのアクセス権またはディスクの空き容量を確認してください。"
 }

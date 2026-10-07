@@ -1,7 +1,9 @@
 // ============================================================================
 // 文件名：ConfigLoader.cs
 // 文件用途：应用配置的加载、保存和管理工具类。
-//          配置文件直接保存在程序运行目录下的 config.json 中。
+//          配置文件保存在 %APPDATA%\Quanta\config.json 中（受限安装目录不可写）。
+//          首次启动时若发现 exe 目录下的旧配置文件，自动迁移到新位置（保留原文件）。
+//          写入采用原子写（临时文件 + File.Move），解析失败时先备份损坏文件再重建默认配置。
 //          支持热重载：配置文件变更时自动重新加载。
 // ============================================================================
 
@@ -10,18 +12,27 @@ using System.Text.Json;
 using Quanta.Core.Constants;
 using Quanta.Models;
 using Quanta.Services;
+using Application = System.Windows.Application;
 
 namespace Quanta.Helpers;
 
 /// <summary>
 /// 静态配置加载器，提供应用配置的加载、保存、导出功能。
-/// 配置文件保存在程序运行目录下的 config.json 中。
+/// 配置文件保存在 %APPDATA%\Quanta\config.json 中。
+/// 写入采用原子写（临时文件 + File.Move 覆盖），崩溃/断电不会产生截断的损坏文件；
+/// 解析失败时先把损坏文件改名为 config.json.bak-&lt;yyyyMMddHHmmss&gt; 再生成默认配置。
 /// 支持热重载：配置文件变更时自动重新加载。
 /// </summary>
 public static class ConfigLoader
 {
     /// <summary>配置缓存，避免重复读取文件</summary>
     private static AppConfig? _cachedConfig;
+
+    /// <summary>缓存读写锁，消除 UI 线程与 FileSystemWatcher 回调线程的竞态</summary>
+    private static readonly object ConfigLock = new();
+
+    /// <summary>保存失败提示是否已展示（成功保存后重置，避免重复弹窗）</summary>
+    private static bool _saveFailureNotified;
 
     /// <summary>文件系统监视器，用于监听配置文件变更</summary>
     private static FileSystemWatcher? _configWatcher;
@@ -30,10 +41,28 @@ public static class ConfigLoader
     public static event EventHandler<AppConfig>? ConfigChanged;
 
     /// <summary>
-    /// 配置文件路径（程序运行目录下的 config.json）
-    /// 单文件发布时使用实际 exe 所在目录
+    /// 配置文件路径（%APPDATA%\Quanta\config.json）。
+    /// exe 目录（如 Program Files）通常不可写，配置统一存放在用户目录。
+    /// 若无法获取 APPDATA（异常环境），回退到 exe 目录。
     /// </summary>
     private static string ConfigPath
+    {
+        get
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (!string.IsNullOrEmpty(appData))
+            {
+                return Path.Combine(appData, "Quanta", "config.json");
+            }
+            return LegacyConfigPath;
+        }
+    }
+
+    /// <summary>
+    /// 旧版配置文件路径（程序运行目录下的 config.json）。
+    /// 仅用于首次启动时的一次性迁移；单文件发布时使用实际 exe 所在目录。
+    /// </summary>
+    private static string LegacyConfigPath
     {
         get
         {
@@ -53,69 +82,95 @@ public static class ConfigLoader
 
     /// <summary>
     /// 加载应用配置。优先从缓存返回，其次从 config.json 读取。
-    /// 如果配置文件不存在或读取失败，则创建默认配置。
+    /// 如果配置文件不存在，则创建默认配置；如果解析失败，
+    /// 先把损坏文件改名为 config.json.bak-&lt;yyyyMMddHHmmss&gt; 再生成默认配置，绝不直接覆盖。
     /// </summary>
     /// <returns>加载的应用配置对象</returns>
     public static AppConfig Load()
     {
-        if (_cachedConfig != null)
+        lock (ConfigLock)
         {
-            Logger.Debug("Using cached config");
-            return _cachedConfig;
-        }
-
-        try
-        {
-            // 获取绝对路径并打印
-            var fullPath = Path.GetFullPath(ConfigPath);
-            Logger.Debug($"Config file path: {fullPath}");
-            Logger.Debug($"File exists: {File.Exists(ConfigPath)}");
-
-            if (File.Exists(ConfigPath))
+            if (_cachedConfig != null)
             {
-                var json = File.ReadAllText(ConfigPath);
-                Logger.Debug($"Config file content length: {json.Length} characters");
+                Logger.Debug("Using cached config");
+                return _cachedConfig;
+            }
 
-                _cachedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+            try
+            {
+                // 首次启动：迁移 exe 目录下的旧配置到 %APPDATA%（保留原文件）
+                MigrateLegacyConfigIfNeeded();
 
-                if (_cachedConfig != null)
+                // 获取绝对路径并打印
+                var fullPath = Path.GetFullPath(ConfigPath);
+                Logger.Debug($"Config file path: {fullPath}");
+                Logger.Debug($"File exists: {File.Exists(ConfigPath)}");
+
+                if (File.Exists(ConfigPath))
                 {
-                    Logger.Debug($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
-                    if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
+                    var json = File.ReadAllText(ConfigPath);
+                    Logger.Debug($"Config file content length: {json.Length} characters");
+
+                    AppConfig? parsedConfig = null;
+                    var parseFailed = false;
+                    try
                     {
-                        var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
-                        Logger.Debug($"Commands from file: {commandKeywords}");
+                        parsedConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                    }
+                    catch (JsonException ex)
+                    {
+                        parseFailed = true;
+                        Logger.Error($"Failed to parse config: {ex.Message}", ex);
+                    }
+
+                    if (parsedConfig != null)
+                    {
+                        _cachedConfig = parsedConfig;
+                        Logger.Debug($"Deserialized config - Commands count: {_cachedConfig.Commands?.Count ?? 0}");
+                        if (_cachedConfig.Commands != null && _cachedConfig.Commands.Count > 0)
+                        {
+                            var commandKeywords = string.Join(", ", _cachedConfig.Commands.Select(c => $"{c.Keyword}({c.Name})"));
+                            Logger.Debug($"Commands from file: {commandKeywords}");
+                        }
+                        else
+                        {
+                            Logger.Debug("No commands found in file");
+                        }
+
+                        // Migrate if needed
+                        _cachedConfig = MigrateConfig(_cachedConfig);
                     }
                     else
                     {
-                        Logger.Debug("No commands found in file");
+                        // 解析失败或内容为 "null" 等无效配置：
+                        // 先把损坏文件改名为 .bak 备份，再生成默认配置，绝不直接覆盖
+                        if (!parseFailed)
+                        {
+                            Logger.Debug("Failed to deserialize config, creating default");
+                        }
+                        BackupCorruptConfig(parseFailed ? "parse error" : "empty config");
+                        _cachedConfig = CreateDefaultConfig();
                     }
-
-                    // Migrate if needed
-                    _cachedConfig = MigrateConfig(_cachedConfig);
                 }
                 else
                 {
-                    Logger.Debug("Failed to deserialize config, creating default");
+                    Logger.Debug("Config file not found, creating default config");
                     _cachedConfig = CreateDefaultConfig();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Logger.Debug("Config file not found, creating default config");
+                Logger.Error($"Failed to load config: {ex.Message}", ex);
+                // 读取失败时同样不覆盖原文件：先尝试备份再重建
+                BackupCorruptConfig("load error");
                 _cachedConfig = CreateDefaultConfig();
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"Failed to load config: {ex.Message}", ex);
-            _cachedConfig = CreateDefaultConfig();
-        }
 
-        // 启动配置文件监视器（热重载）
-        StartFileWatcher();
+            // 启动配置文件监视器（热重载）
+            StartFileWatcher();
 
-        return _cachedConfig;
+            return _cachedConfig!;
+        }
     }
 
     /// <summary>
@@ -193,7 +248,9 @@ public static class ConfigLoader
 
     /// <summary>
     /// 保存应用配置到 config.json。
-    /// 同时更新内存缓存。
+    /// 采用原子写：先写临时文件，再 File.Move 覆盖目标文件，
+    /// 崩溃/断电不会产生截断的损坏文件。
+    /// 同时更新内存缓存。保存失败时记录 Error 日志并通过 Toast 提示一次。
     /// </summary>
     /// <param name="config">要保存的应用配置对象</param>
     public static void Save(AppConfig config)
@@ -204,19 +261,147 @@ public static class ConfigLoader
             var wasEnabled = _configWatcher?.EnableRaisingEvents ?? false;
             if (_configWatcher != null) _configWatcher.EnableRaisingEvents = false;
 
-            var json = JsonSerializer.Serialize(config, JsonOptions);
-            File.WriteAllText(ConfigPath, json);
+            try
+            {
+                var json = JsonSerializer.Serialize(config, JsonOptions);
+                AtomicWrite(ConfigPath, json);
+            }
+            finally
+            {
+                // 恢复监视器
+                if (_configWatcher != null) _configWatcher.EnableRaisingEvents = wasEnabled;
+            }
 
-            _cachedConfig = config;
-
-            // 恢复监视器
-            if (_configWatcher != null) _configWatcher.EnableRaisingEvents = wasEnabled;
+            lock (ConfigLock)
+            {
+                _cachedConfig = config;
+                _saveFailureNotified = false;
+            }
 
             Logger.Debug($"Config saved to: {ConfigPath}");
         }
         catch (Exception ex)
         {
             Logger.Error($"Failed to save config: {ex.Message}", ex);
+            NotifySaveFailed();
+        }
+    }
+
+    /// <summary>
+    /// 原子写入文件：先写入同目录下的临时文件，再通过 File.Move（overwrite）替换目标文件。
+    /// 同目录保证同一卷，Move 在同一卷上是原子操作；写入中途崩溃最多残留临时文件，
+    /// 目标文件要么是旧内容、要么是完整新内容，不会损坏。
+    /// </summary>
+    /// <param name="path">目标文件路径</param>
+    /// <param name="contents">要写入的内容</param>
+    private static void AtomicWrite(string path, string contents)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var tempPath = path + ".tmp";
+        try
+        {
+            File.WriteAllText(tempPath, contents);
+            File.Move(tempPath, path, true);
+        }
+        catch
+        {
+            // 清理残留的临时文件（可能被占用，尽力而为）
+            try
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            catch
+            {
+                // 忽略清理失败
+            }
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 把损坏的配置文件改名为 config.json.bak-&lt;yyyyMMddHHmmss&gt;，
+    /// 保证生成默认配置时绝不直接覆盖用户的原文件。
+    /// </summary>
+    /// <param name="reason">损坏原因描述，用于日志</param>
+    private static void BackupCorruptConfig(string reason)
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath)) return;
+
+            // 同一秒内多次损坏时追加序号，避免重名
+            var basePath = $"{ConfigPath}.bak-{DateTime.Now:yyyyMMddHHmmss}";
+            var bakPath = basePath;
+            var suffix = 1;
+            while (File.Exists(bakPath))
+            {
+                bakPath = $"{basePath}-{suffix++}";
+            }
+
+            File.Move(ConfigPath, bakPath);
+            Logger.Error($"[ConfigLoader] Corrupt config ({reason}) backed up to: {bakPath}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[ConfigLoader] Failed to back up corrupt config: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 首次启动时把 exe 目录下的旧配置迁移到 %APPDATA%\Quanta\config.json。
+    /// 仅在新位置尚无配置时复制，原文件保留不动。
+    /// </summary>
+    private static void MigrateLegacyConfigIfNeeded()
+    {
+        try
+        {
+            var legacyPath = LegacyConfigPath;
+            if (ConfigPath == legacyPath || !File.Exists(legacyPath)) return;
+
+            if (!File.Exists(ConfigPath))
+            {
+                var directory = Path.GetDirectoryName(ConfigPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                File.Copy(legacyPath, ConfigPath);
+                Logger.Debug($"[ConfigLoader] Migrated legacy config from {legacyPath} to {ConfigPath} (original kept)");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 迁移失败不阻断启动，按“配置文件不存在”流程生成默认配置
+            Logger.Warn($"[ConfigLoader] Failed to migrate legacy config: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 保存失败时向用户提示一次（Toast + i18n），成功保存后重置，
+    /// 避免受限目录下每次保存都弹窗打扰。日志始终记录 Error。
+    /// </summary>
+    private static void NotifySaveFailed()
+    {
+        if (_saveFailureNotified) return;
+        _saveFailureNotified = true;
+
+        try
+        {
+            var app = Application.Current;
+            if (app == null) return; // UI 尚未初始化（极早期启动），仅记录日志
+
+            // 异步派发到 UI 线程，避免与配置锁互相等待
+            app.Dispatcher.BeginInvoke(() =>
+                ToastService.Instance.ShowError(LocalizationService.Get("ConfigSaveFailed"), 3));
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"[ConfigLoader] Failed to show save-failure toast: {ex.Message}");
         }
     }
 
@@ -245,7 +430,10 @@ public static class ConfigLoader
     /// <returns>重新加载的应用配置对象</returns>
     public static AppConfig Reload()
     {
-        _cachedConfig = null;
+        lock (ConfigLock)
+        {
+            _cachedConfig = null;
+        }
         return Load();
     }
 

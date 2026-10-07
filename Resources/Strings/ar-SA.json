@@ -321,5 +321,6 @@
   "TextUrlDecodeResult": "فك ترميز URL",
   "TextJsonResult": "JSON ({0} سطر)",
   "FileSearchInvalidDirs": "مجلدات غير صالحة:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "فشل حفظ الإعدادات. يرجى التحقق من أذونات المجلد أو مساحة القرص."
 }

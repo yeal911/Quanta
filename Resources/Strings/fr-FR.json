@@ -321,5 +321,6 @@
   "TextUrlDecodeResult": "Décoder URL",
   "TextJsonResult": "JSON ({0} lignes)",
   "FileSearchInvalidDirs": "Dossiers invalides :",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "Échec de l'enregistrement des paramètres. Vérifiez les autorisations du dossier ou l'espace disque."
 }

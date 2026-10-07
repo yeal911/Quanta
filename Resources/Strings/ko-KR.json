@@ -321,5 +321,6 @@
   "TextUrlDecodeResult": "URL 디코딩",
   "TextJsonResult": "JSON ({0}줄)",
   "FileSearchInvalidDirs": "잘못된 디렉토리:",
-  "TrayTooltip": "Quanta"
+  "TrayTooltip": "Quanta",
+  "ConfigSaveFailed": "설정을 저장하지 못했습니다. 폴더 권한이나 디스크 공간을 확인하세요."
 }
